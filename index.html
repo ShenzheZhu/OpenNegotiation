@@ -54,13 +54,6 @@
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p { margin: 0; }
     .subtitle { max-width: 840px; color: var(--muted); font-size: 18px; }
-    .eyebrow {
-      margin-bottom: 12px;
-      color: var(--accent-dark);
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
     .section {
       margin-top: 24px;
       padding: 26px;
@@ -85,15 +78,69 @@
       border-radius: 8px;
     }
     .card strong { color: var(--accent-dark); }
-    .flow { display: grid; grid-template-columns: repeat(6, minmax(110px, 1fr)); gap: 10px; }
-    .step {
-      min-height: 108px;
-      padding: 12px;
-      background: #f9fbfc;
+    .workflow-diagram {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .workflow-stage {
+      position: relative;
+      min-height: 220px;
+      padding: 16px;
+      background: #fff;
       border: 1px solid var(--line);
       border-radius: 8px;
     }
-    .step strong { display: block; margin-bottom: 5px; }
+    .workflow-stage:nth-child(1) { border-top: 4px solid var(--accent); }
+    .workflow-stage:nth-child(2) { border-top: 4px solid var(--blue); }
+    .workflow-stage:nth-child(3) { border-top: 4px solid var(--amber); }
+    .workflow-stage:nth-child(4) { border-top: 4px solid var(--accent-dark); }
+    .workflow-stage:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -18px;
+      width: 18px;
+      border-top: 2px solid var(--line);
+    }
+    .workflow-stage:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      top: calc(50% - 4px);
+      right: -21px;
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid var(--line);
+      border-right: 2px solid var(--line);
+      transform: rotate(45deg);
+      background: #f8fafc;
+    }
+    .stage-kicker {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+    .stage-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      color: var(--muted);
+    }
+    .stage-list span {
+      display: block;
+      padding-left: 10px;
+      border-left: 3px solid #e7eef4;
+    }
+    .workflow-loop {
+      margin-top: 14px;
+      padding: 13px 15px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: #fbfdfe;
+    }
     .muted { color: var(--muted); }
     .pill {
       display: inline-block;
@@ -108,7 +155,10 @@
     .pill.strong { color: var(--accent-dark); font-weight: 750; }
     footer { margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }
     @media (max-width: 920px) {
-      .grid-3, .flow { grid-template-columns: 1fr; }
+      .grid-3, .workflow-diagram { grid-template-columns: 1fr; }
+      .workflow-stage { min-height: auto; }
+      .workflow-stage:not(:last-child)::before,
+      .workflow-stage:not(:last-child)::after { display: none; }
     }
     @media (max-width: 620px) {
       .nav { align-items: flex-start; flex-direction: column; }
@@ -133,8 +183,7 @@
 
   <main class="shell">
     <section id="overview" class="hero">
-      <p class="eyebrow">OpenNegotiation, short name OpenNego</p>
-      <h1>A Real-Market Negotiation Gym for AI Agents</h1>
+      <h1>OpenNegotiation: A Real-Market Negotiation Gym for AI Agents</h1>
       <p class="subtitle">OpenNegotiation is an evaluation and improvement framework for agent-to-agent negotiation. It moves negotiation benchmarks beyond static prompt roleplay by giving agents market evidence, tool access, private constraints, transaction rules, and traceable outcomes.</p>
     </section>
 
@@ -171,36 +220,52 @@
       <div class="section-head">
         <div>
           <h2>Mechanism</h2>
-          <p class="section-copy">The core protocol stays fixed so runs are comparable. Users can change the agent strategy layer, tool regime, model gateway, and opponent profile without rewriting the environment.</p>
-        </div>
-        <span class="pill">fixed base protocol + editable strategy</span>
-      </div>
-      <div class="flow">
-        <div class="step"><strong>1. Scenario</strong><span class="muted">Product cluster, condition, private reservation, role goal, and market reference.</span></div>
-        <div class="step"><strong>2. Evidence</strong><span class="muted">Private or shared comparable search with provenance and timestamps.</span></div>
-        <div class="step"><strong>3. Negotiation</strong><span class="muted">Messages, offers, accepts, rejects, and tool calls through a structured action schema.</span></div>
-        <div class="step"><strong>4. Settlement</strong><span class="muted">Shipping, tax, platform fees, escrow, payment, and transaction-risk checks.</span></div>
-        <div class="step"><strong>5. Metrics</strong><span class="muted">Deal rate, market gap, utility, violations, tool quality, and validity.</span></div>
-        <div class="step"><strong>6. Learning</strong><span class="muted">Replay traces, diagnose failures, and generate strategy patches.</span></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <div>
-          <h2>System Boundary</h2>
-          <p class="section-copy">OpenNegotiation separates the stable sandbox from user-editable strategy. The base defines actions, tools, settlement, traces, and metrics. The strategy layer defines how an agent negotiates inside that sandbox.</p>
+          <p class="section-copy">OpenNegotiation evaluates the full path from market setup to negotiated settlement, then turns the resulting artifacts into benchmark scores and training feedback.</p>
         </div>
       </div>
-      <div class="grid-3">
-        <div class="card"><h3>Base protocol</h3><p class="muted">Environment rules, action schema, tool trace policy, transaction checks, and metric contracts remain fixed.</p></div>
-        <div class="card"><h3>Agent strategy</h3><p class="muted">Role policy, concession behavior, evidence policy, close-mode tactics, and prompt variations are editable.</p></div>
-        <div class="card"><h3>Provider gateway</h3><p class="muted">LiteLLM acts as the unified model gateway while core environment code stays provider-neutral.</p></div>
+      <div class="workflow-diagram" aria-label="OpenNegotiation workflow diagram">
+        <div class="workflow-stage">
+          <div class="stage-kicker">Input</div>
+          <h3>Market Scenario</h3>
+          <div class="stage-list">
+            <span>Product cluster and condition</span>
+            <span>Comparable-sale reference</span>
+            <span>Private buyer and seller constraints</span>
+          </div>
+        </div>
+        <div class="workflow-stage">
+          <div class="stage-kicker">Agent loop</div>
+          <h3>Evidence and Offers</h3>
+          <div class="stage-list">
+            <span>Tool calls for market evidence</span>
+            <span>Structured messages and offers</span>
+            <span>Accept, reject, or counteroffer decisions</span>
+          </div>
+        </div>
+        <div class="workflow-stage">
+          <div class="stage-kicker">Transaction</div>
+          <h3>Settlement Check</h3>
+          <div class="stage-list">
+            <span>Shipping, tax, and platform fees</span>
+            <span>Payment and escrow assumptions</span>
+            <span>All-in price and validity checks</span>
+          </div>
+        </div>
+        <div class="workflow-stage">
+          <div class="stage-kicker">Output</div>
+          <h3>Scores and Learning</h3>
+          <div class="stage-list">
+            <span>Deal quality and market gap</span>
+            <span>Tool-use and constraint metrics</span>
+            <span>Replay trace and strategy feedback</span>
+          </div>
+        </div>
       </div>
+      <p class="workflow-loop">The same run artifacts support leaderboard evaluation, NPC sparring reports, and targeted policy improvement without changing the underlying market scenario.</p>
     </section>
 
     <footer>
-      OpenNegotiation is the public-facing name. OpenNego remains the short name for the repository, package, and CLI.
+      OpenNegotiation is built for realistic agent-to-agent negotiation evaluation, training, and transaction-aware policy analysis.
     </footer>
   </main>
 </body>
