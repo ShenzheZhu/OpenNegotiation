@@ -62,3 +62,40 @@ python -m pip install -e ".[llm]"
 
 Keep provider credentials in environment variables or a LiteLLM proxy config.
 Do not commit keys or live provider traces.
+
+## Five-Model Demo
+
+OpenNego includes a tiny live-model demo command:
+
+```bash
+opennego run-models --output-dir /tmp/opennego-five-model-demo
+opennego report --input-dir /tmp/opennego-five-model-demo --output /tmp/opennego-five-model-demo.html
+```
+
+The default model set uses LiteLLM OpenRouter model IDs so one provider key can
+cover multiple frontier and open-weight model families:
+
+- `openrouter/openai/gpt-5.4-pro`
+- `openrouter/anthropic/claude-opus-4.8`
+- `openrouter/google/gemini-3.1-pro-preview`
+- `openrouter/x-ai/grok-4.3`
+- `openrouter/qwen/qwen3-235b-a22b`
+
+This command runs each model as the buyer-side LLM agent against the scripted
+seller on the real-market fixture. It writes the same benchmark artifacts as the
+main runner, so `opennego report` can render the results as a leaderboard
+preview.
+
+This is intentionally a small demo path, not a batch benchmark. For cost and
+latency control, prefer a low turn/token budget during live demos:
+
+```bash
+opennego run-models --output-dir /tmp/opennego-five-model-demo --max-turns 4 --max-tokens 256
+```
+
+The command writes `/tmp/opennego-five-model-demo/summary.json` for the full
+attempt. Completed model directories contain the normal benchmark artifacts.
+Failed model directories contain `failure.json` with redacted error text and
+usage counters, so provider failures remain auditable without storing raw
+provider payloads or credentials. `opennego report` renders these attempts in a
+separate status table while keeping the leaderboard limited to completed runs.

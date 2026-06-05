@@ -1,0 +1,23 @@
+[
+  {
+    "query": "Apple iPhone 14 Pro 128GB Unlocked",
+    "title": "iPhone 14 Pro 128GB unlocked, good condition",
+    "condition": "used_good",
+    "price": 555.0,
+    "source": "fixture-sold-comp"
+  },
+  {
+    "query": "Apple iPhone 14 Pro 128GB Unlocked",
+    "title": "Apple iPhone 14 Pro 128GB clean IMEI",
+    "condition": "used_good",
+    "price": 575.0,
+    "source": "fixture-sold-comp"
+  },
+  {
+    "query": "Apple iPhone 14 Pro 128GB Unlocked",
+    "title": "Unlocked iPhone 14 Pro 128GB, battery 88 percent",
+    "condition": "used_good",
+    "price": 610.0,
+    "source": "fixture-sold-comp"
+  }
+]

@@ -49,6 +49,7 @@ def compute_metrics(
                 "normalized_deal_price": 0.0,
             }
         )
+        metrics.update(_market_reference_metrics(scenario, None))
         return metrics
 
     product = scenario.product
@@ -61,6 +62,7 @@ def compute_metrics(
             "normalized_deal_price": (deal_price - product.wholesale_price) / spread,
         }
     )
+    metrics.update(_market_reference_metrics(scenario, deal_price))
     return metrics
 
 
@@ -96,3 +98,38 @@ def _transaction_metrics(transaction: TransactionOutcome | None) -> dict[str, fl
             transaction.escrow_fee + transaction.payment_fee + transaction.seller_fee
         ),
     }
+
+
+def _market_reference_metrics(
+    scenario: Scenario,
+    deal_price: float | None,
+) -> dict[str, float]:
+    reference = scenario.product.market_reference
+    defaults = {
+        "market_reference_price": 0.0,
+        "market_price_gap": 0.0,
+        "normalized_market_gap": 0.0,
+        "buyer_savings_vs_market_reference": 0.0,
+        "seller_revenue_vs_market_reference": 0.0,
+    }
+    if reference is None:
+        return defaults
+
+    metrics = {
+        **defaults,
+        "market_reference_price": reference.reference_price,
+    }
+    if deal_price is None:
+        return metrics
+
+    gap = abs(deal_price - reference.reference_price)
+    scale = max(reference.iqr or reference.reference_price * 0.1, 1.0)
+    metrics.update(
+        {
+            "market_price_gap": gap,
+            "normalized_market_gap": gap / scale,
+            "buyer_savings_vs_market_reference": reference.reference_price - deal_price,
+            "seller_revenue_vs_market_reference": deal_price - reference.reference_price,
+        }
+    )
+    return metrics

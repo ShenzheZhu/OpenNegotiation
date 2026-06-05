@@ -1,0 +1,110 @@
+{
+  "schema_version": "opennego.policy_learning.v1",
+  "profiles": [
+    {
+      "id": "seller_hardline_anchor_v1",
+      "name": "Hardline Anchor Seller",
+      "role": "seller",
+      "archetype": "hardline_anchor",
+      "difficulty": "medium",
+      "summary": "Anchors near listing price, concedes slowly, and tests whether buyers can stay disciplined against high opening offers.",
+      "base_prompt": "Follow OpenNego seller protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and never accept below reservation price.",
+      "strategy_prompt": "Open high, justify price with condition and scarcity, concede in small steps, ask the buyer to justify low offers, and only accept once the offer clears reservation and strategic margin.",
+      "expected_traps": [
+        "High opening anchor can pull weak buyers above market reference.",
+        "Slow concessions can force timeout if the buyer lacks close-mode policy.",
+        "Justification pressure can make buyers reveal budget too early."
+      ],
+      "allowed_tools": [],
+      "tags": ["seller", "anchor", "concession", "baseline"],
+      "metadata": {
+        "base_prompt_fixed": true,
+        "strategy_prompt_editable": true
+      }
+    },
+    {
+      "id": "seller_stale_comps_v1",
+      "name": "Stale Comps Seller",
+      "role": "seller",
+      "archetype": "evidence_asymmetry",
+      "difficulty": "hard",
+      "summary": "Uses stale or selective market evidence to defend price and tests whether buyers verify provenance before accepting.",
+      "base_prompt": "Follow OpenNego seller protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and preserve evidence provenance.",
+      "strategy_prompt": "Reference favorable comparables, downplay stale evidence, ask the buyer to match stronger comps, and concede only when the buyer provides better trace-backed market evidence.",
+      "expected_traps": [
+        "Stale market evidence can mislead agents that do not inspect provenance.",
+        "Selective comparable sales can make market gap look smaller than it is.",
+        "Evidence disputes can consume turns before the buyer switches to close mode."
+      ],
+      "allowed_tools": ["market_price_search"],
+      "tags": ["seller", "market-evidence", "stale", "tool-aware"],
+      "metadata": {
+        "base_prompt_fixed": true,
+        "strategy_prompt_editable": true
+      }
+    },
+    {
+      "id": "seller_hidden_fees_v1",
+      "name": "Hidden Fees Seller",
+      "role": "seller",
+      "archetype": "transaction_cost_pressure",
+      "difficulty": "hard",
+      "summary": "Keeps negotiated price attractive while shifting attention away from shipping, escrow, payment, and platform costs.",
+      "base_prompt": "Follow OpenNego seller protocol exactly: return one valid action, respect role constraints, and do not falsify transaction simulator outputs.",
+      "strategy_prompt": "Emphasize item price and urgency, avoid volunteering fee details unless asked, and use late-stage concessions to make the buyer accept before computing all-in cost.",
+      "expected_traps": [
+        "Low item price can hide high all-in transaction cost.",
+        "Late concessions can cause buyers to accept before computing settlement risk.",
+        "Transaction terms can be ignored if the buyer only optimizes negotiated price."
+      ],
+      "allowed_tools": [],
+      "tags": ["seller", "transaction", "fees", "risk"],
+      "metadata": {
+        "base_prompt_fixed": true,
+        "strategy_prompt_editable": true
+      }
+    },
+    {
+      "id": "buyer_budget_probe_v1",
+      "name": "Budget Probe Buyer",
+      "role": "buyer",
+      "archetype": "reservation_probe",
+      "difficulty": "medium",
+      "summary": "Uses low anchors and repeated justification requests to discover weak seller reservation logic.",
+      "base_prompt": "Follow OpenNego buyer protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and never exceed budget.",
+      "strategy_prompt": "Open below market, ask sellers to justify every counter, infer reservation from concession speed, and close quickly once the seller reveals a soft floor.",
+      "expected_traps": [
+        "Low anchors can push sellers below market if they lack price floors.",
+        "Repeated justification requests can expose reservation logic.",
+        "Fast close offers can make sellers accept before checking net revenue."
+      ],
+      "allowed_tools": ["market_price_search"],
+      "tags": ["buyer", "probe", "reservation", "baseline"],
+      "metadata": {
+        "base_prompt_fixed": true,
+        "strategy_prompt_editable": true
+      }
+    },
+    {
+      "id": "buyer_tool_overuse_v1",
+      "name": "Tool Overuse Buyer",
+      "role": "buyer",
+      "archetype": "tool_overuse",
+      "difficulty": "easy",
+      "summary": "Calls tools repeatedly but struggles to convert evidence into concrete offers, useful for testing tool-use discipline.",
+      "base_prompt": "Follow OpenNego buyer protocol exactly: return one valid action, respect role constraints, and keep private tool traces private when configured.",
+      "strategy_prompt": "Search for comps whenever uncertain, ask for more evidence, delay binding offers, and avoid accepting until several evidence points agree.",
+      "expected_traps": [
+        "Excessive search can burn negotiation turns.",
+        "Evidence collection without offer policy causes timeout.",
+        "Tool evidence can become a substitute for strategic concession planning."
+      ],
+      "allowed_tools": ["market_price_search"],
+      "tags": ["buyer", "tool-use", "timeout", "training"],
+      "metadata": {
+        "base_prompt_fixed": true,
+        "strategy_prompt_editable": true
+      }
+    }
+  ]
+}

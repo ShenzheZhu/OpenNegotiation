@@ -1,0 +1,71 @@
+{
+  "schema_version": "opennego.experiment.v1",
+  "name": "real_market_demo",
+  "output_dir": "runs/real_market_demo",
+  "resume": false,
+  "fail_fast": true,
+  "metadata": {
+    "purpose": "small fixture-backed demo for market-grounded scoring"
+  },
+  "transaction": {
+    "kind": "fixture",
+    "enabled": true,
+    "shipping_cost": 12.0,
+    "tax_rate": 0.06,
+    "escrow_fee": 3.0,
+    "payment_fee_rate": 0.015,
+    "seller_fee_rate": 0.04,
+    "return_risk": 0.02,
+    "reputation_risk": 0.01
+  },
+  "seeds": [13],
+  "agents": {
+    "buyer": {
+      "kind": "tool_aware_buyer"
+    },
+    "seller": {
+      "kind": "scripted_seller"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "iphone_14_pro_128gb_unlocked_good",
+      "products_file": "examples/data/real_market_products.json",
+      "product_index": 0,
+      "max_turns": 8
+    }
+  ],
+  "tool_regimes": [
+    {
+      "id": "no_tools",
+      "tools": []
+    },
+    {
+      "id": "buyer_private_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "buyer_private",
+          "mode": "clean"
+        }
+      ]
+    },
+    {
+      "id": "buyer_private_noisy_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "buyer_private",
+          "mode": "noisy",
+          "metadata": {
+            "noise_fraction": 0.08
+          }
+        }
+      ]
+    }
+  ]
+}

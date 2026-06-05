@@ -34,6 +34,74 @@ def parse_price(value: Any) -> float:
 
 
 @dataclass(frozen=True)
+class MarketReference:
+    reference_price: float
+    p25_price: float | None = None
+    p75_price: float | None = None
+    sample_size: int | None = None
+    currency: str = "USD"
+    window_days: int | None = None
+    source: str = "unknown"
+    sale_mechanism: str = "mixed"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "MarketReference":
+        reference_price = (
+            data.get("reference_price")
+            if data.get("reference_price") is not None
+            else data.get("median_price", data.get("market_median_price"))
+        )
+        if reference_price is None:
+            raise ValueError("market_reference must include reference_price or median_price")
+
+        known_keys = {
+            "reference_price",
+            "median_price",
+            "market_median_price",
+            "p25_price",
+            "p25",
+            "q1_price",
+            "p75_price",
+            "p75",
+            "q3_price",
+            "sample_size",
+            "currency",
+            "window_days",
+            "source",
+            "sale_mechanism",
+        }
+        sample_size = data.get("sample_size")
+        window_days = data.get("window_days")
+        return cls(
+            reference_price=parse_price(reference_price),
+            p25_price=_optional_price(data.get("p25_price", data.get("p25", data.get("q1_price")))),
+            p75_price=_optional_price(data.get("p75_price", data.get("p75", data.get("q3_price")))),
+            sample_size=int(sample_size) if sample_size is not None else None,
+            currency=str(data.get("currency", "USD")),
+            window_days=int(window_days) if window_days is not None else None,
+            source=str(data.get("source", "unknown")),
+            sale_mechanism=str(data.get("sale_mechanism", "mixed")),
+            metadata={key: value for key, value in data.items() if key not in known_keys},
+        )
+
+    @property
+    def iqr(self) -> float | None:
+        if self.p25_price is None or self.p75_price is None:
+            return None
+        spread = self.p75_price - self.p25_price
+        if spread <= 0:
+            return None
+        return spread
+
+
+def _optional_price(value: Any) -> float | None:
+    if value is None:
+        return None
+    return parse_price(value)
+
+
+@dataclass(frozen=True)
 class Product:
     id: str
     name: str
@@ -41,6 +109,7 @@ class Product:
     list_price: float
     wholesale_price: float
     condition: str = "unknown"
+    market_reference: MarketReference | None = None
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -51,10 +120,41 @@ class Product:
         if not name:
             raise ValueError("Product record must include name or Product Name")
 
-        list_price = data.get("list_price", data.get("Retail Price"))
+        raw_market_reference = data.get("market_reference")
+        market_reference = None
+        if raw_market_reference is not None:
+            if not isinstance(raw_market_reference, Mapping):
+                raise ValueError("market_reference must be an object")
+            market_reference = MarketReference.from_mapping(raw_market_reference)
+
+        list_price = data.get(
+            "list_price",
+            data.get("Retail Price", data.get("asking_price", data.get("initial_listing_price"))),
+        )
+        if list_price is None:
+            raise ValueError("Product record must include list, retail, or asking price")
+
         wholesale_price = data.get("wholesale_price", data.get("Wholesale Price"))
-        if list_price is None or wholesale_price is None:
-            raise ValueError("Product record must include list and wholesale prices")
+        legacy_wholesale_basis = None
+        if wholesale_price is None:
+            wholesale_price = data.get(
+                "synthetic_seller_reservation_price",
+                data.get("seller_reservation_price", data.get("reservation_price")),
+            )
+            if wholesale_price is not None:
+                legacy_wholesale_basis = "synthetic_seller_reservation_price"
+        if wholesale_price is None and market_reference is not None:
+            wholesale_price = market_reference.p25_price or market_reference.reference_price
+            legacy_wholesale_basis = (
+                "market_reference.p25_price"
+                if market_reference.p25_price is not None
+                else "market_reference.reference_price"
+            )
+        if wholesale_price is None:
+            raise ValueError(
+                "Product record must include wholesale price, synthetic reservation, "
+                "or market_reference"
+            )
 
         description = data.get("description") or data.get("Features") or ""
         product_id = str(data.get("id", name))
@@ -67,11 +167,19 @@ class Product:
             "Features",
             "list_price",
             "Retail Price",
+            "asking_price",
+            "initial_listing_price",
             "wholesale_price",
             "Wholesale Price",
             "condition",
+            "market_reference",
         }
         attributes = {key: value for key, value in data.items() if key not in known_keys}
+        if legacy_wholesale_basis is not None:
+            attributes = {
+                **attributes,
+                "legacy_wholesale_basis": legacy_wholesale_basis,
+            }
         return cls(
             id=product_id,
             name=str(name),
@@ -79,6 +187,7 @@ class Product:
             list_price=parse_price(list_price),
             wholesale_price=parse_price(wholesale_price),
             condition=condition,
+            market_reference=market_reference,
             attributes=attributes,
         )
 
