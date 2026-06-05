@@ -108,10 +108,24 @@ opennego spar \
 
 This writes `/tmp/opennego-sparring/sparring_suite.json` plus one
 `battle_report.json` per selected profile, then renders a compact HTML report
-when `--report` is provided. The current execution mode is fixture-backed
-profile diagnosis: deterministic local agents generate the benchmark artifacts,
-while marketplace profiles define the opponent archetype and lessons used for
-prompt optimization.
+when `--report` is provided. By default, deterministic local agents spar
+against counterparties instantiated from marketplace NPC profiles, so the
+selected profile appears in the trace, manifest, opponent archetype, expected
+traps, failure modes, and strategy patch.
+
+To use a provider-backed profile NPC through LiteLLM, install the optional LLM
+dependency, keep credentials in environment variables, and select explicit
+opponent profiles to bound live calls:
+
+```bash
+python -m pip install -e ".[dev,llm]"
+export OPENROUTER_API_KEY=...
+opennego spar \
+  --output-dir /tmp/opennego-live-npc-sparring \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --opponent-llm-model openrouter/openai/gpt-4o-mini \
+  --opponent-llm-max-tokens 256
+```
 
 To rerun sparring with a generated strategy candidate:
 

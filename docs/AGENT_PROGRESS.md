@@ -60,6 +60,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   battle reports, strategy candidates, sparring reruns, comparison artifacts,
   and local marketplace export.
+- Added CLI LiteLLM profile NPC sparring with explicit opponent-profile
+  selection and no-key fake-gateway tests.
 
 ### Current Live-Run State
 
@@ -81,7 +83,7 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 99 passed after adding the shared workflow contract smoke.
+- `pytest -q`: 102 passed after adding CLI LiteLLM profile NPC sparring.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.

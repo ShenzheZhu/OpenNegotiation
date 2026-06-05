@@ -229,5 +229,21 @@ summary = run_sparring_suite(
 )
 ```
 
+The same provider-backed NPC path is available from the CLI through LiteLLM:
+
+```bash
+OPENROUTER_API_KEY=... opennego spar \
+  --output-dir /tmp/team-a-live-npc-sparring \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-agent-factory /absolute/path/to/my_agents.py:my_buyer_factory \
+  --user-agent-kind team_a_buyer \
+  --opponent-llm-model openrouter/openai/gpt-4o-mini \
+  --opponent-llm-max-tokens 256
+```
+
+`--opponent-llm-model` requires at least one explicit `--opponent-profile` so a
+live provider-backed run cannot accidentally expand across the whole NPC
+registry.
+
 CI tests this path with fake `LLMPort` implementations. Live provider calls
 require optional LLM dependencies and local credentials.

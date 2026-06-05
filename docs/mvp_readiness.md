@@ -87,8 +87,9 @@ Known architecture limits:
 - CLI local agent loading is explicit only: no automatic module discovery,
   remote plugin installation, or hosted strategy execution.
 - Strategy sparring defaults to deterministic fixture counterparties. Python API
-  callers can supply profile-backed provider agents behind `LLMPort`; CLI
-  provider-backed NPC loading is not implemented.
+  callers can supply profile-backed provider agents behind `LLMPort`, and CLI
+  users can opt into LiteLLM-backed profile NPCs with explicit
+  `--opponent-profile` selections.
 - Hosted marketplace backend, account-backed sharing, and provider-backed
   coaching are not implemented.
 - Real-market evidence remains fixture/offline-data backed. Offline sold-comps
@@ -112,7 +113,7 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 99 passed.
+- `pytest -q`: 102 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Secret-pattern scan: no matches.
