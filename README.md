@@ -34,13 +34,17 @@ The first scaffold focuses on:
 ## Quickstart
 
 ```bash
+git clone https://github.com/Kordi-AI/OpenNego.git
+cd OpenNego
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
-python -m opennego.cli --products-file examples/data/products.json --market-comps-file examples/data/market_comps.json
 opennego run --config configs/no_key_smoke.yaml
 pytest
 ```
+
+The no-key smoke benchmark is fully fixture-backed. It does not call live market
+search, browser tools, payment systems, logistics APIs, or model providers.
 
 Install the optional LiteLLM adapter when running LLM-backed agents:
 
@@ -52,20 +56,23 @@ Example output:
 
 ```json
 {
-  "outcome": "deal",
-  "deal_price": 760.0,
-  "metrics": {
-    "deal_rate": 1.0,
-    "tool_call_count": 1.0
-  }
+  "name": "no_key_smoke",
+  "total_runs": 5,
+  "completed": 5,
+  "failed": 0
 }
 ```
+
+See [examples/outputs/no_key_smoke_summary.json][sample-summary]
+and
+[examples/outputs/buyer_private_market_search_metrics.json][sample-metrics]
+for curated sample artifacts.
 
 ## Core Abstractions
 
 - `Scenario`: product, buyer budget, seller reservation price, and run limits.
 - `AgentAction`: one step in the agent loop. Actions can be `tool_call`,
-  `offer`, `accept`, `reject`, or `message`.
+  `offer`, `accept`, `reject`, `message`, or `transaction`.
 - `NegotiationEnvironment`: runs the buyer and seller loop, keeps private tool
   traces private from the counterparty, and records a full audit trail.
 - `LLMPort`: the provider-neutral model interface used by LLM-backed agents.
@@ -74,7 +81,7 @@ Example output:
 - `LiteLLMGateway`: optional adapter that routes `LLMPort` calls through
   LiteLLM-supported providers.
 - `Metrics`: deal rate, buyer savings, seller profit, normalized deal price,
-  and tool-call counts.
+  tool-call counts, transaction cost, seller net revenue, and risk exposure.
 - `Benchmark artifacts`: versioned scenario, manifest, trace JSONL, and metric
   report files for reproducible external evaluation.
 
@@ -82,17 +89,19 @@ Example output:
 
 ```text
 src/opennego/
-  agents/        scripted baseline agents
+  agents/        scripted and LLM-backed baseline agents
   adapters/      concrete provider bindings such as LiteLLM
   artifacts.py   versioned benchmark artifact contracts and JSON I/O
   ports/         provider-neutral LLM, agent, and tool contracts
+  transactions/  deterministic transaction simulators
   tools/         tool interfaces and built-in market-price search
   cli.py         runnable smoke demo
   environment.py core negotiation loop
   metrics.py     run-level metrics
   schema.py      shared dataclasses and parsing helpers
 examples/data/   tiny sample products and market comparables
-tests/           regression tests for the first scaffold
+examples/outputs curated no-key sample outputs
+tests/           regression tests and no-key benchmark contracts
 docs/            research agenda and design notes
 ```
 
@@ -110,7 +119,9 @@ OpenNego should support a ladder of increasingly realistic agentic settings:
 
 See [docs/research_agenda.md](docs/research_agenda.md) for the initial roadmap
 and [docs/benchmark_contract.md](docs/benchmark_contract.md) for the current
-artifact contract. See
+artifact contract. See [docs/benchmark_spec.md](docs/benchmark_spec.md) for the
+benchmark structure and [docs/agent_integration.md](docs/agent_integration.md)
+for external agent integration. See
 [docs/magentic_marketplace_architecture_notes.md](docs/magentic_marketplace_architecture_notes.md)
 for architecture lessons from recent agentic marketplace work and how those
 lessons translate into OpenNego-specific design choices. See
@@ -118,7 +129,10 @@ lessons translate into OpenNego-specific design choices. See
 benchmark execution and [docs/llm_baselines.md](docs/llm_baselines.md) for the
 structured action contract used by LLM-backed agents. See
 [docs/transaction_simulator.md](docs/transaction_simulator.md) for the first
-fixture-backed settlement model.
+fixture-backed settlement model and [docs/troubleshooting.md](docs/troubleshooting.md)
+for common setup and parser issues. See
+[docs/release_checklist.md](docs/release_checklist.md) for the no-key handoff
+gate.
 
 ## Status
 
@@ -134,3 +148,6 @@ metrics code.
 ## License
 
 TBD.
+
+[sample-summary]: examples/outputs/no_key_smoke_summary.json
+[sample-metrics]: examples/outputs/buyer_private_market_search_metrics.json

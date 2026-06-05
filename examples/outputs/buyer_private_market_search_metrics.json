@@ -1,0 +1,29 @@
+{
+  "completed_turns": 2,
+  "deal_price": 760.0,
+  "metrics": {
+    "buyer_budget_slack": 90.0,
+    "buyer_savings_vs_list": 240.0,
+    "buyer_total_transaction_cost": 858.0,
+    "deal_rate": 1.0,
+    "failed_transaction_rate": 0.0,
+    "normalized_deal_price": 0.3684210526315789,
+    "private_tool_call_count": 1.0,
+    "public_tool_call_count": 0.0,
+    "seller_net_transaction_revenue": 718.0,
+    "seller_profit_vs_reservation": 140.0,
+    "tool_call_count": 1.0,
+    "tool_evidence_event_count": 1.0,
+    "tool_failure_count": 0.0,
+    "tool_success_count": 1.0,
+    "transaction_completed_rate": 1.0,
+    "transaction_fees": 57.2,
+    "transaction_risk_exposure": 0.05,
+    "transaction_shipping_cost": 18.0,
+    "transaction_tax": 60.8
+  },
+  "outcome": "deal",
+  "run_id": "no_key_smoke-camera_001-buyer_private_market_search-seed-7",
+  "scenario_id": "camera_001",
+  "schema_version": "opennego.benchmark.v1"
+}
