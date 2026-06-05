@@ -6,21 +6,21 @@
   <title>OpenNegotiation | Real-Market Negotiation Gym for AI Agents</title>
   <style>
     :root {
-      --ink: #111827;
-      --muted: #5f6b7a;
-      --line: #dde5ee;
+      --ink: #102126;
+      --muted: #5c6f76;
+      --line: #d7e7e3;
       --panel: #ffffff;
-      --soft: #f7fafc;
-      --accent: #087f8c;
-      --accent-dark: #075f68;
-      --blue: #2563eb;
-      --amber: #b45309;
+      --soft: #f3faf8;
+      --accent: #0f766e;
+      --accent-dark: #124e45;
+      --blue: #2f6fed;
+      --amber: #b7791f;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       color: var(--ink);
-      background: #f8fafc;
+      background: #f7fbfa;
       font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     a { color: inherit; text-decoration: none; }
@@ -41,7 +41,7 @@
       justify-content: space-between;
       gap: 18px;
     }
-    .brand { font-weight: 800; letter-spacing: 0; }
+    .brand { color: var(--accent-dark); font-weight: 850; letter-spacing: 0; }
     .navlinks { display: flex; gap: 22px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
     .navlinks a.active { color: var(--accent-dark); font-weight: 750; }
     .shell { max-width: 1120px; margin: 0 auto; padding: 34px 22px 54px; }
@@ -54,6 +54,10 @@
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p { margin: 0; }
     .subtitle { max-width: 840px; color: var(--muted); font-size: 18px; }
+    .brand-word {
+      color: var(--accent-dark);
+      box-shadow: inset 0 -0.18em 0 rgba(15, 118, 110, .16);
+    }
     .section {
       margin-top: 24px;
       padding: 26px;
@@ -114,7 +118,7 @@
       border-top: 2px solid var(--line);
       border-right: 2px solid var(--line);
       transform: rotate(45deg);
-      background: #f8fafc;
+      background: #f7fbfa;
     }
     .stage-kicker {
       color: var(--muted);
@@ -139,7 +143,9 @@
       border: 1px dashed var(--line);
       border-radius: 8px;
       color: var(--muted);
-      background: #fbfdfe;
+      border-color: rgba(15, 118, 110, .34);
+      color: var(--accent-dark);
+      background: #f4fbf8;
     }
     .muted { color: var(--muted); }
     .pill {
@@ -183,7 +189,7 @@
 
   <main class="shell">
     <section id="overview" class="hero">
-      <h1>OpenNegotiation: A Real-Market Negotiation Gym for AI Agents</h1>
+      <h1><span class="brand-word">OpenNegotiation:</span> A Real-Market Negotiation Gym for AI Agents</h1>
       <p class="subtitle">OpenNegotiation is an evaluation and improvement framework for agent-to-agent negotiation. It moves negotiation benchmarks beyond static prompt roleplay by giving agents market evidence, tool access, private constraints, transaction rules, and traceable outcomes.</p>
     </section>
 
