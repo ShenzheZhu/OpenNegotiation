@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from opennego.artifacts import write_json
+from opennego.market_sources import market_source_policy_summary
 from opennego.schema import parse_price
 
 MARKET_INGESTION_SCHEMA_VERSION = "opennego.market_ingestion.v1"
@@ -40,6 +41,7 @@ class MarketIngestionResult:
     product_count: int
     comparable_count: int
     manifest_output: str | None = None
+    source_policy: str | None = None
 
 
 def ingest_market_data(
@@ -53,10 +55,16 @@ def ingest_market_data(
     asking_multiplier: float = 1.25,
     buyer_budget_multiplier: float = 1.2,
     manifest_output: str | Path | None = None,
+    source_policy_path: str | Path | None = None,
 ) -> MarketIngestionResult:
     """Normalize a local CSV/JSON sold-comps export into OpenNegotiation fixtures."""
 
     source_path = Path(input_path)
+    source_policy = (
+        market_source_policy_summary(source_policy_path)
+        if source_policy_path is not None
+        else None
+    )
     records = _read_records(source_path)
     comparables = [
         _normalize_record(record, index, source, currency)
@@ -92,6 +100,7 @@ def ingest_market_data(
                 window_days=window_days,
                 products=products,
                 comparables=comparables,
+                source_policy=source_policy,
             ),
         )
     return MarketIngestionResult(
@@ -102,6 +111,7 @@ def ingest_market_data(
         product_count=len(products),
         comparable_count=len(comparables),
         manifest_output=str(manifest_path) if manifest_path is not None else None,
+        source_policy=str(source_policy_path) if source_policy_path is not None else None,
     )
 
 
@@ -246,9 +256,10 @@ def _dataset_manifest(
     window_days: int | None,
     products: Sequence[Mapping[str, Any]],
     comparables: Sequence[NormalizedComparable],
+    source_policy: Mapping[str, Any] | None,
 ) -> Mapping[str, Any]:
     prices = sorted(record.price for record in comparables)
-    return {
+    manifest: dict[str, Any] = {
         "schema_version": MARKET_DATASET_MANIFEST_SCHEMA_VERSION,
         "ingestion_schema_version": MARKET_INGESTION_SCHEMA_VERSION,
         "input": {
@@ -283,6 +294,9 @@ def _dataset_manifest(
             "contains_credentials": False,
         },
     }
+    if source_policy is not None:
+        manifest["source_policy"] = dict(source_policy)
+    return manifest
 
 
 def _cluster_summaries(

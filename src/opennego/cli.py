@@ -32,6 +32,11 @@ from opennego.learning import (
 )
 from opennego.leaderboard import build_leaderboard, write_leaderboard
 from opennego.market_ingestion import MarketIngestionError, ingest_market_data
+from opennego.market_sources import (
+    MarketSourcePolicyError,
+    validate_market_source_policy,
+    write_market_source_policy,
+)
 from opennego.market_validation import validate_market_dataset
 from opennego.marketplace import (
     MarketplaceError,
@@ -108,6 +113,10 @@ def main(argv: list[str] | None = None) -> int:
         return _marketplace_export_main(argv[1:])
     if argv and argv[0] == "validate-marketplace":
         return _validate_marketplace_main(argv[1:])
+    if argv and argv[0] == "market-source-policy":
+        return _market_source_policy_main(argv[1:])
+    if argv and argv[0] == "validate-market-source":
+        return _validate_market_source_main(argv[1:])
     if argv and argv[0] == "ingest-market":
         return _ingest_market_main(argv[1:])
     if argv and argv[0] == "validate-market":
@@ -755,6 +764,80 @@ def _validate_marketplace_main(argv: list[str] | None = None) -> int:
     return 0 if result.status == "passed" else 1
 
 
+def _market_source_policy_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Generate a real-market source policy gate artifact."
+    )
+    parser.add_argument("--output", required=True, help="Path to write policy JSON.")
+    parser.add_argument("--source-id", required=True, help="Source id, e.g. ebay.")
+    parser.add_argument(
+        "--adapter-kind",
+        default="offline_export",
+        help="Adapter kind such as offline_export, official_api, or licensed_dataset.",
+    )
+    parser.add_argument(
+        "--collection-mode",
+        default="offline_export",
+        choices=("fixture", "offline_export", "official_api", "licensed_dataset"),
+    )
+    parser.add_argument(
+        "--data-rights",
+        default="user_provided_export",
+        help="Declared source/data rights boundary.",
+    )
+    parser.add_argument("--terms-url", help="Terms/license URL for live-capable sources.")
+    parser.add_argument(
+        "--privacy-classification",
+        default="aggregate_or_user_provided_export",
+    )
+    parser.add_argument(
+        "--allowed-field",
+        action="append",
+        help="Allowed normalized field. Defaults cover sold-comps fixture fields.",
+    )
+    parser.add_argument(
+        "--prohibited-field",
+        action="append",
+        help="Prohibited field. Defaults block credentials, raw HTML, and PII.",
+    )
+    parser.add_argument("--live-collection-enabled", action="store_true")
+    args = parser.parse_args(argv)
+
+    try:
+        policy = write_market_source_policy(
+            args.output,
+            source_id=args.source_id,
+            adapter_kind=args.adapter_kind,
+            collection_mode=args.collection_mode,
+            data_rights=args.data_rights,
+            terms_url=args.terms_url,
+            privacy_classification=args.privacy_classification,
+            allowed_fields=tuple(args.allowed_field) if args.allowed_field else None,
+            prohibited_fields=(
+                tuple(args.prohibited_field) if args.prohibited_field else None
+            ),
+            live_collection_enabled=args.live_collection_enabled,
+        )
+    except (OSError, MarketSourcePolicyError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(policy), indent=2))
+    return 0
+
+
+def _validate_market_source_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate a real-market source policy artifact."
+    )
+    parser.add_argument("--policy", required=True, help="Path to source policy JSON.")
+    args = parser.parse_args(argv)
+
+    result = validate_market_source_policy(args.policy)
+    print(json.dumps(to_jsonable(result), indent=2))
+    return 0 if result.status == "passed" else 1
+
+
 def _ingest_market_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Normalize offline sold-comps CSV/JSON into OpenNegotiation fixtures."
@@ -794,6 +877,13 @@ def _ingest_market_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--window-days", type=int)
     parser.add_argument("--asking-multiplier", type=float, default=1.25)
     parser.add_argument("--buyer-budget-multiplier", type=float, default=1.2)
+    parser.add_argument(
+        "--source-policy",
+        help=(
+            "Optional opennego.market_source_policy.v1 artifact to validate and "
+            "attach to the dataset manifest."
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -807,8 +897,9 @@ def _ingest_market_main(argv: list[str] | None = None) -> int:
             asking_multiplier=args.asking_multiplier,
             buyer_budget_multiplier=args.buyer_budget_multiplier,
             manifest_output=args.manifest_output,
+            source_policy_path=args.source_policy,
         )
-    except (OSError, MarketIngestionError) as exc:
+    except (OSError, MarketIngestionError, MarketSourcePolicyError) as exc:
         print(json.dumps({"error": str(exc)}, indent=2))
         return 2
 

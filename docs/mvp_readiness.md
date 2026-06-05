@@ -86,6 +86,8 @@ Implemented:
   and dispute-risk caps.
 - Offline CSV/JSON sold-comps ingestion into `products.json`,
   `market_comps.json`, and optional aggregate dataset manifest artifacts.
+- Real-market source policy generation and validation for source, licensing,
+  privacy, credential, and anti-scraping boundaries before future live adapters.
 - Market fixture validation CLI for products/comps plus optional dataset
   manifest consistency checks.
 - Machine-readable leaderboard aggregation with ranked run rows, participant
@@ -149,6 +151,8 @@ opennego train --output-dir "$tmpdir/training" --opponent-profile seller_hardlin
 opennego apply-strategy --candidate "$tmpdir/training/strategy_candidate.json" --output "$tmpdir/training/manual_strategy_config.json" --strategy-id buyer_baseline_manual_v1
 opennego export-training-adapter --strategy-config "$tmpdir/training/strategy_config.json" --output "$tmpdir/training/external_training_adapter.json" --agent-kind buyer_baseline
 opennego validate-training-adapter --adapter "$tmpdir/training/external_training_adapter.json"
+opennego market-source-policy --output "$tmpdir/source_policy.json" --source-id ebay_offline_export
+opennego validate-market-source --policy "$tmpdir/source_policy.json"
 opennego validate-marketplace --registry examples/data/npc_strategies.json
 opennego role-swap --output-dir "$tmpdir/role_swap" --participant-id baseline_strategy
 opennego arena-plan --participant model_a --participant model_b --participant model_c --scenario-id real_market_demo --seed 13 --output "$tmpdir/arena_plan.json"
@@ -171,6 +175,8 @@ Latest local result on this readiness branch:
 - Strategy application smoke: passed and wrote `opennego.strategy_config.v1`.
 - External training adapter validation smoke: passed and wrote
   `opennego.external_training_adapter.v1`.
+- Market source policy validation smoke: passed and wrote
+  `opennego.market_source_policy.v1`.
 - Marketplace validation smoke: curated registry and exported profile registry
   passed with no errors or warnings.
 - Role-swapped benchmark smoke: passed with buyer/seller role coverage 1.0.
@@ -198,7 +204,7 @@ Current state:
 
 - Current `main` includes the local backend workflow slices for benchmark,
   training, external strategy handoff, marketplace export, transaction guards,
-  offline data, and leaderboard artifacts.
+  market source policy gates, offline data, and leaderboard artifacts.
 - Open issue `#29` tracks remaining backend/product loop scale-up work.
 - Open issue `#28` tracks public GitHub Pages hosting and remains blocked by
   repository/private-plan support for Pages.

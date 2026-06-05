@@ -63,6 +63,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   and market-comparable fixture files.
 - Added optional aggregate market dataset manifests for offline sold-comps
   ingestion, including input fingerprints and quality summaries.
+- Added real-market source policy artifacts and validation gates for adapter
+  readiness, including collection-mode, data-rights, privacy, credentials, and
+  anti-scraping boundaries.
 - Added `opennego validate-market` for no-key product, comparable, and dataset
   manifest consistency checks.
 - Added `opennego leaderboard` for machine-readable run rankings, participant

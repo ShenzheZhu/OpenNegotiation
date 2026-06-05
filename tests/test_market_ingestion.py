@@ -7,6 +7,7 @@ from opennego.market_ingestion import (
     MARKET_DATASET_MANIFEST_SCHEMA_VERSION,
     ingest_market_data,
 )
+from opennego.market_sources import write_market_source_policy
 from opennego.schema import Product
 from opennego.tools import MarketPriceTool
 
@@ -257,6 +258,59 @@ def test_ingest_market_cli_writes_outputs(tmp_path, capsys):
     assert manifest["source"] == "offline_cli_export"
     assert manifest["quality"]["missing_sold_at_count"] == 1
     assert manifest["quality"]["price_summary"]["median"] == 575.0
+
+
+def test_ingest_market_cli_attaches_validated_source_policy(tmp_path, capsys):
+    input_path = tmp_path / "sold_comps.csv"
+    products_path = tmp_path / "products.json"
+    comps_path = tmp_path / "market_comps.json"
+    manifest_path = tmp_path / "dataset_manifest.json"
+    policy_path = tmp_path / "source_policy.json"
+    _write_csv(
+        input_path,
+        [
+            {
+                "product_name": "Apple iPhone 14 Pro 128GB Unlocked",
+                "listing_title": "iPhone 14 Pro clean IMEI",
+                "sold_price": "575",
+                "condition": "used_good",
+            }
+        ],
+    )
+    write_market_source_policy(
+        policy_path,
+        source_id="ebay_offline_export",
+        adapter_kind="offline_export",
+        collection_mode="offline_export",
+        data_rights="user_provided_export",
+    )
+
+    exit_code = main(
+        [
+            "ingest-market",
+            "--input",
+            str(input_path),
+            "--products-output",
+            str(products_path),
+            "--comps-output",
+            str(comps_path),
+            "--manifest-output",
+            str(manifest_path),
+            "--source",
+            "ebay_offline_export",
+            "--source-policy",
+            str(policy_path),
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    manifest = json.loads(manifest_path.read_text())
+
+    assert exit_code == 0
+    assert payload["source_policy"] == str(policy_path)
+    assert manifest["source_policy"]["source_id"] == "ebay_offline_export"
+    assert manifest["source_policy"]["collection_mode"] == "offline_export"
+    assert manifest["source_policy"]["live_collection_enabled"] is False
+    assert manifest["source_policy"]["validation_status"] == "passed"
 
 
 def _write_csv(path, rows):

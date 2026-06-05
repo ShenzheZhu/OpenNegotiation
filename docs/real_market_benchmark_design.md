@@ -118,6 +118,29 @@ Official or licensed data sources can be adapted later. The no-key demo uses
 fixture-backed sold comps only. Live collection, marketplace API credentials,
 and scraping are out of scope for the initial benchmark slice.
 
+Before adding any live or official source adapter, create and validate a source
+policy artifact:
+
+```bash
+opennego market-source-policy \
+  --output /tmp/ebay-source-policy.json \
+  --source-id ebay_offline_export \
+  --adapter-kind offline_export \
+  --collection-mode offline_export \
+  --data-rights user_provided_export
+opennego validate-market-source \
+  --policy /tmp/ebay-source-policy.json
+```
+
+The policy uses schema `opennego.market_source_policy.v1` and records source id,
+adapter kind, collection mode, data rights, terms URL when relevant, privacy
+classification, allowed/prohibited fields, credential policy, retention policy,
+and the anti-scraping boundary. Live collection is disabled by default. If a
+future adapter enables live collection, validation requires an official API or
+licensed dataset mode, a terms/license URL, explicit non-export data rights, and
+the `no_credentials_in_repo` and
+`no_automated_scraping_without_source_permission` policies.
+
 ## Offline Sold-Comps Ingestion
 
 Local CSV or JSON-list exports can be normalized into OpenNegotiation fixtures without
@@ -129,6 +152,7 @@ opennego ingest-market \
   --products-output /tmp/opennego-products.json \
   --comps-output /tmp/opennego-market-comps.json \
   --manifest-output /tmp/opennego-market-dataset.json \
+  --source-policy /tmp/ebay-source-policy.json \
   --source ebay_offline_export \
   --window-days 90
 ```
@@ -143,7 +167,8 @@ sold date. It writes:
 - `market_dataset.json`: optional aggregate manifest with schema version,
   source file SHA-256, output paths, product/comparable counts, price summary,
   missing-date counts, grouped source/condition/mechanism stats, and cluster
-  summaries.
+  summaries. When `--source-policy` is supplied, the manifest also records a
+  validated source-policy summary and SHA-256.
 
 This is an offline normalization path only. It does not scrape websites, call
 marketplace APIs, bypass marketplace terms, or store live credentials. The
