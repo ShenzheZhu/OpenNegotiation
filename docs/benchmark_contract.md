@@ -200,6 +200,23 @@ summary, battle report, and strategy candidate artifacts. A failed validation
 returns a nonzero CLI exit code so release scripts can gate curated demo
 bundles before handoff.
 
+## External Handoff Package
+
+`opennego handoff --output-dir <dir>` writes a top-level
+`handoff_manifest.json` with schema `opennego.external_handoff.v1`. The handoff
+manifest is the package index for external no-key model-team smoke tests. It
+records:
+
+- the package README path
+- MVP demo artifact paths and benchmark completion counts
+- role-swapped benchmark summary path and participant role coverage
+- MVP bundle, market fixture, and strategy marketplace validation statuses
+- recheck commands for the package validators
+- no-key boundaries: fixture-backed data, no live marketplace collection, no
+  live model-provider calls, and no hosted marketplace backend
+
+The handoff package is ready only when the manifest `status` is `passed`.
+
 ## Compatibility
 
 The artifact contract is provider-neutral. It does not assume LiteLLM, OpenAI,

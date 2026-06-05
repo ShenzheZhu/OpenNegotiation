@@ -56,6 +56,8 @@ parallel logs.
   editable-strategy prompt-layer contracts for user-agent evolution.
 - `marketplace.py`: local strategy candidate export, registry installation, and
   validation for shareable marketplace profiles.
+- `handoff.py`: no-key external package orchestration over MVP demo,
+  validations, role-swap artifacts, README, and handoff manifest generation.
 - `sparring.py`: no-key strategy sparring suite orchestration, including
   optional application of versioned user strategy candidates.
 - `report.py` and `sparring_report.py`: dependency-free static HTML reports.
