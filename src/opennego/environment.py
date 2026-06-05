@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Mapping, Protocol
+from typing import Mapping
 
 from .metrics import compute_metrics
+from .ports import AgentPort, ToolPort
 from .schema import (
     ActionType,
     AgentAction,
@@ -16,31 +17,15 @@ from .schema import (
 )
 
 
-class Tool(Protocol):
-    name: str
-    description: str
-
-    def call(self, arguments: Mapping[str, object], context: AgentContext) -> Mapping[str, object]:
-        ...
-
-
-class NegotiationAgent(Protocol):
-    name: str
-    role: Role
-
-    def act(self, context: AgentContext) -> AgentAction:
-        ...
-
-
 class NegotiationEnvironment:
     """Runs a two-party negotiation while preserving private tool traces."""
 
     def __init__(
         self,
         scenario: Scenario,
-        buyer: NegotiationAgent,
-        seller: NegotiationAgent,
-        tools: tuple[Tool, ...] = (),
+        buyer: AgentPort,
+        seller: AgentPort,
+        tools: tuple[ToolPort, ...] = (),
     ) -> None:
         if buyer.role != Role.BUYER:
             raise ValueError("buyer agent must have role=Role.BUYER")
@@ -55,7 +40,7 @@ class NegotiationEnvironment:
         self._latest_offer_price: float | None = None
 
     def run(self) -> RunResult:
-        actor: NegotiationAgent = self.buyer
+        actor: AgentPort = self.buyer
         public_turns = 0
         total_steps = 0
         max_total_steps = self.scenario.max_turns * 4
@@ -149,7 +134,7 @@ class NegotiationEnvironment:
             return "invalid_accept", None
         return "deal", self._latest_offer_price
 
-    def _next_actor(self, actor: NegotiationAgent) -> NegotiationAgent:
+    def _next_actor(self, actor: AgentPort) -> AgentPort:
         return self.seller if actor.role == Role.BUYER else self.buyer
 
     def _result(self, outcome: str, deal_price: float | None, completed_turns: int) -> RunResult:

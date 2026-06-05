@@ -17,6 +17,9 @@ dependencies = []
 dev = [
   "pytest>=8.0"
 ]
+llm = [
+  "litellm>=1.0"
+]
 
 [project.scripts]
 opennego = "opennego.cli:main"

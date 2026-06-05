@@ -1,0 +1,16 @@
+# Example model aliases for OpenNego LLM-backed agents.
+#
+# These aliases are resolved by the LiteLLMGateway adapter. Keep provider keys in
+# environment variables or a LiteLLM proxy config, not in this repository.
+
+models:
+  buyer:
+    default: openai/gpt-4o-mini
+  seller:
+    default: anthropic/claude-3-5-haiku-20241022
+  judge:
+    default: openai/gpt-4o-mini
+
+litellm:
+  mode: sdk
+  proxy_base_url: null

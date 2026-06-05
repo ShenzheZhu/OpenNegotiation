@@ -21,6 +21,7 @@ The first scaffold focuses on:
 
 - tool-aware negotiation traces
 - market-comparable lookup as a minimal tool
+- ports-and-adapters boundaries for models, tools, and transaction systems
 - explicit buyer budget and seller reservation constraints
 - reproducible scripted agents for smoke tests
 - metrics that separate deal outcome, price efficiency, and tool use
@@ -33,6 +34,12 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 python -m opennego.cli --products-file examples/data/products.json --market-comps-file examples/data/market_comps.json
 pytest
+```
+
+Install the optional LiteLLM adapter when running LLM-backed agents:
+
+```bash
+python -m pip install -e ".[dev,llm]"
 ```
 
 Example output:
@@ -55,7 +62,11 @@ Example output:
   `offer`, `accept`, `reject`, or `message`.
 - `NegotiationEnvironment`: runs the buyer and seller loop, keeps private tool
   traces private from the counterparty, and records a full audit trail.
-- `Tool`: any callable information or transaction interface exposed to agents.
+- `LLMPort`: the provider-neutral model interface used by LLM-backed agents.
+- `ToolPort`: any callable information or transaction interface exposed to
+  agents.
+- `LiteLLMGateway`: optional adapter that routes `LLMPort` calls through
+  LiteLLM-supported providers.
 - `Metrics`: deal rate, buyer savings, seller profit, normalized deal price,
   and tool-call counts.
 
@@ -64,6 +75,8 @@ Example output:
 ```text
 src/opennego/
   agents/        scripted baseline agents
+  adapters/      concrete provider bindings such as LiteLLM
+  ports/         provider-neutral LLM, agent, and tool contracts
   tools/         tool interfaces and built-in market-price search
   cli.py         runnable smoke demo
   environment.py core negotiation loop
@@ -94,6 +107,10 @@ This is an initial scaffold. The code is intentionally provider-neutral and uses
 scripted agents so the environment and metrics can be tested without API keys.
 LLM adapters, real search tools, richer product datasets, and transaction
 simulators should be added behind the same interfaces.
+
+LiteLLM is the preferred LLM gateway for real model sweeps. Keep the eval core
+provider-neutral: model providers belong in adapters, not in the environment or
+metrics code.
 
 ## License
 
