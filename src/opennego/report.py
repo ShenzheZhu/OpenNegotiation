@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import html
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
@@ -66,7 +65,6 @@ def load_demo_runs(input_dir: str | Path) -> tuple[DemoRun, ...]:
 
 def render_demo_report(runs: Sequence[DemoRun]) -> str:
     primary = runs[0]
-    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     leaderboard = sorted(runs, key=_demo_score, reverse=True)
     product = primary.scenario.product
     market_reference = product.market_reference
@@ -337,7 +335,7 @@ def render_demo_report(runs: Sequence[DemoRun]) -> str:
     </section>
 
     <footer>
-      Generated at {generated_at}. This is a no-key demo surface built from OpenNego benchmark artifacts, not a live marketplace collection.
+      Generated from OpenNego benchmark artifacts. This is a no-key demo surface, not a live marketplace collection.
     </footer>
   </main>
 </body>
