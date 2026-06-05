@@ -1,14 +1,16 @@
-"""Command-line smoke runner for OpenNego."""
+"""Command-line entry points for OpenNego."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from opennego.artifacts import to_jsonable, write_run_artifacts
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.environment import NegotiationEnvironment
+from opennego.runner import ConfigValidationError, run_experiment_config
 from opennego.schema import Product, Scenario
 from opennego.tools import MarketPriceTool
 
@@ -21,6 +23,10 @@ def load_first_product(path: str | Path) -> Product:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] == "run":
+        return _run_config_main(argv[1:])
+
     parser = argparse.ArgumentParser(description="Run a deterministic OpenNego smoke demo.")
     parser.add_argument("--products-file", default="examples/data/products.json")
     parser.add_argument("--market-comps-file", default="examples/data/market_comps.json")
@@ -84,6 +90,32 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     return 0
+
+
+def _run_config_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run an OpenNego experiment config.")
+    parser.add_argument(
+        "--config",
+        required=True,
+        help="Path to an OpenNego experiment config.",
+    )
+    parser.add_argument("--output-dir", help="Override the config output_dir.")
+    parser.add_argument("--resume", dest="resume", action="store_true", default=None)
+    parser.add_argument("--no-resume", dest="resume", action="store_false")
+    args = parser.parse_args(argv)
+
+    try:
+        summary = run_experiment_config(
+            args.config,
+            resume=args.resume,
+            output_dir=args.output_dir,
+        )
+    except ConfigValidationError as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(summary), indent=2))
+    return 1 if summary.failed else 0
 
 
 if __name__ == "__main__":

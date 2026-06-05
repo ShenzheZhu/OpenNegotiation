@@ -10,6 +10,7 @@ OpenNego uses a `src/` Python package layout.
   handling.
 - `src/opennego/artifacts.py`: versioned scenario, manifest, trace, and metrics
   artifact contracts.
+- `src/opennego/runner.py`: config-driven experiment runner and resume logic.
 - `src/opennego/ports/`: provider-neutral contracts for agents, LLM gateways,
   tools, and future transaction systems.
 - `src/opennego/adapters/`: concrete provider integrations. LiteLLM belongs
@@ -18,6 +19,8 @@ OpenNego uses a `src/` Python package layout.
 - `src/opennego/agents/`: baseline agents used for deterministic smoke tests.
 - `src/opennego/metrics.py`: run-level evaluation metrics.
 - `examples/data/`: small fixtures for local demos.
+- `configs/`: local experiment configs, including no-key smoke runs.
+- `docs/experiment_runner.md`: config runner schema and output layout.
 - `tests/`: pytest regression tests.
 
 Generated outputs should go under `results/`, `runs/`, or `artifacts/` and
@@ -28,6 +31,7 @@ should not be committed unless they are curated examples.
 ```bash
 python -m pip install -e ".[dev]"
 python -m opennego.cli --products-file examples/data/products.json --market-comps-file examples/data/market_comps.json
+opennego run --config configs/no_key_smoke.yaml
 pytest
 ```
 

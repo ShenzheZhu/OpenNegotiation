@@ -1,0 +1,41 @@
+{
+  "schema_version": "opennego.experiment.v1",
+  "name": "no_key_smoke",
+  "output_dir": "runs/no_key_smoke",
+  "resume": true,
+  "fail_fast": true,
+  "seeds": [7],
+  "agents": {
+    "buyer": {
+      "kind": "tool_aware_buyer"
+    },
+    "seller": {
+      "kind": "scripted_seller"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "camera_001",
+      "products_file": "examples/data/products.json",
+      "product_index": 0,
+      "max_turns": 8
+    }
+  ],
+  "tool_regimes": [
+    {
+      "id": "no_tools",
+      "tools": []
+    },
+    {
+      "id": "buyer_private_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/market_comps.json",
+          "visibility": "buyer_private"
+        }
+      ]
+    }
+  ]
+}
