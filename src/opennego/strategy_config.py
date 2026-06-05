@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from opennego.artifacts import read_json, write_json
+from opennego.branding import PRODUCT_NAME
 from opennego.evolution import StrategyCandidate, load_strategy_candidate
 from opennego.schema import Role
 
@@ -60,7 +61,7 @@ def base_prompt_for_role(role: Role) -> str:
     """Return the fixed sandbox prompt used by shared strategy configs."""
 
     return (
-        f"Follow OpenNego {role.value} protocol exactly: return one valid action, "
+        f"Follow {PRODUCT_NAME} {role.value} protocol exactly: return one valid action, "
         "respect role constraints, never alter tool permissions, and keep the "
         "base sandbox rules fixed."
     )

@@ -1,4 +1,4 @@
-"""Static HTML report generation for small OpenNego demos."""
+"""Static HTML report generation for small OpenNegotiation demos."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ from opennego.artifacts import (
     load_scenario_artifact,
     load_trace,
 )
+from opennego.branding import PRODUCT_NAME
 from opennego.leaderboard import LEADERBOARD_SCHEMA_VERSION
 from opennego.learning import DEFAULT_NPC_REGISTRY_PATH, StrategyProfile, load_strategy_registry
 
@@ -291,7 +292,7 @@ def render_demo_report(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OpenNego Demo Dashboard</title>
+  <title>{PRODUCT_NAME} Demo Dashboard</title>
   <style>
     :root {{
       --ink: #111827;
@@ -432,7 +433,7 @@ def render_demo_report(
 <body>
   <header class="topbar">
     <nav class="nav">
-      <a class="brand" href="#">OpenNego</a>
+      <a class="brand" href="#">{PRODUCT_NAME}</a>
       <div class="navlinks">
         <a href="#overview">Overview</a>
         <a href="#mechanism">Mechanism</a>
@@ -449,7 +450,7 @@ def render_demo_report(
     <section class="hero">
       <p class="eyebrow">Agentic negotiation benchmark</p>
       <h1>Benchmarking AI agents in real-market negotiation and transaction settings</h1>
-      <p class="subtitle">OpenNego evaluates how buyer and seller agents search market evidence, bargain under asymmetric tools, and settle realistic consumer-to-consumer deals.</p>
+      <p class="subtitle">{PRODUCT_NAME} evaluates how buyer and seller agents search market evidence, bargain under asymmetric tools, and settle realistic consumer-to-consumer deals.</p>
       <div class="actions">
         <a class="button primary" href="#leaderboard">View leaderboard preview</a>
         <a class="button" href="#overview">Explore mechanism</a>
@@ -467,7 +468,7 @@ def render_demo_report(
     <section id="overview" class="section">
       <div class="section-head">
         <div>
-          <h2>OpenNego Overview</h2>
+          <h2>{PRODUCT_NAME} Overview</h2>
           <p class="section-copy">A market lifecycle view of negotiation: agents do not just chat, they gather evidence, make structured offers, and pass accepted deals through transaction validation.</p>
         </div>
         <span class="pill">Artifact-backed demo</span>
@@ -484,7 +485,7 @@ def render_demo_report(
     </section>
 
     <section class="section">
-      <h2>Why Choose OpenNego</h2>
+      <h2>Why Choose {PRODUCT_NAME}</h2>
       <div class="grid-3">
         <div class="card"><h3>Agentic, not prompt-only</h3><p class="muted">Agents can use tools for market search, provenance checks, and transaction reasoning before making offers.</p></div>
         <div class="card"><h3>Training-ready</h3><p class="muted">Every run can become a battle report with failure diagnoses and strategy-layer prompt patches.</p></div>
@@ -561,7 +562,7 @@ def render_demo_report(
     </section>
 
     <footer>
-      Generated from OpenNego benchmark and policy-learning artifacts. This is a no-key demo surface, not a live marketplace collection.
+      Generated from {PRODUCT_NAME} benchmark and policy-learning artifacts. This is a no-key demo surface, not a live marketplace collection.
     </footer>
   </main>
 </body>

@@ -1,6 +1,6 @@
 # Release Checklist
 
-Use this checklist before handing OpenNego to an external model team.
+Use this checklist before handing OpenNegotiation to an external model team.
 
 ## Local No-Key Gate
 

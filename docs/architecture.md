@@ -1,11 +1,11 @@
-# OpenNego Architecture
+# OpenNegotiation Architecture
 
 This document summarizes the current MVP architecture and the boundaries that
 should stay stable while the benchmark grows.
 
 ## Product Layers
 
-OpenNego is organized around three product layers:
+OpenNegotiation is organized around three product layers:
 
 1. Benchmark: run agent-to-agent negotiation and transaction scenarios, then
    write versioned artifacts.
@@ -84,7 +84,7 @@ the provider-neutral core from importing concrete adapters.
 
 ## Prompt Boundary
 
-OpenNego separates prompt state into two layers:
+OpenNegotiation separates prompt state into two layers:
 
 - Base: fixed sandbox protocol, role rules, action schema, tool permissions,
   transaction constraints, and invariant checks.

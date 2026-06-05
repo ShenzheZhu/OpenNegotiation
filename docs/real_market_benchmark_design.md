@@ -1,6 +1,6 @@
 # Real-Market Benchmark Design
 
-This note defines the first market-grounded OpenNego slice. It is intentionally
+This note defines the first market-grounded OpenNegotiation slice. It is intentionally
 small enough for local demos and advisor discussions. It is not a live eBay
 collector and it is not a large model sweep.
 
@@ -11,7 +11,7 @@ search comparable sales, compare conditions, reason about fees and shipping,
 and then bargain. A realistic seller agent may also use market evidence, demand
 signals, reputation, or transaction risk.
 
-OpenNego should therefore evaluate negotiation as one phase in an agentic market
+OpenNegotiation should therefore evaluate negotiation as one phase in an agentic market
 workflow:
 
 1. Build a product cluster.
@@ -47,7 +47,7 @@ The current fixture format stores this in `product.market_reference`.
 
 ## Cost Price Policy
 
-Human-observed seller cost is not generally available in C2C markets. OpenNego
+Human-observed seller cost is not generally available in C2C markets. OpenNegotiation
 should not treat cost price as a public benchmark truth.
 
 For compatibility with the initial environment, the current schema still keeps a
@@ -102,7 +102,7 @@ electronics do not dominate all scores.
 ## Human Market Gap
 
 Sold prices are human market outcomes, but not always human negotiations.
-Auction, buy-it-now, and best-offer sales are different mechanisms. OpenNego
+Auction, buy-it-now, and best-offer sales are different mechanisms. OpenNegotiation
 should use careful naming:
 
 - `human market outcome gap` for broad sold-price comparison
@@ -120,7 +120,7 @@ and scraping are out of scope for the initial benchmark slice.
 
 ## Offline Sold-Comps Ingestion
 
-Local CSV or JSON-list exports can be normalized into OpenNego fixtures without
+Local CSV or JSON-list exports can be normalized into OpenNegotiation fixtures without
 live marketplace access:
 
 ```bash

@@ -1,4 +1,4 @@
-"""Offline sold-comps ingestion for OpenNego market fixtures."""
+"""Offline sold-comps ingestion for OpenNegotiation market fixtures."""
 
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ def ingest_market_data(
     buyer_budget_multiplier: float = 1.2,
     manifest_output: str | Path | None = None,
 ) -> MarketIngestionResult:
-    """Normalize a local CSV/JSON sold-comps export into OpenNego fixtures."""
+    """Normalize a local CSV/JSON sold-comps export into OpenNegotiation fixtures."""
 
     source_path = Path(input_path)
     records = _read_records(source_path)

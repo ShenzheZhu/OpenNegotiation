@@ -1,4 +1,4 @@
-"""Config-driven experiment runner for OpenNego."""
+"""Config-driven experiment runner for OpenNegotiation."""
 
 from __future__ import annotations
 

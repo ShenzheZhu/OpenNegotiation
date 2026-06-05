@@ -18,7 +18,7 @@ def test_write_demo_report_from_real_market_demo_config(tmp_path):
     html = output.read_text()
     assert summary.total_runs == 3
     assert summary.completed == 3
-    assert "OpenNego" in html
+    assert "OpenNegotiation" in html
     assert "Leaderboard Preview" in html
     assert "Trace Replay" in html
     assert "Market Reference" in html

@@ -1,6 +1,6 @@
 # Benchmark Artifact Contract
 
-OpenNego benchmark outputs are versioned JSON artifacts. The current schema
+OpenNegotiation benchmark outputs are versioned JSON artifacts. The current schema
 version is:
 
 ```text

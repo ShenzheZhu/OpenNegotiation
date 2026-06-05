@@ -1,6 +1,6 @@
-# OpenNego Research Agenda
+# OpenNegotiation Research Agenda
 
-OpenNego starts from the A2A-NT consumer negotiation setup and asks what changes
+OpenNegotiation starts from the A2A-NT consumer negotiation setup and asks what changes
 when agents can use tools before and during negotiation.
 
 ## Central Question
@@ -62,7 +62,7 @@ tool-call cost.
 
 ## Architecture Reference Pass
 
-OpenNego should learn from mature agentic market simulators such as
+OpenNegotiation should learn from mature agentic market simulators such as
 [Magentic Marketplace](https://arxiv.org/abs/2510.25779), but it should not
 become a compatibility wrapper for one paper or one synthetic marketplace. See
 [Magentic Marketplace Architecture Notes](magentic_marketplace_architecture_notes.md)

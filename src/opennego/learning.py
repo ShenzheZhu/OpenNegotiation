@@ -19,6 +19,7 @@ from opennego.artifacts import (
     to_jsonable,
     write_json,
 )
+from opennego.branding import PRODUCT_NAME
 from opennego.schema import ActionType, Role
 
 POLICY_LEARNING_SCHEMA_VERSION = "opennego.policy_learning.v1"
@@ -552,7 +553,7 @@ def _summary(
 def _suggested_strategy_prompt(role: Role, lessons: Sequence[PolicyLesson]) -> str:
     lines = [
         f"Role strategy patch for {role.value}:",
-        "Keep OpenNego base protocol fixed. Edit only the strategy layer.",
+        f"Keep {PRODUCT_NAME} base protocol fixed. Edit only the strategy layer.",
     ]
     for index, lesson in enumerate(lessons, start=1):
         if lesson.suggested_strategy_patch:

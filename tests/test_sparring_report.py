@@ -17,7 +17,7 @@ def test_write_sparring_report_renders_profile_lessons(tmp_path):
     html = written.read_text()
 
     assert written == report_path
-    assert "OpenNego strategy sparring report" in html
+    assert "OpenNegotiation strategy sparring report" in html
     assert "profile_backed_fixture_sparring" in html
     assert "Hardline Anchor Seller" in html
     assert "buyer_overpaid_market" in html

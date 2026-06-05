@@ -37,7 +37,7 @@ class LLMResponse:
 
 
 class LLMPort(Protocol):
-    """Unified model gateway interface used by OpenNego agents."""
+    """Unified model gateway interface used by OpenNegotiation agents."""
 
     def complete(self, request: LLMRequest) -> LLMResponse:
         ...

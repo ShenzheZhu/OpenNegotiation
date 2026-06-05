@@ -123,7 +123,7 @@ class Product:
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "Product":
-        """Load either OpenNego or A2A-NT-style product records."""
+        """Load either OpenNegotiation or A2A-NT-style product records."""
 
         name = data.get("name") or data.get("Product Name")
         if not name:

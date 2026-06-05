@@ -8,8 +8,8 @@ Reviewed sources:
 - Microsoft Foundry Labs overview:
   [Magentic Marketplace](https://labs.ai.azure.com/innovations/magentic-marketplace/)
 
-This note records what OpenNego should learn from Magentic Marketplace without
-copying its code or narrowing OpenNego into an MSR-specific benchmark adapter.
+This note records what OpenNegotiation should learn from Magentic Marketplace without
+copying its code or narrowing OpenNegotiation into an MSR-specific benchmark adapter.
 The goal is a broader agent-to-agent negotiation and transaction gym for
 realistic application markets.
 
@@ -32,11 +32,11 @@ specific prompt. The important pattern is that agents interact with a market
 runtime through typed actions, while the runtime controls search, messaging,
 transaction integrity, persistence, and evaluation.
 
-## What OpenNego Should Adopt
+## What OpenNegotiation Should Adopt
 
 ### Protocol First
 
-OpenNego should move from a buyer-seller prompt loop toward a typed market
+OpenNegotiation should move from a buyer-seller prompt loop toward a typed market
 protocol. A protocol should declare available capabilities and accept action
 objects such as:
 
@@ -49,13 +49,13 @@ objects such as:
 - Future actions: `Refund`, `Dispute`, `Review`, `VerifyIdentity`,
   `RequestShippingQuote`, and `InspectReputation`.
 
-The first OpenNego implementation can stay in-process and fixture-backed, but
+The first OpenNegotiation implementation can stay in-process and fixture-backed, but
 the action schema should be runtime-neutral so a future HTTP server does not
 require a benchmark rewrite.
 
 ### Runtime Layers
 
-OpenNego should keep these layers separate:
+OpenNegotiation should keep these layers separate:
 
 - `AgentPort`: agent decision logic, whether scripted, LLM-backed, or external.
 - `LLMPort`: provider-neutral model access through LiteLLM adapters.
@@ -72,7 +72,7 @@ databases, and model providers replaceable.
 
 ### Full Lifecycle Metrics
 
-OpenNego metrics should extend beyond final price:
+OpenNegotiation metrics should extend beyond final price:
 
 - Search quality: relevant counterparties returned, ranking effects, and
   missed optimal candidates.
@@ -91,8 +91,8 @@ OpenNego metrics should extend beyond final price:
 
 ### Data Model
 
-Magentic Marketplace's customer/business split maps well to OpenNego, but
-OpenNego should keep the schema domain-general:
+Magentic Marketplace's customer/business split maps well to OpenNegotiation, but
+OpenNegotiation should keep the schema domain-general:
 
 - `PrincipalProfile`: human or organization represented by the agent.
 - `AgentProfile`: role, capabilities, and private instructions for the agent.
@@ -109,7 +109,7 @@ should become one domain, not the whole framework.
 
 ### Infrastructure Path
 
-OpenNego does not need to start with a production server stack. The pragmatic
+OpenNegotiation does not need to start with a production server stack. The pragmatic
 path is:
 
 1. In-process runtime with typed actions and JSON/JSONL artifacts.
@@ -121,11 +121,11 @@ path is:
 This path gives MSR and other model teams a usable benchmark quickly, while
 keeping the design compatible with industrial deployment patterns.
 
-## What OpenNego Should Not Copy
+## What OpenNegotiation Should Not Copy
 
 - Do not import or adapt Magentic Marketplace source code directly.
 - Do not build around one restaurant/contractor schema.
-- Do not make OpenNego a compatibility wrapper for their CLI.
+- Do not make OpenNegotiation a compatibility wrapper for their CLI.
 - Do not prematurely require Docker, Postgres, or FastAPI for local benchmark
   runs.
 - Do not hide benchmark behavior inside prompts. Actions, tools, search results,
@@ -175,7 +175,7 @@ The simulator should start with structured offers, acceptances, and payments,
 then grow toward escrow, shipping, taxes, returns, warranties, reputation, and
 disputes. It should validate proposal consistency before computing utility.
 
-## Suggested OpenNego Architecture
+## Suggested OpenNegotiation Architecture
 
 ```mermaid
 flowchart LR

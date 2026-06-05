@@ -1,17 +1,17 @@
-# OpenNego
+# OpenNegotiation
 
-OpenNego is an evaluation gym for agent-level agent-to-agent negotiation and
+OpenNegotiation is an evaluation gym for agent-level agent-to-agent negotiation and
 transaction research.
 
 This repository is a follow-up to
 [A2A-NT](https://github.com/ShenzheZhu/A2A-NT). A2A-NT studies automated
 negotiation where the buyer and seller mostly rely on model-internal knowledge
-and prompted constraints. OpenNego shifts the setting toward current agentic
+and prompted constraints. OpenNegotiation shifts the setting toward current agentic
 systems: agents can call tools, gather market evidence, reduce information
 asymmetry, and then negotiate or transact.
 
 The intended scope is broader than a single consumer-negotiation benchmark:
-OpenNego treats negotiation as one phase in a market lifecycle that can include
+OpenNegotiation treats negotiation as one phase in a market lifecycle that can include
 search, private tools, messaging, structured offers, payment, fulfillment, and
 post-transaction validation.
 
@@ -20,7 +20,7 @@ post-transaction validation.
 Real buyer and seller agents should not negotiate only from static prompts. A
 capable agent can search recent comparable sales, inspect product listings,
 check reputation, estimate shipping and payment risk, and use those signals
-before making an offer. OpenNego is intended to make that behavior measurable.
+before making an offer. OpenNegotiation is intended to make that behavior measurable.
 
 The first scaffold focuses on:
 
@@ -33,7 +33,7 @@ The first scaffold focuses on:
 
 ## Quickstart
 
-OpenNego currently requires Python 3.10 or newer.
+OpenNegotiation currently requires Python 3.10 or newer.
 
 ```bash
 git clone https://github.com/Kordi-AI/OpenNego.git
@@ -55,7 +55,7 @@ opennego run --config configs/real_market_demo.yaml --output-dir /tmp/opennego-r
 opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennego-real-market-demo.html
 ```
 
-The generated HTML report introduces OpenNego, shows the agentic negotiation
+The generated HTML report introduces OpenNegotiation, shows the agentic negotiation
 mechanism, previews a scorecard-style leaderboard, and replays the trace for the
 highest-scoring fixture run.
 
@@ -111,7 +111,7 @@ This runs the real-market fixture benchmark, writes a machine-readable
 `leaderboard_summary.json` plus `mvp_demo_manifest.json`, generates a
 trace-grounded battle report for a buyer agent against a curated seller NPC, and
 renders a static HTML report. The battle report produces strategy-layer lessons
-and prompt optimization suggestions while keeping OpenNego's base sandbox
+and prompt optimization suggestions while keeping OpenNegotiation's base sandbox
 protocol fixed. The validation command returns
 `opennego.mvp_demo_bundle_validation.v1` JSON and fails nonzero when required
 artifacts are missing or their schema versions drift.
@@ -289,9 +289,9 @@ docs/            research agenda and design notes
 
 ## Research Direction
 
-OpenNego should support a ladder of increasingly realistic agentic settings:
+OpenNegotiation should support a ladder of increasingly realistic agentic settings:
 
-1. No-tool baseline with a clean OpenNego prompt/action contract.
+1. No-tool baseline with a clean OpenNegotiation prompt/action contract.
 2. Retrieval-only agents that can inspect market comparables.
 3. Web/search agents that can gather live evidence with provenance.
 4. Transaction agents that can invoke checkout, escrow, logistics, or payment
@@ -306,7 +306,7 @@ benchmark structure and [docs/agent_integration.md](docs/agent_integration.md)
 for external agent integration. See
 [docs/magentic_marketplace_architecture_notes.md](docs/magentic_marketplace_architecture_notes.md)
 for architecture lessons from recent agentic marketplace work and how those
-lessons translate into OpenNego-specific design choices. See
+lessons translate into OpenNegotiation-specific design choices. See
 [docs/experiment_runner.md](docs/experiment_runner.md) for config-driven
 benchmark execution and [docs/llm_baselines.md](docs/llm_baselines.md) for the
 structured action contract used by LLM-backed agents. See
@@ -314,7 +314,8 @@ structured action contract used by LLM-backed agents. See
 fixture-backed settlement model and [docs/troubleshooting.md](docs/troubleshooting.md)
 for common setup and parser issues. See
 [docs/release_checklist.md](docs/release_checklist.md) for the no-key handoff
-gate. See
+gate and [docs/naming.md](docs/naming.md) for the OpenNegotiation vs `opennego`
+technical-handle policy. See
 [docs/real_market_benchmark_design.md](docs/real_market_benchmark_design.md) for
 the market-grounded dataset and leaderboard design. See
 [docs/policy_learning.md](docs/policy_learning.md) for the prompt-optimization

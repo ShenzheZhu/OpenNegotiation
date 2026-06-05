@@ -1,4 +1,4 @@
-"""Provider-neutral ports used by OpenNego core code."""
+"""Provider-neutral ports used by OpenNegotiation core code."""
 
 from .agent import AgentPort
 from .llm import LLMPort, LLMRequest, LLMResponse, LLMUsage
