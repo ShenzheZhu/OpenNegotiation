@@ -188,10 +188,17 @@ leaderboard frontend.
 For a small live-model run:
 
 ```bash
-opennego run-models --output-dir /tmp/opennego-five-model-demo
+opennego run-models --output-dir /tmp/opennego-five-model-demo --max-turns 4 --max-tokens 256
 opennego report --input-dir /tmp/opennego-five-model-demo --output /tmp/opennego-five-model-demo.html
 ```
 
 `run-models` runs a fixed real-market scenario across a short default set of
 five LiteLLM/OpenRouter model IDs. It keeps the seller scripted so the demo
 isolates buyer-side model behavior and avoids pairwise arena cost.
+
+The model demo writes a top-level `summary.json` next to the per-model run
+directories. Completed runs use the standard benchmark artifacts. Failed runs
+write a redacted `failure.json` with model id, error type, safe error text, and
+usage counters collected before failure. The static HTML report only includes
+completed benchmark runs because it requires `manifest.json`, `scenario.json`,
+`trace.jsonl`, and `metrics.json`.

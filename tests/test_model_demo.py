@@ -1,3 +1,5 @@
+import json
+
 from opennego.model_demo import run_model_demo
 from opennego.ports import LLMRequest, LLMResponse
 from opennego.report import write_demo_report
@@ -22,6 +24,11 @@ class FakeModelDemoLLM:
         )
 
 
+class FailingModelDemoLLM:
+    def complete(self, request: LLMRequest) -> LLMResponse:
+        raise RuntimeError("provider rejected key " + "s" "k-or-v1-do-not-store")
+
+
 def test_model_demo_writes_artifacts_and_report_with_fake_llm(tmp_path):
     output_dir = tmp_path / "model-runs"
     summary = run_model_demo(
@@ -38,6 +45,30 @@ def test_model_demo_writes_artifacts_and_report_with_fake_llm(tmp_path):
     assert "fake/model-a" in html
     assert "fake/model-b" in html
     assert "Leaderboard Preview" in html
+
+
+def test_model_demo_writes_redacted_failure_artifacts(tmp_path):
+    output_dir = tmp_path / "model-runs"
+    summary = run_model_demo(
+        models=("fake/failing-model",),
+        output_dir=output_dir,
+        llm_factory=FailingModelDemoLLM,
+    )
+
+    failure_path = output_dir / "five_model_demo-fake-failing-model" / "failure.json"
+    summary_path = output_dir / "summary.json"
+    failure = json.loads(failure_path.read_text())
+    summary_payload = json.loads(summary_path.read_text())
+
+    assert summary.total_runs == 1
+    assert summary.completed == 0
+    assert summary.failed == 1
+    assert failure["status"] == "failed"
+    assert failure["error_type"] == "RuntimeError"
+    assert "[redacted-secret]" in failure["error"]
+    assert "s" "k-or-v1" not in failure_path.read_text()
+    assert summary_payload["schema_version"] == "opennego.model_demo.v1"
+    assert summary_payload["runs"][0]["failure_path"] == str(failure_path)
 
 
 def test_run_models_preflight_reports_missing_litellm(monkeypatch):

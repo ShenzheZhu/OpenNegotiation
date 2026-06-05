@@ -92,3 +92,9 @@ latency control, prefer a low turn/token budget during live demos:
 ```bash
 opennego run-models --output-dir /tmp/opennego-five-model-demo --max-turns 4 --max-tokens 256
 ```
+
+The command writes `/tmp/opennego-five-model-demo/summary.json` for the full
+attempt. Completed model directories contain the normal benchmark artifacts.
+Failed model directories contain `failure.json` with redacted error text and
+usage counters, so provider failures remain auditable without storing raw
+provider payloads or credentials.

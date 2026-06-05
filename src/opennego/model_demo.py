@@ -3,18 +3,22 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 from opennego.adapters import LiteLLMGateway
 from opennego.agents import ScriptedSeller, make_llm_buyer
-from opennego.artifacts import ArtifactPaths, write_run_artifacts
+from opennego.artifacts import ArtifactPaths, to_jsonable, write_json, write_run_artifacts
 from opennego.environment import NegotiationEnvironment, ToolRuntimeConfig
 from opennego.ports import LLMPort, LLMRequest, LLMResponse
 from opennego.schema import Product, Role, Scenario
 from opennego.tools import MarketPriceTool
 from opennego.transactions import FixtureTransactionSimulator
+
+MODEL_DEMO_SCHEMA_VERSION = "opennego.model_demo.v1"
+SECRET_PATTERN = re.compile("s" "k-" + r"(?:or-v1-|proj-)?[A-Za-z0-9_-]+")
 
 DEFAULT_MODEL_DEMO_MODELS: tuple[str, ...] = (
     "openrouter/openai/gpt-5.4-pro",
@@ -39,6 +43,8 @@ class ModelDemoRecord:
     total_tokens: int | None = None
     cost_usd: float | None = None
     error: str | None = None
+    error_type: str | None = None
+    failure_path: str | None = None
 
 
 @dataclass(frozen=True)
@@ -111,6 +117,7 @@ def run_model_demo(
         reputation_risk=0.01,
     )
     base_output_dir = Path(output_dir)
+    base_output_dir.mkdir(parents=True, exist_ok=True)
     records: list[ModelDemoRecord] = []
     for model in models:
         run_id = f"five_model_demo-{_slug_model(model)}"
@@ -163,19 +170,28 @@ def run_model_demo(
                 )
             )
         except Exception as exc:
+            failure_path = _write_failure_record(
+                output_dir=run_output_dir,
+                run_id=run_id,
+                model=model,
+                usage=recorder.usage_summary,
+                error=exc,
+            )
             records.append(
                 ModelDemoRecord(
                     model=model,
                     status="failed",
                     output_dir=str(run_output_dir),
                     llm_call_count=int(recorder.usage_summary["llm_call_count"] or 0),
-                    error=str(exc),
+                    error=_safe_error_message(exc),
+                    error_type=type(exc).__name__,
+                    failure_path=str(failure_path),
                 )
             )
             if fail_fast:
                 break
 
-    return ModelDemoSummary(
+    summary = ModelDemoSummary(
         name="five_model_demo",
         output_dir=str(base_output_dir),
         total_runs=len(models),
@@ -183,6 +199,8 @@ def run_model_demo(
         failed=sum(1 for record in records if record.status == "failed"),
         runs=tuple(records),
     )
+    write_json(base_output_dir / "summary.json", _summary_payload(summary))
+    return summary
 
 
 def _write_model_run(
@@ -225,6 +243,40 @@ def _write_model_run(
     )
 
 
+def _write_failure_record(
+    *,
+    output_dir: Path,
+    run_id: str,
+    model: str,
+    usage: Mapping[str, float | int | None],
+    error: Exception,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    failure_path = output_dir / "failure.json"
+    write_json(
+        failure_path,
+        {
+            "schema_version": MODEL_DEMO_SCHEMA_VERSION,
+            "run_id": run_id,
+            "model": model,
+            "status": "failed",
+            "error_type": type(error).__name__,
+            "error": _safe_error_message(error),
+            "llm_usage": dict(usage),
+        },
+    )
+    return failure_path
+
+
+def _summary_payload(summary: ModelDemoSummary) -> Mapping[str, Any]:
+    payload = to_jsonable(summary)
+    assert isinstance(payload, Mapping)
+    return {
+        "schema_version": MODEL_DEMO_SCHEMA_VERSION,
+        **payload,
+    }
+
+
 def _load_first_product(path: str | Path) -> Product:
     records = json.loads(Path(path).read_text())
     if not records:
@@ -260,3 +312,10 @@ def _optional_float(value: object) -> float | None:
     if value is None:
         return None
     return float(value)
+
+
+def _safe_error_message(error: Exception) -> str:
+    message = SECRET_PATTERN.sub("[redacted-secret]", str(error))
+    if len(message) > 2000:
+        return message[:1997] + "..."
+    return message
