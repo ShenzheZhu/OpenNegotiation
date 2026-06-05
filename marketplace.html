@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenNego | Strategy Marketplace</title>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #5f6b7a;
+      --line: #dde5ee;
+      --panel: #ffffff;
+      --soft: #f7fafc;
+      --accent: #087f8c;
+      --accent-dark: #075f68;
+      --blue: #2563eb;
+      --amber: #b45309;
+      --red: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #f8fafc;
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, .92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .nav {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand { font-weight: 800; letter-spacing: 0; }
+    .navlinks { display: flex; gap: 22px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
+    .navlinks a.active { color: var(--accent-dark); font-weight: 750; }
+    .shell { max-width: 1180px; margin: 0 auto; padding: 34px 22px 54px; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(300px, .85fr);
+      gap: 28px;
+      align-items: end;
+      padding: 46px 0 32px;
+    }
+    h1 { margin: 0 0 14px; max-width: 780px; font-size: 54px; line-height: 1.04; letter-spacing: 0; }
+    h2 { margin: 0 0 14px; font-size: 26px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p { margin: 0; }
+    .subtitle { max-width: 760px; color: var(--muted); font-size: 18px; }
+    .market-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .strip-item {
+      padding-top: 12px;
+      border-top: 3px solid var(--accent);
+    }
+    .strip-label { color: var(--muted); font-size: 12px; text-transform: uppercase; font-weight: 750; }
+    .strip-value { margin-top: 2px; font-size: 26px; font-weight: 850; }
+    .section {
+      margin-top: 24px;
+      padding: 26px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, .035);
+    }
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+    .section-copy { max-width: 720px; color: var(--muted); }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      margin-bottom: 16px;
+    }
+    .search {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: #fff;
+    }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .tab {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #fff;
+      cursor: pointer;
+    }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .catalog-meta { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 14px; color: var(--muted); font-size: 13px; }
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .strategy-card {
+      display: flex;
+      min-height: 330px;
+      flex-direction: column;
+      gap: 12px;
+      padding: 17px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .strategy-card[hidden] { display: none; }
+    .card-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .avatar {
+      display: inline-grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--accent);
+      font-weight: 850;
+    }
+    .avatar.buyer { background: var(--blue); }
+    .avatar.seller-hard { background: var(--amber); }
+    .avatar.risk { background: var(--red); }
+    .pill {
+      display: inline-block;
+      padding: 3px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .pill.strong { color: var(--accent-dark); font-weight: 750; }
+    .card-title { display: flex; flex-direction: column; gap: 2px; }
+    .card-id { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+    .muted { color: var(--muted); }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .test-list { display: grid; gap: 8px; color: var(--muted); }
+    .test-list p { padding-left: 10px; border-left: 3px solid #e7eef4; }
+    .card-action {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      color: var(--accent-dark);
+      font-weight: 750;
+    }
+    .contract-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .contract-panel {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+    }
+    .contract-panel code {
+      display: block;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #10212b;
+      color: #e7f6f2;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .empty {
+      display: none;
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .empty.visible { display: block; }
+    footer { margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }
+    @media (max-width: 920px) {
+      .hero, .toolbar, .contract-grid { grid-template-columns: 1fr; }
+      .tabs { justify-content: flex-start; }
+      .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px) {
+      .nav { align-items: flex-start; flex-direction: column; }
+      .navlinks { width: 100%; gap: 10px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; font-size: 13px; }
+      h1 { font-size: 36px; }
+      .market-strip, .catalog-grid { grid-template-columns: 1fr; }
+      .section-head { align-items: flex-start; flex-direction: column; }
+      .catalog-meta { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="./">OpenNego</a>
+      <div class="navlinks">
+        <a href="index.html#overview">Overview</a>
+        <a href="index.html#leaderboard">Leaderboard</a>
+        <a href="index.html#training">Training</a>
+        <a class="active" href="marketplace.html">Marketplace</a>
+        <a href="reports/real_market_benchmark.html">Report</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <h1>Strategy Marketplace</h1>
+        <p class="subtitle">A catalog of reusable NPC strategies for agent-to-agent negotiation sparring, failure diagnosis, and strategy-layer prompt optimization.</p>
+      </div>
+      <div class="market-strip" aria-label="Marketplace summary">
+        <div class="strip-item"><div class="strip-label">Profiles</div><div class="strip-value">8</div></div>
+        <div class="strip-item"><div class="strip-label">Stress Packs</div><div class="strip-value">4</div></div>
+        <div class="strip-item"><div class="strip-label">Base Protocol</div><div class="strip-value">Fixed</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Catalog</h2>
+          <p class="section-copy">Each profile is an opponent archetype with a fixed sandbox contract and an editable strategy layer. Users can spar against profiles, inspect battle reports, and patch their agent policies.</p>
+        </div>
+        <span class="pill strong">no-key demo catalog</span>
+      </div>
+
+      <div class="toolbar">
+        <input id="strategy-search" class="search" type="search" placeholder="Search profiles, traps, tags, or roles" aria-label="Search marketplace profiles">
+        <div class="tabs" aria-label="Marketplace filters">
+          <button class="tab active" type="button" data-filter="all">All</button>
+          <button class="tab" type="button" data-filter="seller">Seller NPCs</button>
+          <button class="tab" type="button" data-filter="buyer">Buyer NPCs</button>
+          <button class="tab" type="button" data-filter="hard">Hard</button>
+          <button class="tab" type="button" data-filter="tool">Tool-aware</button>
+          <button class="tab" type="button" data-filter="transaction">Transaction</button>
+        </div>
+      </div>
+
+      <div class="catalog-meta">
+        <span><strong id="result-count">8</strong> strategies visible</span>
+        <span>Sort: recommended for benchmark coverage</span>
+      </div>
+
+      <div id="empty-state" class="empty">No strategy profiles match this filter.</div>
+
+      <div id="catalog-grid" class="catalog-grid">
+        <article class="strategy-card" data-role="seller" data-difficulty="medium" data-pack="baseline" data-search="seller anchor hardline concession baseline price discipline listing close-mode">
+          <div class="card-top"><span class="avatar seller-hard">HA</span><span class="pill">seller / medium</span></div>
+          <div class="card-title"><h3>Hardline Anchor Seller</h3><span class="card-id">seller_hardline_anchor_v1</span></div>
+          <p class="muted">Anchors near listing price, concedes slowly, and tests whether buyers stay disciplined against high opening offers.</p>
+          <div class="test-list">
+            <p>High opening anchor can pull weak buyers above market reference.</p>
+            <p>Slow concessions can force timeout without close-mode policy.</p>
+          </div>
+          <div class="tags"><span class="pill">anchor</span><span class="pill">baseline</span><span class="pill">price floor</span></div>
+          <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>medium</span></a>
+        </article>
+
+        <article class="strategy-card" data-role="seller" data-difficulty="hard" data-pack="tool" data-search="seller stale comps market evidence provenance selective sales tool aware hard">
+          <div class="card-top"><span class="avatar seller-hard">SC</span><span class="pill">seller / hard</span></div>
+          <div class="card-title"><h3>Stale Comps Seller</h3><span class="card-id">seller_stale_comps_v1</span></div>
+          <p class="muted">Uses stale or selective market evidence to defend price and tests whether buyers verify provenance before accepting.</p>
+          <div class="test-list">
+            <p>Stale evidence can mislead agents that do not inspect timestamps.</p>
+            <p>Selective comps can make the market gap look smaller than it is.</p>
+          </div>
+          <div class="tags"><span class="pill">market evidence</span><span class="pill">provenance</span><span class="pill">tool-aware</span></div>
+          <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>hard</span></a>
+        </article>
+
+        <article class="strategy-card" data-role="seller" data-difficulty="hard" data-pack="transaction" data-search="seller hidden fees transaction settlement shipping escrow payment risk hard">
+          <div class="card-top"><span class="avatar risk">HF</span><span class="pill">seller / hard</span></div>
+          <div class="card-title"><h3>Hidden Fees Seller</h3><span class="card-id">seller_hidden_fees_v1</span></div>
+          <p class="muted">Keeps negotiated price attractive while shifting attention away from shipping, escrow, payment, and platform costs.</p>
+          <div class="test-list">
+            <p>Low item price can hide high all-in transaction cost.</p>
+            <p>Late concessions can trigger acceptance before settlement risk is computed.</p>
+          </div>
+          <div class="tags"><span class="pill">transaction</span><span class="pill">fees</span><span class="pill">risk</span></div>
+          <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>hard</span></a>
+        </article>
+
+        <article class="strategy-card" data-role="seller" data-difficulty="hard" data-pack="baseline" data-search="seller deadline walk away pressure scarcity timeout hard">
+          <div class="card-top"><span class="avatar seller-hard">WD</span><span class="pill">seller / hard</span></div>
+          <div class="card-title"><h3>Walk-away Deadline Seller</h3><span class="card-id">seller_walkaway_deadline_v1</span></div>
+          <p class="muted">Creates urgency with credible walk-away language and tests whether agents can close without overpaying.</p>
+          <div class="test-list">
+            <p>Deadline pressure can override price discipline.</p>
+            <p>Weak agents may accept without extracting final concession evidence.</p>
+          </div>
+          <div class="tags"><span class="pill">deadline</span><span class="pill">timeout</span><span class="pill">close policy</span></div>
+          <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>hard</span></a>
+        </article>
+
+        <article class="strategy-card" data-role="seller" data-difficulty="medium" data-pack="transaction" data-search="seller bundle decoy accessory warranty shipping transaction medium">
+          <div class="card-top"><span class="avatar risk">BD</span><span class="pill">seller / medium</span></div>
+          <div class="card-title"><h3>Bundle Decoy Seller</h3><span class="card-id">seller_bundle_decoy_v1</span></div>
+          <p class="muted">Adds accessories, warranty claims, or bundle value to blur the reference price and test value normalization.</p>
+          <div class="test-list">
+            <p>Bundle framing can hide whether the core item price is fair.</p>
+            <p>Agents must separate comparable item value from optional add-ons.</p>
+          </div>
+          <div class="tags"><span class="pill">bundle</span><span class="pill">valuation</span><span class="pill">transaction</span></div>
+          <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>medium</span></a>
+        </article>
+
+        <article class="strategy-card" data-role="buyer" data-difficulty="medium" data-pack="baseline" data-search="buyer budget probe reservation low anchor justification medium">
+          <div class="card-top"><span class="avatar buyer">BP</span><span class="pill">buyer / medium</span></div>
+          <div class="card-title"><h3>Budget Probe Buyer</h3><span class="card-id">buyer_budget_probe_v1</span></div>
+          <p class="muted">Uses low anchors and repeated justification requests to discover weak seller reservation logic.</p>
+          <div class="test-list">
+            <p>Low anchors can push sellers below market without price floors.</p>
+            <p>Repeated justification requests can expose reservation logic.</p>
+          </div>
+          <div class="tags"><span class="pill">probe</span><span class="pill">reservation</span><span class="pill">anchor</span></div>
+          <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>medium</span></a>
+        </article>
+
+        <article class="strategy-card" data-role="buyer" data-difficulty="easy" data-pack="tool" data-search="buyer tool overuse search timeout evidence offer policy easy tool aware">
+          <div class="card-top"><span class="avatar buyer">TO</span><span class="pill">buyer / easy</span></div>
+          <div class="card-title"><h3>Tool Overuse Buyer</h3><span class="card-id">buyer_tool_overuse_v1</span></div>
+          <p class="muted">Calls tools repeatedly but struggles to convert evidence into concrete offers, useful for testing tool-use discipline.</p>
+          <div class="test-list">
+            <p>Excessive search can burn negotiation turns.</p>
+            <p>Evidence collection without offer policy causes timeout.</p>
+          </div>
+          <div class="tags"><span class="pill">tool-use</span><span class="pill">timeout</span><span class="pill">training</span></div>
+          <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>easy</span></a>
+        </article>
+
+        <article class="strategy-card" data-role="buyer" data-difficulty="hard" data-pack="tool" data-search="buyer inspection fatigue tool evidence provenance hard repeated questions">
+          <div class="card-top"><span class="avatar buyer">IF</span><span class="pill">buyer / hard</span></div>
+          <div class="card-title"><h3>Inspection Fatigue Buyer</h3><span class="card-id">buyer_inspection_fatigue_v1</span></div>
+          <p class="muted">Uses repeated evidence requests and condition questions to test seller patience and consistency under tool-aware scrutiny.</p>
+          <div class="test-list">
+            <p>Repeated inspection can cause sellers to reveal inconsistent claims.</p>
+            <p>Long evidence loops test whether seller agents maintain coherent policy.</p>
+          </div>
+          <div class="tags"><span class="pill">inspection</span><span class="pill">tool-aware</span><span class="pill">consistency</span></div>
+          <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>hard</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section id="strategy-contract" class="section">
+      <div class="section-head">
+        <div>
+          <h2>Strategy Contract</h2>
+          <p class="section-copy">Marketplace profiles are prompt-level strategies around a fixed sandbox base. This keeps comparisons stable while allowing users to optimize their agent policy.</p>
+        </div>
+      </div>
+      <div class="contract-grid">
+        <div class="contract-panel">
+          <h3>Fixed Base</h3>
+          <p class="muted">Environment rules, action schema, private tool trace handling, settlement checks, and metric definitions remain fixed by OpenNego.</p>
+          <code>base:
+  protocol: opennego.negotiation.v1
+  actions: [message, offer, accept, reject, tool_call]
+  traces: versioned and auditable
+  user_editable: false</code>
+        </div>
+        <div class="contract-panel">
+          <h3>Editable Strategy</h3>
+          <p class="muted">Role behavior, concession policy, evidence policy, and close-mode tactics are editable strategy-layer instructions.</p>
+          <code>strategy:
+  role: seller_or_buyer
+  objective: stress a concrete failure mode
+  traps: market, tool, transaction, timing
+  user_editable: true</code>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Generated from OpenNego benchmark and policy-learning artifacts. This is a no-key demo catalog, not a live marketplace collection.
+    </footer>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("strategy-search");
+    const tabs = Array.from(document.querySelectorAll(".tab"));
+    const cards = Array.from(document.querySelectorAll(".strategy-card"));
+    const resultCount = document.getElementById("result-count");
+    const emptyState = document.getElementById("empty-state");
+    let activeFilter = "all";
+
+    function cardMatchesFilter(card) {
+      if (activeFilter === "all") return true;
+      if (activeFilter === "seller" || activeFilter === "buyer") return card.dataset.role === activeFilter;
+      if (activeFilter === "hard") return card.dataset.difficulty === "hard";
+      return card.dataset.pack === activeFilter;
+    }
+
+    function applyFilters() {
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+      for (const card of cards) {
+        const text = `${card.dataset.search} ${card.textContent}`.toLowerCase();
+        const visible = cardMatchesFilter(card) && (!query || text.includes(query));
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      }
+      resultCount.textContent = String(visibleCount);
+      emptyState.classList.toggle("visible", visibleCount === 0);
+    }
+
+    for (const tab of tabs) {
+      tab.addEventListener("click", () => {
+        activeFilter = tab.dataset.filter;
+        for (const item of tabs) item.classList.toggle("active", item === tab);
+        applyFilters();
+      });
+    }
+    searchInput.addEventListener("input", applyFilters);
+  </script>
+</body>
+</html>

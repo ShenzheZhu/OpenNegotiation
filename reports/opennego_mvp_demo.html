@@ -71,7 +71,6 @@
     .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .card { padding: 16px; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; }
     .lesson-card { padding: 16px; background: #fffaf0; border: 1px solid #f3d7a4; border-radius: 8px; }
-    .profile-card { padding: 16px; background: #f8fbff; border: 1px solid var(--line); border-radius: 8px; }
     .prompt-patch { margin-top: 12px; padding: 12px; background: #10212b; color: #e7f6f2; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
     .severity-high { color: #b91c1c; font-weight: 750; }
     .severity-medium { color: #b45309; font-weight: 750; }
@@ -119,7 +118,7 @@
         <a href="#overview">Overview</a>
         <a href="#leaderboard">Leaderboard</a>
         <a href="#training">Training</a>
-        <a href="#marketplace">Marketplace</a>
+        <a href="../marketplace.html">Marketplace</a>
         <a href="real_market_benchmark.html">Report</a>
       </div>
     </nav>
@@ -239,16 +238,14 @@ Keep OpenNego base protocol fixed. Edit only the strategy layer.
       <div class="section-head">
         <div>
           <h2>Strategy Marketplace</h2>
-          <p class="section-copy">Preset NPC profiles provide repeatable sparring partners. Each profile separates fixed sandbox base logic from editable strategy behavior.</p>
+          <p class="section-copy">A dedicated catalog for NPC profiles, stress-test packs, and strategy-layer training opponents.</p>
         </div>
-        <span class="pill">5 NPC profiles</span>
+        <a class="pill" href="../marketplace.html">Open marketplace catalog</a>
       </div>
       <div class="grid-3">
-        <div class="profile-card"><h3>Hardline Anchor Seller</h3><p><span class="pill">seller</span> <span class="pill">medium</span></p><p class="muted">Anchors near listing price, concedes slowly, and tests whether buyers can stay disciplined against high opening offers.</p><p class="muted">Tests: High opening anchor can pull weak buyers above market reference.; Slow concessions can force timeout if the buyer lacks close-mode policy.</p><p class="muted">Tags: seller, anchor, concession, baseline</p></div>
-<div class="profile-card"><h3>Stale Comps Seller</h3><p><span class="pill">seller</span> <span class="pill">hard</span></p><p class="muted">Uses stale or selective market evidence to defend price and tests whether buyers verify provenance before accepting.</p><p class="muted">Tests: Stale market evidence can mislead agents that do not inspect provenance.; Selective comparable sales can make market gap look smaller than it is.</p><p class="muted">Tags: seller, market-evidence, stale, tool-aware</p></div>
-<div class="profile-card"><h3>Hidden Fees Seller</h3><p><span class="pill">seller</span> <span class="pill">hard</span></p><p class="muted">Keeps negotiated price attractive while shifting attention away from shipping, escrow, payment, and platform costs.</p><p class="muted">Tests: Low item price can hide high all-in transaction cost.; Late concessions can cause buyers to accept before computing settlement risk.</p><p class="muted">Tags: seller, transaction, fees, risk</p></div>
-<div class="profile-card"><h3>Budget Probe Buyer</h3><p><span class="pill">buyer</span> <span class="pill">medium</span></p><p class="muted">Uses low anchors and repeated justification requests to discover weak seller reservation logic.</p><p class="muted">Tests: Low anchors can push sellers below market if they lack price floors.; Repeated justification requests can expose reservation logic.</p><p class="muted">Tags: buyer, probe, reservation, baseline</p></div>
-<div class="profile-card"><h3>Tool Overuse Buyer</h3><p><span class="pill">buyer</span> <span class="pill">easy</span></p><p class="muted">Calls tools repeatedly but struggles to convert evidence into concrete offers, useful for testing tool-use discipline.</p><p class="muted">Tests: Excessive search can burn negotiation turns.; Evidence collection without offer policy causes timeout.</p><p class="muted">Tags: buyer, tool-use, timeout, training</p></div>
+        <div class="card"><h3>Seller NPCs</h3><p class="muted">Anchors, stale comps, hidden fees, walk-away pressure, and bundle decoys.</p></div>
+        <div class="card"><h3>Buyer NPCs</h3><p class="muted">Budget probes, tool overuse, evidence fatigue, and low-anchor stress tests.</p></div>
+        <div class="card"><h3>Training Packs</h3><p class="muted">Reusable opponent sets for price discipline, tool discipline, and settlement-risk learning.</p></div>
       </div>
     </section>
 
