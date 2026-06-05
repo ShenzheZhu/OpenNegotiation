@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -36,12 +37,19 @@ def test_run_sparring_suite_writes_profile_reports(tmp_path):
         battle_report_path = (
             output_dir / "profiles" / result.profile_id / "battle_report.json"
         )
+        learning_dir = result.learning_input_dir
+        assert learning_dir is not None
+        manifest = json.loads((Path(learning_dir) / "manifest.json").read_text())
+        trace = (Path(learning_dir) / "trace.jsonl").read_text()
+
         assert result.status == "completed"
         assert result.benchmark_completed == 3
         assert result.benchmark_failed == 0
         assert result.battle_report == str(battle_report_path)
         assert battle_report_path.exists()
         assert "buyer_overpaid_market" in result.lesson_ids
+        assert manifest["agents"]["seller"]["profile_id"] == result.profile_id
+        assert f"npc_seller:{result.profile_id}" in trace
 
 
 def test_sparring_suite_rejects_wrong_role_profile(tmp_path):
@@ -51,6 +59,30 @@ def test_sparring_suite_rejects_wrong_role_profile(tmp_path):
             user_role="buyer",
             opponent_profile_ids=("buyer_budget_probe_v1",),
         )
+
+
+def test_sparring_suite_supports_seller_user_against_buyer_profile(tmp_path):
+    output_dir = tmp_path / "seller_sparring"
+
+    summary = run_sparring_suite(
+        output_dir=output_dir,
+        user_role="seller",
+        opponent_profile_ids=("buyer_budget_probe_v1",),
+    )
+    result = summary.results[0]
+    assert result.learning_input_dir is not None
+    manifest = json.loads(
+        (Path(result.learning_input_dir) / "manifest.json").read_text()
+    )
+    trace = (Path(result.learning_input_dir) / "trace.jsonl").read_text()
+
+    assert summary.completed == 1
+    assert summary.failed == 0
+    assert summary.user_role.value == "seller"
+    assert result.profile_id == "buyer_budget_probe_v1"
+    assert manifest["agents"]["buyer"]["profile_id"] == "buyer_budget_probe_v1"
+    assert manifest["agents"]["seller"]["kind"] == "user_seller"
+    assert "npc_buyer:buyer_budget_probe_v1" in trace
 
 
 def test_spar_cli_prints_suite_artifact(tmp_path, capsys):

@@ -127,7 +127,7 @@ def render_sparring_report(summary: Mapping[str, Any]) -> str:
 
     <section class="section">
       <h2>Boundary</h2>
-      <p class="muted">This report is generated from local sparring artifacts. In the current fixture_profile_diagnosis mode, deterministic local agents create the benchmark traces while strategy profiles provide opponent archetypes and expected traps for prompt optimization.</p>
+      <p class="muted">This report is generated from local sparring artifacts. In profile-backed fixture sparring mode, selected NPC profiles are instantiated as deterministic counterparties, and their archetypes, expected traps, and trace evidence drive the battle report.</p>
     </section>
   </main>
 </body>
