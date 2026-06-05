@@ -176,6 +176,7 @@ opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp
 ```
 
 This runs the small real-market benchmark, writes
+`/tmp/opennego-mvp-demo/leaderboard_summary.json` plus
 `/tmp/opennego-mvp-demo/battle_report.json`, and renders an HTML page with the
 leaderboard preview, Training / Prompt Optimization section, and Strategy
 Marketplace section.
@@ -331,7 +332,7 @@ In scope:
 - strategy prompt patch suggestions
 - versioned strategy candidate and comparison artifacts
 - CLI commands for listing profiles, writing battle reports, and rendering the
-  one-command MVP demo
+  one-command MVP demo with visual and machine-readable artifacts
 - no-key sparring suite artifacts for selected marketplace profiles
 - no-key runtime application of versioned strategy candidates in sparring
 - local export and installation of strategy candidates as marketplace profiles

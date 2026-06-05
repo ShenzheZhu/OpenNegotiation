@@ -94,10 +94,11 @@ optimization, and the local strategy marketplace:
 opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp-demo.html
 ```
 
-This runs the real-market fixture benchmark, generates a trace-grounded battle
-report for a buyer agent against a curated seller NPC, and renders a static
-HTML report. The battle report produces strategy-layer lessons and prompt
-optimization suggestions while keeping OpenNego's base sandbox protocol fixed.
+This runs the real-market fixture benchmark, writes a machine-readable
+`leaderboard_summary.json`, generates a trace-grounded battle report for a buyer
+agent against a curated seller NPC, and renders a static HTML report. The battle
+report produces strategy-layer lessons and prompt optimization suggestions while
+keeping OpenNego's base sandbox protocol fixed.
 A curated no-key MVP page is available at
 `examples/reports/opennego_mvp_demo.html`.
 
@@ -262,10 +263,10 @@ architecture, and test readiness audit.
 
 ## Status
 
-This is an initial scaffold. The code is intentionally provider-neutral and uses
-scripted agents so the environment and metrics can be tested without API keys.
-LLM adapters, real search tools, richer product datasets, and transaction
-simulators should be added behind the same interfaces.
+This is a provider-neutral MVP scaffold with no-key benchmark, training,
+leaderboard, marketplace-export, and transaction-simulation paths. Scripted
+agents and fixtures keep the core environment testable without API keys, while
+LLM adapters and real-search style tools live behind explicit ports.
 
 LiteLLM is the preferred LLM gateway for real model sweeps. Keep the eval core
 provider-neutral: model providers belong in adapters, not in the environment or
