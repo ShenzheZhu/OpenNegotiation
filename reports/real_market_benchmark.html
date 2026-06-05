@@ -143,7 +143,6 @@
         <a href="#mechanism">Mechanism</a>
         <a href="#leaderboard">Leaderboard</a>
         <a href="#trace">Trace</a>
-        <a href="#findings">Findings</a>
         <a href="../">Dashboard</a>
         <a href="strategy_sparring.html">Sparring</a>
       </div>
@@ -158,12 +157,6 @@
         <a class="button primary" href="#leaderboard">View leaderboard preview</a>
         <a class="button" href="#overview">Explore mechanism</a>
         <a class="button" href="https://github.com/Kordi-AI/OpenNego/blob/main/docs/real_market_benchmark_design.md">Design notes</a>
-      </div>
-      <div class="kpis">
-        <div class="kpi"><div class="label">Live LLM Models</div><div class="value">5</div></div>
-        <div class="kpi"><div class="label">Provider Gateway</div><div class="value">LiteLLM</div></div>
-        <div class="kpi"><div class="label">Market Reference</div><div class="value">$575.00</div></div>
-        <div class="kpi"><div class="label">Smoke Result</div><div class="value">5 / 5</div></div>
       </div>
     </section>
 
@@ -239,15 +232,6 @@
 <tr><td>5</td><td>Qwen3 235B A22B</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>7,220 / $0.009732</td></tr>
           </tbody>
         </table>
-      </div>
-    </section>
-
-    <section id="findings" class="section">
-      <h2>Key Findings From This Smoke</h2>
-      <div class="grid-3">
-        <div class="card"><h3>Tools change price formation</h3><p class="muted">The buyer-private market tool pulls offers toward the sold-comparable reference instead of the inflated asking price.</p></div>
-        <div class="card"><h3>Noisy evidence remains visible</h3><p class="muted">Tool regime metadata and trace provenance make clean, noisy, stale, adversarial, and failure cases auditable.</p></div>
-        <div class="card"><h3>Transactions are part of eval</h3><p class="muted">The accepted offer is not the final story: buyer total cost, seller net revenue, fees, and risk are separately scored.</p></div>
       </div>
     </section>
 
