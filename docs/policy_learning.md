@@ -68,6 +68,30 @@ opennego strategies --role seller
 This is a local curated marketplace in the MVP. A hosted marketplace or
 contributed strategy backend is intentionally out of scope for the first slice.
 
+Users can export their own improved strategy candidates into the same local
+marketplace format:
+
+```bash
+opennego marketplace-export \
+  --candidate /tmp/opennego-real-market-demo/strategy_candidate.json \
+  --output /tmp/opennego-real-market-demo/marketplace_profile.json \
+  --profile-id shared_buyer_guard_v1 \
+  --name "Shared Buyer Guard" \
+  --install-registry /tmp/opennego-local-marketplace.json
+```
+
+The exported profile uses schema version
+`opennego.strategy_marketplace_profile.v1`, but its top-level fields are also
+compatible with `StrategyProfile`. Installing the profile writes or updates a
+local `opennego.policy_learning.v1` registry, so existing commands can list it:
+
+```bash
+opennego strategies --registry /tmp/opennego-local-marketplace.json --role buyer
+```
+
+Duplicate profile ids are rejected by default. Pass `--overwrite` only when
+intentionally replacing a local shared strategy profile.
+
 ## Strategy Sparring Suite
 
 `opennego spar` turns marketplace profiles into a repeatable no-key training
@@ -282,6 +306,7 @@ In scope:
   one-command MVP demo
 - no-key sparring suite artifacts for selected marketplace profiles
 - no-key runtime application of versioned strategy candidates in sparring
+- local export and installation of strategy candidates as marketplace profiles
 
 Out of scope:
 

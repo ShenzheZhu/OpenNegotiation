@@ -22,6 +22,7 @@ from opennego.learning import (
     registry_listing,
     write_battle_report,
 )
+from opennego.marketplace import MarketplaceError, write_marketplace_profile
 from opennego.model_demo import DEFAULT_MODEL_DEMO_MODELS, run_model_demo
 from opennego.mvp_demo import run_mvp_demo
 from opennego.report import write_demo_report
@@ -55,6 +56,8 @@ def main(argv: list[str] | None = None) -> int:
         return _evolve_main(argv[1:])
     if argv and argv[0] == "compare":
         return _compare_main(argv[1:])
+    if argv and argv[0] == "marketplace-export":
+        return _marketplace_export_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
         return _mvp_demo_main(argv[1:])
     if argv and argv[0] == "spar":
@@ -319,6 +322,71 @@ def _compare_main(argv: list[str] | None = None) -> int:
         return 2
 
     print(json.dumps({"strategy_comparison": str(output_path)}, indent=2))
+    return 0
+
+
+def _marketplace_export_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Export a strategy candidate as a local marketplace profile."
+    )
+    parser.add_argument(
+        "--candidate",
+        required=True,
+        help="Path to an opennego.strategy_evolution.v1 strategy candidate.",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to write the marketplace profile JSON.",
+    )
+    parser.add_argument("--profile-id", help="Profile id for the exported strategy.")
+    parser.add_argument("--name", help="Human-readable marketplace profile name.")
+    parser.add_argument("--summary", help="Short marketplace profile summary.")
+    parser.add_argument(
+        "--difficulty",
+        default="custom",
+        help="Marketplace difficulty label for the exported profile.",
+    )
+    parser.add_argument(
+        "--tag",
+        action="append",
+        default=[],
+        help="Additional marketplace tag. Can be provided multiple times.",
+    )
+    parser.add_argument(
+        "--allowed-tool",
+        action="append",
+        help="Allowed tool name for the profile. Can be provided multiple times.",
+    )
+    parser.add_argument(
+        "--install-registry",
+        help="Optional local registry JSON file to append or update.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite an existing installed profile with the same id.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        result = write_marketplace_profile(
+            args.candidate,
+            args.output,
+            profile_id=args.profile_id,
+            name=args.name,
+            summary=args.summary,
+            difficulty=args.difficulty,
+            tags=tuple(args.tag),
+            allowed_tools=tuple(args.allowed_tool) if args.allowed_tool else None,
+            install_registry_path=args.install_registry,
+            overwrite=args.overwrite,
+        )
+    except (OSError, StrategyEvolutionError, MarketplaceError, ValueError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(result), indent=2))
     return 0
 
 

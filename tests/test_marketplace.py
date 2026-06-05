@@ -1,0 +1,132 @@
+import json
+
+import pytest
+
+from opennego.cli import main
+from opennego.evolution import write_strategy_candidate
+from opennego.learning import StrategyProfile, load_strategy_registry
+from opennego.learning import write_battle_report
+from opennego.marketplace import (
+    MARKETPLACE_PROFILE_SCHEMA_VERSION,
+    MarketplaceError,
+    install_marketplace_profile,
+    load_marketplace_profile,
+    write_marketplace_profile,
+)
+from opennego.runner import run_experiment_config
+
+
+def test_marketplace_export_turns_candidate_into_profile(tmp_path):
+    candidate_path = _write_candidate(tmp_path)
+    profile_path = tmp_path / "marketplace_profile.json"
+
+    result = write_marketplace_profile(
+        candidate_path,
+        profile_path,
+        profile_id="buyer_market_guard_v1",
+        name="Buyer Market Guard",
+        tags=("demo",),
+        allowed_tools=("market_price_search",),
+    )
+    payload = json.loads(profile_path.read_text())
+    profile = load_marketplace_profile(profile_path)
+    direct_profile = StrategyProfile.from_mapping(payload)
+
+    assert result.profile_id == "buyer_market_guard_v1"
+    assert result.profile_path == str(profile_path)
+    assert payload["schema_version"] == MARKETPLACE_PROFILE_SCHEMA_VERSION
+    assert payload["id"] == "buyer_market_guard_v1"
+    assert payload["role"] == "buyer"
+    assert payload["name"] == "Buyer Market Guard"
+    assert payload["allowed_tools"] == ["market_price_search"]
+    assert "buyer_overpaid_market" in payload["metadata"]["applied_lesson_ids"]
+    assert payload["metadata"]["candidate_id"] == "buyer_baseline-iter-1"
+    assert profile.id == direct_profile.id == "buyer_market_guard_v1"
+
+
+def test_marketplace_install_appends_and_rejects_duplicate_ids(tmp_path):
+    candidate_path = _write_candidate(tmp_path)
+    profile_path = tmp_path / "marketplace_profile.json"
+    registry_path = tmp_path / "registry.json"
+    write_marketplace_profile(
+        candidate_path,
+        profile_path,
+        profile_id="buyer_market_guard_v1",
+    )
+    profile = json.loads(profile_path.read_text())
+
+    installed = install_marketplace_profile(profile, registry_path)
+    registry = load_strategy_registry(installed)
+
+    assert installed == registry_path
+    assert registry.by_id("buyer_market_guard_v1").role.value == "buyer"
+    with pytest.raises(MarketplaceError, match="already exists"):
+        install_marketplace_profile(profile, registry_path)
+
+    profile["name"] = "Buyer Market Guard Updated"
+    install_marketplace_profile(profile, registry_path, overwrite=True)
+    updated = load_strategy_registry(registry_path)
+    assert (
+        updated.by_id("buyer_market_guard_v1").name
+        == "Buyer Market Guard Updated"
+    )
+
+
+def test_marketplace_export_cli_installs_profile_for_strategy_listing(tmp_path, capsys):
+    candidate_path = _write_candidate(tmp_path)
+    profile_path = tmp_path / "profile.json"
+    registry_path = tmp_path / "registry.json"
+
+    status = main(
+        [
+            "marketplace-export",
+            "--candidate",
+            str(candidate_path),
+            "--output",
+            str(profile_path),
+            "--profile-id",
+            "shared_buyer_guard",
+            "--name",
+            "Shared Buyer Guard",
+            "--tag",
+            "external",
+            "--install-registry",
+            str(registry_path),
+        ]
+    )
+    stdout = capsys.readouterr().out
+    payload = json.loads(stdout)
+    strategies_status = main(
+        ["strategies", "--registry", str(registry_path), "--role", "buyer"]
+    )
+    strategies_stdout = capsys.readouterr().out
+
+    assert status == 0
+    assert payload["profile_id"] == "shared_buyer_guard"
+    assert payload["installed_registry"] == str(registry_path)
+    assert profile_path.exists()
+    assert strategies_status == 0
+    assert "shared_buyer_guard" in strategies_stdout
+
+
+def _write_candidate(tmp_path):
+    runs_dir = tmp_path / "runs"
+    run_experiment_config("configs/real_market_demo.yaml", output_dir=runs_dir)
+    run_dir = (
+        runs_dir
+        / "real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13"
+    )
+    battle_report_path = tmp_path / "battle_report.json"
+    candidate_path = tmp_path / "strategy_candidate.json"
+    write_battle_report(
+        run_dir,
+        battle_report_path,
+        user_role="buyer",
+        opponent_profile_id="seller_hardline_anchor_v1",
+    )
+    write_strategy_candidate(
+        battle_report_path,
+        candidate_path,
+        parent_strategy_id="buyer_baseline",
+    )
+    return candidate_path

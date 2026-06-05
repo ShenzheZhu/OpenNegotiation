@@ -122,6 +122,16 @@ opennego spar \
   --user-strategy /tmp/opennego-mvp-demo/strategy_candidate.json
 ```
 
+To share a generated strategy candidate into a local marketplace registry:
+
+```bash
+opennego marketplace-export \
+  --candidate /tmp/opennego-mvp-demo/strategy_candidate.json \
+  --output /tmp/opennego-mvp-demo/marketplace_profile.json \
+  --profile-id shared_buyer_guard_v1 \
+  --install-registry /tmp/opennego-local-marketplace.json
+```
+
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
 
 ```bash
