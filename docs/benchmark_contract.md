@@ -162,6 +162,19 @@ check, not a new negotiation metric: it makes one-role NPC/profile results
 visibly different from balanced buyer/seller evaluations. Elo or Bradley-Terry
 fitting is a future arena layer, not part of this deterministic summary.
 
+## MVP Demo Bundle
+
+`opennego mvp-demo` writes `mvp_demo_manifest.json` with schema
+`opennego.mvp_demo_bundle.v1`. The bundle manifest is a handoff index, not a
+separate scoring surface. It records:
+
+- benchmark completion and failure counts
+- selected learning run id and artifact directory
+- paths for `leaderboard_summary.json`, `battle_report.json`,
+  `strategy_candidate.json`, and the rendered HTML report
+- observed and expected schema versions for machine-readable artifacts
+- ordered workflow steps used by the one-command no-key demo
+
 ## Compatibility
 
 The artifact contract is provider-neutral. It does not assume LiteLLM, OpenAI,

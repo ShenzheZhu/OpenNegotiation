@@ -1,8 +1,10 @@
 import json
 
 from opennego.cli import main
+from opennego.evolution import STRATEGY_EVOLUTION_SCHEMA_VERSION
 from opennego.leaderboard import LEADERBOARD_SCHEMA_VERSION
-from opennego.mvp_demo import run_mvp_demo
+from opennego.learning import POLICY_LEARNING_SCHEMA_VERSION
+from opennego.mvp_demo import MVP_DEMO_BUNDLE_SCHEMA_VERSION, run_mvp_demo
 
 
 def test_run_mvp_demo_generates_benchmark_learning_and_report(tmp_path):
@@ -14,17 +16,45 @@ def test_run_mvp_demo_generates_benchmark_learning_and_report(tmp_path):
     assert summary.name == "opennego_mvp_demo"
     assert summary.benchmark_completed == 3
     assert summary.benchmark_failed == 0
+    assert (output_dir / "mvp_demo_manifest.json").exists()
     assert (output_dir / "leaderboard_summary.json").exists()
     assert (output_dir / "battle_report.json").exists()
     assert (output_dir / "strategy_candidate.json").exists()
     assert report_path.exists()
 
+    bundle_manifest = json.loads((output_dir / "mvp_demo_manifest.json").read_text())
     leaderboard = json.loads((output_dir / "leaderboard_summary.json").read_text())
     battle_report = json.loads((output_dir / "battle_report.json").read_text())
     candidate = json.loads((output_dir / "strategy_candidate.json").read_text())
     html = report_path.read_text()
 
+    assert summary.bundle_manifest == str(output_dir / "mvp_demo_manifest.json")
     assert summary.leaderboard_summary == str(output_dir / "leaderboard_summary.json")
+    assert bundle_manifest["schema_version"] == MVP_DEMO_BUNDLE_SCHEMA_VERSION
+    assert bundle_manifest["benchmark"]["completed"] == 3
+    assert bundle_manifest["benchmark"]["failed"] == 0
+    assert bundle_manifest["benchmark"]["learning_run_id"].endswith("-no_tools-seed-13")
+    assert bundle_manifest["artifacts"] == {
+        "leaderboard_summary": str(output_dir / "leaderboard_summary.json"),
+        "battle_report": str(output_dir / "battle_report.json"),
+        "strategy_candidate": str(output_dir / "strategy_candidate.json"),
+        "html_report": str(report_path),
+    }
+    assert bundle_manifest["artifact_schema_versions"] == {
+        "leaderboard_summary": LEADERBOARD_SCHEMA_VERSION,
+        "battle_report": POLICY_LEARNING_SCHEMA_VERSION,
+        "strategy_candidate": STRATEGY_EVOLUTION_SCHEMA_VERSION,
+    }
+    assert bundle_manifest["expected_schema_versions"] == (
+        bundle_manifest["artifact_schema_versions"]
+    )
+    assert bundle_manifest["workflow_steps"] == [
+        "benchmark",
+        "leaderboard",
+        "policy_learning",
+        "strategy_evolution",
+        "html_report",
+    ]
     assert leaderboard["schema_version"] == LEADERBOARD_SCHEMA_VERSION
     assert leaderboard["run_count"] == 3
     assert leaderboard["participant_summaries"]
@@ -60,6 +90,7 @@ def test_mvp_demo_cli_prints_artifact_paths(tmp_path, capsys):
     assert status == 0
     assert payload["benchmark_completed"] == 3
     assert payload["benchmark_failed"] == 0
+    assert payload["bundle_manifest"] == str(output_dir / "mvp_demo_manifest.json")
     assert payload["leaderboard_summary"] == str(
         output_dir / "leaderboard_summary.json"
     )
@@ -67,4 +98,5 @@ def test_mvp_demo_cli_prints_artifact_paths(tmp_path, capsys):
     assert payload["strategy_candidate"] == str(output_dir / "strategy_candidate.json")
     assert payload["html_report"] == str(report_path)
     assert (output_dir / "leaderboard_summary.json").exists()
+    assert (output_dir / "mvp_demo_manifest.json").exists()
     assert report_path.exists()

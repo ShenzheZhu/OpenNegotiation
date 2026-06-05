@@ -95,10 +95,11 @@ opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp
 ```
 
 This runs the real-market fixture benchmark, writes a machine-readable
-`leaderboard_summary.json`, generates a trace-grounded battle report for a buyer
-agent against a curated seller NPC, and renders a static HTML report. The battle
-report produces strategy-layer lessons and prompt optimization suggestions while
-keeping OpenNego's base sandbox protocol fixed.
+`leaderboard_summary.json` plus `mvp_demo_manifest.json`, generates a
+trace-grounded battle report for a buyer agent against a curated seller NPC, and
+renders a static HTML report. The battle report produces strategy-layer lessons
+and prompt optimization suggestions while keeping OpenNego's base sandbox
+protocol fixed.
 A curated no-key MVP page is available at
 `examples/reports/opennego_mvp_demo.html`.
 
