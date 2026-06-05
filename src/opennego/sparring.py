@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Sequence
 
-from opennego.artifacts import write_json
+from opennego.agents import make_profile_agent_pair
+from opennego.artifacts import write_json, write_run_artifacts
+from opennego.environment import NegotiationEnvironment
 from opennego.learning import (
     DEFAULT_NPC_REGISTRY_PATH,
     BattleReport,
@@ -16,14 +18,19 @@ from opennego.learning import (
 )
 from opennego.runner import (
     ConfigValidationError,
+    ExperimentConfig,
     ExperimentSummary,
+    PreparedRun,
     RunRecord,
-    run_experiment_config,
+    ToolRegimeConfig,
+    ToolSpec,
+    load_experiment_config,
+    prepare_runs,
 )
 from opennego.schema import Role
 
 SPARRING_SUITE_SCHEMA_VERSION = "opennego.sparring_suite.v1"
-SPARRING_EXECUTION_MODE = "fixture_profile_diagnosis"
+SPARRING_EXECUTION_MODE = "profile_backed_fixture_sparring"
 
 
 @dataclass(frozen=True)
@@ -143,7 +150,12 @@ def _run_profile_sparring(
     user_role: Role,
     learning_tool_regime: str,
 ) -> SparringOpponentResult:
-    benchmark = run_experiment_config(config_path, output_dir=output_dir / "benchmark")
+    benchmark = _run_profile_benchmark(
+        profile=profile,
+        output_dir=output_dir / "benchmark",
+        config_path=config_path,
+        user_role=user_role,
+    )
     learning_run = _select_completed_run(benchmark.runs, learning_tool_regime)
     report = generate_battle_report(
         learning_run.output_dir,
@@ -228,3 +240,163 @@ def _select_completed_run(records: Sequence[RunRecord], tool_regime: str) -> Run
 
 def _opponent_role(role: Role) -> Role:
     return Role.SELLER if role == Role.BUYER else Role.BUYER
+
+
+def _run_profile_benchmark(
+    *,
+    profile: StrategyProfile,
+    output_dir: Path,
+    config_path: str | Path,
+    user_role: Role,
+) -> ExperimentSummary:
+    config = replace(
+        load_experiment_config(config_path),
+        output_dir=output_dir,
+        resume=False,
+    )
+    prepared_runs = prepare_runs(config)
+    records: list[RunRecord] = []
+    for prepared_run in prepared_runs:
+        try:
+            result = _execute_profile_prepared_run(
+                prepared_run=prepared_run,
+                config=config,
+                profile=profile,
+                user_role=user_role,
+            )
+        except Exception as exc:  # pragma: no cover - CLI failure path
+            records.append(
+                RunRecord(
+                    run_id=prepared_run.run_id,
+                    status="failed",
+                    output_dir=str(prepared_run.output_dir),
+                    error=str(exc),
+                )
+            )
+            if config.fail_fast:
+                break
+            continue
+
+        records.append(
+            RunRecord(
+                run_id=prepared_run.run_id,
+                status="completed",
+                output_dir=str(prepared_run.output_dir),
+                outcome=result.outcome,
+                deal_price=result.deal_price,
+                completed_turns=result.completed_turns,
+            )
+        )
+
+    return ExperimentSummary(
+        name=config.name,
+        output_dir=str(config.output_dir),
+        total_runs=len(prepared_runs),
+        completed=sum(1 for record in records if record.status == "completed"),
+        skipped=0,
+        failed=sum(1 for record in records if record.status == "failed"),
+        runs=tuple(records),
+    )
+
+
+def _execute_profile_prepared_run(
+    *,
+    prepared_run: PreparedRun,
+    config: ExperimentConfig,
+    profile: StrategyProfile,
+    user_role: Role,
+):
+    buyer, seller = _profile_agent_pair(profile=profile, user_role=user_role)
+    env = NegotiationEnvironment(
+        scenario=prepared_run.scenario,
+        buyer=buyer,
+        seller=seller,
+        tools=prepared_run.tools,
+        tool_configs=prepared_run.tool_configs,
+        transaction_simulator=prepared_run.transaction_simulator,
+    )
+    result = env.run()
+    write_run_artifacts(
+        result=result,
+        output_dir=prepared_run.output_dir,
+        run_id=prepared_run.run_id,
+        scenario_id=prepared_run.scenario_id,
+        seed=prepared_run.seed,
+        agents={
+            "buyer": _agent_manifest(buyer, profile=profile),
+            "seller": _agent_manifest(seller, profile=profile),
+        },
+        tool_regime=_tool_regime_manifest(prepared_run.tool_regime),
+        metadata={
+            "experiment_name": config.name,
+            "sparring_execution_mode": SPARRING_EXECUTION_MODE,
+            "user_role": user_role.value,
+            "opponent_profile_id": profile.id,
+            "opponent_profile_name": profile.name,
+            "opponent_archetype": profile.archetype,
+            "opponent_difficulty": profile.difficulty,
+        },
+    )
+    return result
+
+
+def _profile_agent_pair(
+    *,
+    profile: StrategyProfile,
+    user_role: Role,
+):
+    return make_profile_agent_pair(
+        profile=profile,
+        user_role=user_role,
+    )
+
+
+def _agent_manifest(agent, *, profile: StrategyProfile) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "name": agent.name,
+        "role": agent.role.value,
+    }
+    if agent.role == profile.role:
+        payload.update(
+            {
+                "kind": f"strategy_profile_{agent.role.value}",
+                "profile_id": profile.id,
+                "profile_name": profile.name,
+                "archetype": profile.archetype,
+                "difficulty": profile.difficulty,
+            }
+        )
+    else:
+        payload["kind"] = f"user_{agent.role.value}"
+    return payload
+
+
+def _tool_regime_manifest(tool_regime: ToolRegimeConfig) -> dict[str, object]:
+    return {
+        "id": tool_regime.id,
+        "tools": [
+            {
+                "name": spec.name,
+                "kind": spec.kind,
+                "source": str(spec.source) if spec.source else None,
+                "visibility": spec.visibility,
+                "roles": [role.value for role in _tool_roles(spec)],
+                "mode": spec.mode,
+                "fail_fast": spec.fail_fast,
+                "enabled": spec.enabled,
+                "metadata": dict(spec.metadata or {}),
+            }
+            for spec in tool_regime.tools
+        ],
+        "metadata": dict(tool_regime.metadata or {}),
+    }
+
+
+def _tool_roles(spec: ToolSpec) -> tuple[Role, ...]:
+    if spec.roles is not None:
+        return spec.roles
+    if spec.visibility == "buyer_private":
+        return (Role.BUYER,)
+    if spec.visibility == "seller_private":
+        return (Role.SELLER,)
+    return (Role.BUYER, Role.SELLER)

@@ -87,8 +87,8 @@ the base sandbox protocol.
 
 - Runner-level custom agent registration is not implemented yet; external
   teams can currently integrate custom agents through the Python API.
-- Strategy sparring uses `fixture_profile_diagnosis`, not live
-  profile-backed model opponents.
+- Strategy sparring instantiates selected profiles as deterministic fixture
+  counterparties, not live provider-backed model opponents.
 - Hosted marketplace, live marketplace collection, and provider-backed coaching
   are out of scope for the no-key MVP.
 - Live five-model demos require provider credentials supplied through

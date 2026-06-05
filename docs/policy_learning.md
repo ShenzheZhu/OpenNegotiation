@@ -84,12 +84,13 @@ opennego spar \
 The command writes `sparring_suite.json` at the output root and one
 `battle_report.json` under each selected profile directory. When `--report` is
 provided, it also renders a compact static HTML summary for demos and review.
-Its first execution mode is `fixture_profile_diagnosis`: deterministic local
-agents produce benchmark artifacts, and the selected NPC profile drives the
-battle-report opponent archetype, expected traps, failure modes, and strategy
-patch. This is not yet a hosted marketplace or a live profile-backed model
-opponent, but it gives users a reproducible curriculum surface for prompt
-optimization.
+Its current execution mode is `profile_backed_fixture_sparring`: deterministic
+local user agents spar against deterministic counterparties instantiated from
+the selected NPC profiles. The selected profile drives the counterparty actor,
+benchmark trace, battle-report opponent archetype, expected traps, failure
+modes, and strategy patch. This is not yet a hosted marketplace or a
+provider-backed model opponent, but it gives users a reproducible curriculum
+surface for prompt optimization.
 
 If no `--opponent-profile` is provided, the command selects every registry
 profile with the opposite role from `--user-role`. A buyer-owned user agent

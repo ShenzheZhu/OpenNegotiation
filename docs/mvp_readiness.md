@@ -24,8 +24,8 @@ Browser smoke evidence:
 - MVP dashboard rendered Leaderboard Preview, Training / Prompt Optimization,
   Strategy Marketplace, Hardline Anchor Seller, and `buyer_overpaid_market`.
 - Sparring report rendered OpenNego strategy sparring report,
-  `fixture_profile_diagnosis`, Hardline Anchor Seller, Hidden Fees Seller, and
-  `buyer_overpaid_market`.
+  `profile_backed_fixture_sparring`, Hardline Anchor Seller, Hidden Fees
+  Seller, and `buyer_overpaid_market`.
 - Both pages passed desktop 1280px and mobile 390px checks.
 - No console errors were observed.
 - No body-level horizontal overflow was observed.
@@ -58,8 +58,8 @@ Guardrail:
 Known architecture limits:
 
 - Runner-level custom agent registration is not implemented.
-- Strategy profiles currently drive diagnosis and curriculum metadata, not live
-  profile-backed model opponents.
+- Strategy profiles are instantiated as deterministic fixture counterparties,
+  not live provider-backed model opponents.
 - Hosted marketplace backend and provider-backed coaching are not implemented.
 
 ## Tests And Static Checks
