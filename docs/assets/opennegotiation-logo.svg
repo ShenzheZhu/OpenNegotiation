@@ -1,0 +1,60 @@
+<svg width="1600" height="360" viewBox="0 0 1600 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">OpenNegotiation</title>
+  <desc id="desc">Real-market negotiation gym for AI agents, showing buyer and seller agents exchanging offers through a traceable market workflow.</desc>
+
+  <defs>
+    <linearGradient id="accent" x1="410" y1="267" x2="1120" y2="267" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6f91a8"/>
+      <stop offset="0.48" stop-color="#9da98f"/>
+      <stop offset="1" stop-color="#c49a72"/>
+    </linearGradient>
+    <filter id="shadow" x="16" y="28" width="1568" height="304" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0b1117" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="360" rx="0" fill="#111820"/>
+
+  <g filter="url(#shadow)">
+    <rect x="34" y="42" width="1532" height="268" rx="36" fill="#f5f3f0"/>
+    <rect x="35.5" y="43.5" width="1529" height="265" rx="34.5" stroke="#d7d4ce" stroke-width="3"/>
+  </g>
+
+  <g transform="translate(112 83)">
+    <rect x="0" y="0" width="216" height="194" rx="30" fill="#ebe7df"/>
+    <path d="M43 61C43 42.8 57.8 28 76 28H104C122.2 28 137 42.8 137 61V82C137 100.2 122.2 115 104 115H91L67 139V115H76C57.8 115 43 100.2 43 82V61Z" fill="#8aa1b3"/>
+    <path d="M87 69H121" stroke="#f7f5ef" stroke-width="10" stroke-linecap="round"/>
+    <path d="M104 52V86" stroke="#f7f5ef" stroke-width="10" stroke-linecap="round"/>
+
+    <path d="M92 151C92 132.8 106.8 118 125 118H158C176.2 118 191 132.8 191 151V162C191 180.2 176.2 195 158 195H125C106.8 195 92 180.2 92 162V151Z" fill="#c6a68d"/>
+    <circle cx="126" cy="154" r="6" fill="#f7f5ef"/>
+    <circle cx="145" cy="154" r="6" fill="#f7f5ef"/>
+    <circle cx="164" cy="154" r="6" fill="#f7f5ef"/>
+
+    <rect x="126" y="47" width="70" height="94" rx="18" fill="#f9f1df" stroke="#b9976d" stroke-width="4"/>
+    <text x="161" y="86" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#253143">$</text>
+    <path d="M148 112H174" stroke="#9da98f" stroke-width="7" stroke-linecap="round"/>
+
+    <path d="M56 145C38 133 28 115 28 94C28 77 35 61 47 49" stroke="#6f91a8" stroke-width="8" stroke-linecap="round"/>
+    <path d="M47 49L49 72L68 59" stroke="#6f91a8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M179 52C199 67 209 86 209 107C209 124 202 140 190 153" stroke="#c49a72" stroke-width="8" stroke-linecap="round"/>
+    <path d="M190 153L188 130L169 143" stroke="#c49a72" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <path d="M20 181C50 167 75 169 103 179C134 190 164 190 197 174" stroke="#8d9885" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="103" cy="179" r="6" fill="#8d9885"/>
+    <circle cx="197" cy="174" r="6" fill="#8d9885"/>
+  </g>
+
+  <text x="406" y="142" textLength="690" lengthAdjust="spacingAndGlyphs" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="58" font-weight="850" fill="#253143">OpenNegotiation</text>
+  <text x="410" y="194" textLength="590" lengthAdjust="spacingAndGlyphs" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25" font-weight="650" fill="#647386">Real-market negotiation gym for AI agents</text>
+
+  <rect x="410" y="250" width="710" height="10" rx="5" fill="url(#accent)"/>
+
+  <text x="410" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" font-weight="700" fill="#767881">benchmark</text>
+  <circle cx="536" cy="296" r="4" fill="#a7a19b"/>
+  <text x="555" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" font-weight="700" fill="#767881">sparring</text>
+  <circle cx="662" cy="296" r="4" fill="#a7a19b"/>
+  <text x="681" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" font-weight="700" fill="#767881">strategy evolution</text>
+  <circle cx="903" cy="296" r="4" fill="#a7a19b"/>
+  <text x="922" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" font-weight="700" fill="#767881">transaction traces</text>
+</svg>
