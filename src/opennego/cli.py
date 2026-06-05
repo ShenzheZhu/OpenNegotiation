@@ -60,6 +60,11 @@ from opennego.strategy_config import (
     load_strategy_config,
     write_strategy_config,
 )
+from opennego.training_adapter import (
+    TrainingAdapterError,
+    validate_training_adapter_package,
+    write_training_adapter_package,
+)
 from opennego.tools import MarketPriceTool
 from opennego.training import run_training_loop
 
@@ -87,6 +92,10 @@ def main(argv: list[str] | None = None) -> int:
         return _evolve_main(argv[1:])
     if argv and argv[0] == "apply-strategy":
         return _apply_strategy_main(argv[1:])
+    if argv and argv[0] == "export-training-adapter":
+        return _export_training_adapter_main(argv[1:])
+    if argv and argv[0] == "validate-training-adapter":
+        return _validate_training_adapter_main(argv[1:])
     if argv and argv[0] == "compare":
         return _compare_main(argv[1:])
     if argv and argv[0] == "leaderboard":
@@ -425,6 +434,83 @@ def _apply_strategy_main(argv: list[str] | None = None) -> int:
         )
     )
     return 0
+
+
+def _export_training_adapter_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Export a strategy config as an external training adapter package."
+    )
+    parser.add_argument(
+        "--strategy-config",
+        required=True,
+        help="Path to an opennego.strategy_config.v1 artifact.",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to write the opennego.external_training_adapter.v1 package.",
+    )
+    parser.add_argument(
+        "--agent-kind",
+        required=True,
+        help="External agent kind or registry key expected to consume the package.",
+    )
+    parser.add_argument("--adapter-id", help="Optional stable adapter id.")
+    parser.add_argument(
+        "--integration-mode",
+        default="prompt_config",
+        choices=("prompt_config", "agent_factory_params"),
+        help="How the external agent should consume the adapter payload.",
+    )
+    parser.add_argument(
+        "--entrypoint-hint",
+        help="Optional local entrypoint hint such as PATH:CALLABLE.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        package = write_training_adapter_package(
+            args.strategy_config,
+            args.output,
+            agent_kind=args.agent_kind,
+            integration_mode=args.integration_mode,
+            adapter_id=args.adapter_id,
+            entrypoint_hint=args.entrypoint_hint,
+        )
+    except (OSError, StrategyConfigError, TrainingAdapterError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(
+        json.dumps(
+            {
+                "training_adapter": args.output,
+                "adapter_id": package.adapter_id,
+                "agent_kind": package.agent_kind,
+                "role": package.role.value,
+                "strategy_id": package.strategy_id,
+                "strategy_version": package.strategy_version,
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
+def _validate_training_adapter_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate an external OpenNegotiation training adapter package."
+    )
+    parser.add_argument(
+        "--adapter",
+        required=True,
+        help="Path to an opennego.external_training_adapter.v1 package.",
+    )
+    args = parser.parse_args(argv)
+
+    result = validate_training_adapter_package(args.adapter)
+    print(json.dumps(to_jsonable(result), indent=2))
+    return 0 if result.status == "passed" else 1
 
 
 def _compare_main(argv: list[str] | None = None) -> int:

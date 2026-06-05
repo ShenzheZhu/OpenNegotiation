@@ -156,6 +156,36 @@ install remote plugins, or load provider SDKs into the environment layer.
 Provider-backed LLM agents should still stay behind `LLMPort` and adapter
 modules.
 
+## Training Adapter Packages
+
+OpenNegotiation training loops produce `opennego.strategy_config.v1` artifacts.
+External teams can package those configs for their own agents without asking
+OpenNegotiation to mutate arbitrary source code:
+
+```bash
+opennego export-training-adapter \
+  --strategy-config /tmp/team-a-training/strategy_config.json \
+  --output /tmp/team-a-training/external_training_adapter.json \
+  --agent-kind team_a_buyer \
+  --entrypoint-hint /absolute/path/to/my_agents.py:my_buyer_factory
+
+opennego validate-training-adapter \
+  --adapter /tmp/team-a-training/external_training_adapter.json
+```
+
+The generated `opennego.external_training_adapter.v1` package includes:
+
+- the target role and external `agent_kind`
+- the fixed `base_prompt` protocol layer
+- the editable `strategy_prompt` policy layer
+- applied lessons, patches, expected improvements, and lineage
+- an integration contract that requires `code_mutation: false`
+
+External agents should load the `base_prompt` as read-only sandbox protocol
+context and load `strategy_prompt` as their editable policy layer. The adapter
+does not install dependencies, rewrite agent source files, discover remote
+plugins, or deploy hosted agents.
+
 ## Sparring Against NPC Profiles
 
 Custom user agents can also spar against curated marketplace NPC profiles
