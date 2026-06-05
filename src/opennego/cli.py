@@ -37,7 +37,7 @@ from opennego.model_demo import (
     make_litellm_gateway,
     run_model_demo,
 )
-from opennego.mvp_demo import run_mvp_demo
+from opennego.mvp_demo import run_mvp_demo, validate_mvp_demo_bundle
 from opennego.report import write_demo_report
 from opennego.runner import (
     ConfigValidationError,
@@ -82,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
         return _ingest_market_main(argv[1:])
     if argv and argv[0] == "validate-market":
         return _validate_market_main(argv[1:])
+    if argv and argv[0] == "validate-demo-bundle":
+        return _validate_demo_bundle_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
         return _mvp_demo_main(argv[1:])
     if argv and argv[0] == "spar":
@@ -563,6 +565,22 @@ def _validate_market_main(argv: list[str] | None = None) -> int:
         market_comps_file=args.market_comps_file,
         manifest_file=args.manifest_file,
     )
+    print(json.dumps(to_jsonable(result), indent=2))
+    return 0 if result.status == "passed" else 1
+
+
+def _validate_demo_bundle_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate an OpenNego MVP demo bundle manifest."
+    )
+    parser.add_argument(
+        "--manifest",
+        required=True,
+        help="Path to mvp_demo_manifest.json produced by opennego mvp-demo.",
+    )
+    args = parser.parse_args(argv)
+
+    result = validate_mvp_demo_bundle(args.manifest)
     print(json.dumps(to_jsonable(result), indent=2))
     return 0 if result.status == "passed" else 1
 

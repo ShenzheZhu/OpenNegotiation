@@ -20,6 +20,8 @@ benchmark -> policy learning -> strategy candidate -> sparring rerun ->
 comparison -> marketplace export loop.
 Benchmark outputs can also be aggregated into a machine-readable leaderboard
 with participant role-coverage summaries and buyer/seller role-track summaries.
+One-command MVP demo bundles can be validated independently with
+`opennego validate-demo-bundle`.
 
 A small live five-model OpenRouter smoke was verified earlier on 2026-06-05.
 It was not rerun for this docs refresh; live provider execution remains an
@@ -83,6 +85,8 @@ Implemented:
   `leaderboard_summary.json` is present.
 - Versioned `opennego.mvp_demo_bundle.v1` handoff manifest for one-command MVP
   demo outputs.
+- MVP demo bundle validation CLI with schema drift, artifact existence, and
+  workflow-order checks.
 - Shared no-key workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.
@@ -121,14 +125,17 @@ pytest -q
 PYTHONPYCACHEPREFIX=/tmp/opennego-pycache PYTHONPATH=src python3 -m compileall -q src tests
 git diff --check
 opennego run-models --output-dir /tmp/opennego-live-five-fixed-20260605 --max-turns 3 --max-tokens 220
+opennego mvp-demo --output-dir "$tmpdir/mvp" --report "$tmpdir/mvp.html"
+opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
 secret-pattern scan for common provider key prefixes
 ```
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 110 passed.
+- `pytest -q`: 118 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
+- MVP demo bundle validation smoke: passed with no errors or warnings.
 - Secret-pattern scan: no matches.
 
 Historical live provider status:

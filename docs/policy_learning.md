@@ -173,6 +173,7 @@ The quickest end-to-end path is:
 
 ```bash
 opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp-demo.html
+opennego validate-demo-bundle --manifest /tmp/opennego-mvp-demo/mvp_demo_manifest.json
 ```
 
 This runs the small real-market benchmark, writes
@@ -182,7 +183,10 @@ This runs the small real-market benchmark, writes
 `/tmp/opennego-mvp-demo/mvp_demo_manifest.json`, and renders an HTML page with
 the leaderboard preview, Training / Prompt Optimization section, and Strategy
 Marketplace section. The leaderboard preview is rendered from the versioned
-leaderboard summary artifact when it is available.
+leaderboard summary artifact when it is available. The validation command emits
+`opennego.mvp_demo_bundle_validation.v1` JSON and is the no-key release check
+that the benchmark, learning report, strategy candidate, and HTML report still
+line up as one coherent demo bundle.
 
 `opennego learn` reads one completed benchmark run directory:
 
