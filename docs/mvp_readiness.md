@@ -125,9 +125,11 @@ Known architecture limits:
 - Real-market evidence remains fixture/offline-data backed. Offline sold-comps
   normalization is implemented; live eBay or C2C marketplace collection is not
   implemented.
-- Transaction simulation validates deterministic settlement fees and lifecycle
-  guard failures, but real payment, logistics, warranty, legal/compliance, and
-  platform dispute integrations are not implemented.
+- Transaction simulation validates deterministic settlement fees, lifecycle
+  guard failures, and structured fixture terms for payment, logistics, returns,
+  warranty, compliance, and dispute policy. Real payment, logistics, warranty,
+  legal/compliance, and platform dispute provider integrations are not
+  implemented.
 
 ## Tests And Static Checks
 

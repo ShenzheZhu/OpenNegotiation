@@ -81,6 +81,9 @@ simulator separates negotiated product price from:
 - return, reputation, and dispute risk
 - deterministic payment, shipping, item-mismatch, return-window, and dispute
   guard failures
+- structured fixture terms for payment, logistics, returns, warranty,
+  compliance, and dispute policy
+- deterministic delivery SLA, warranty-window, and compliance guard failures
 
 Transaction outcomes are recorded as public system events.
 

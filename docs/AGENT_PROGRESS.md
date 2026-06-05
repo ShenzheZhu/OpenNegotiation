@@ -50,6 +50,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   and seller net-revenue floors.
 - Added deterministic transaction lifecycle guards for shipping failure, item
   mismatch, return-window policy, and dispute-risk caps.
+- Added structured fixture transaction terms for payment, logistics, returns,
+  warranty, compliance, and dispute policy metadata, plus deterministic delivery
+  SLA, warranty-window, and compliance guards.
 - Added profile-backed LLM NPC factories behind `LLMPort` for Python API
   sparring.
 - Added config-runner `llm_buyer` and `llm_seller` agent kinds behind
@@ -134,9 +137,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 - Keep live provider demos small and label them as smoke runs, not batch
   benchmark evidence.
-- Expand the transaction layer beyond deterministic lifecycle guards into real
-  payment, logistics, warranty, legal/compliance, and platform dispute
-  integrations when those boundaries are decided.
+- Keep expanding transaction realism through provider-neutral fixture contracts
+  first; add real payment, logistics, warranty, legal/compliance, and platform
+  dispute integrations only when those boundaries are decided.
 - Expand market-data ingestion from offline normalization toward licensed/live
   adapters only after API, scraping, and privacy boundaries are decided.
 - Resolve public hosted site deployment for the `web` branch or choose another
