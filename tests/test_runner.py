@@ -1,10 +1,12 @@
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
 from opennego.artifacts import load_manifest, load_metric_report
 from opennego.runner import ConfigValidationError, run_experiment_config
+from opennego.schema import AgentAction, AgentContext, Role
 
 
 def write_config(
@@ -117,3 +119,79 @@ def test_config_runner_rejects_unsupported_agent_before_creating_output(tmp_path
         run_experiment_config(config_path)
 
     assert not output_dir.exists()
+
+
+def test_config_runner_accepts_registered_custom_agent(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = write_config(tmp_path, output_dir)
+    config = read_config(config_path)
+    config["agents"]["buyer"] = {
+        "kind": "fixed_offer_buyer",
+        "params": {"name": "external_test_buyer", "offer_price": 760},
+    }
+    config["tool_regimes"] = [{"id": "no_tools", "tools": []}]
+    config_path.write_text(json.dumps(config, indent=2) + "\n")
+
+    summary = run_experiment_config(
+        config_path,
+        agent_factories={"fixed_offer_buyer": fixed_offer_buyer_factory},
+    )
+
+    assert summary.completed == 1
+    assert summary.failed == 0
+    run_dir = output_dir / "runner_smoke-camera_001-no_tools-seed-11"
+    manifest = load_manifest(run_dir / "manifest.json")
+    metrics = load_metric_report(run_dir / "metrics.json")
+    assert manifest.agents["buyer"]["kind"] == "fixed_offer_buyer"
+    assert manifest.agents["buyer"]["name"] == "external_test_buyer"
+    assert metrics.outcome == "deal"
+    assert metrics.deal_price == 760.0
+
+
+def test_config_runner_rejects_wrong_role_custom_agent_before_output(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = write_config(tmp_path, output_dir)
+    config = read_config(config_path)
+    config["agents"]["buyer"] = {"kind": "wrong_role_agent"}
+    config_path.write_text(json.dumps(config, indent=2) + "\n")
+
+    with pytest.raises(ConfigValidationError, match="expected 'buyer'"):
+        run_experiment_config(
+            config_path,
+            agent_factories={"wrong_role_agent": wrong_role_agent_factory},
+        )
+
+    assert not output_dir.exists()
+
+
+@dataclass
+class FixedOfferBuyer:
+    name: str
+    offer_price: float
+    role: Role = Role.BUYER
+
+    def act(self, context: AgentContext) -> AgentAction:
+        return AgentAction.offer_price(
+            self.offer_price,
+            f"My offer is ${self.offer_price:.2f}.",
+        )
+
+
+@dataclass
+class WrongRoleAgent:
+    name: str = "wrong_role_agent"
+    role: Role = Role.SELLER
+
+    def act(self, context: AgentContext) -> AgentAction:
+        return AgentAction.reject("Wrong role.")
+
+
+def fixed_offer_buyer_factory(role, params):
+    return FixedOfferBuyer(
+        name=str(params.get("name", "fixed_offer_buyer")),
+        offer_price=float(params.get("offer_price", 760)),
+    )
+
+
+def wrong_role_agent_factory(role, params):
+    return WrongRoleAgent()

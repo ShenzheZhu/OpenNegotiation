@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.artifacts import (
@@ -31,10 +31,27 @@ class ConfigValidationError(ValueError):
     """Raised when an experiment config is malformed."""
 
 
+AgentFactory = Callable[[Role, Mapping[str, Any]], AgentPort]
+
+
+@dataclass(frozen=True)
+class AgentSpecConfig:
+    kind: str
+    params: Mapping[str, Any] = field(default_factory=dict)
+
+
 @dataclass(frozen=True)
 class AgentPairConfig:
-    buyer_kind: str
-    seller_kind: str
+    buyer: AgentSpecConfig
+    seller: AgentSpecConfig
+
+    @property
+    def buyer_kind(self) -> str:
+        return self.buyer.kind
+
+    @property
+    def seller_kind(self) -> str:
+        return self.seller.kind
 
 
 @dataclass(frozen=True)
@@ -171,7 +188,6 @@ def load_experiment_config(path: str | Path) -> ExperimentConfig:
 
     seeds = _parse_seeds(data.get("seeds", [None]))
     agents = _parse_agents(_required_mapping(data, "agents"))
-    _validate_agent_kinds(agents)
 
     resume = _optional_bool(data, "resume", False)
     fail_fast = _optional_bool(data, "fail_fast", True)
@@ -196,6 +212,7 @@ def run_experiment_config(
     *,
     resume: bool | None = None,
     output_dir: str | Path | None = None,
+    agent_factories: Mapping[str, AgentFactory] | None = None,
 ) -> ExperimentSummary:
     """Run all jobs declared by an experiment config."""
 
@@ -205,6 +222,8 @@ def run_experiment_config(
     if output_dir is not None:
         config = replace(config, output_dir=Path(output_dir))
 
+    agent_registry = _agent_factory_registry(agent_factories)
+    _validate_agent_kinds(config.agents, agent_registry)
     prepared_runs = prepare_runs(config)
     records: list[RunRecord] = []
     for prepared_run in prepared_runs:
@@ -222,7 +241,7 @@ def run_experiment_config(
             continue
 
         try:
-            result = _execute_prepared_run(prepared_run, config)
+            result = _execute_prepared_run(prepared_run, config, agent_registry)
         except Exception as exc:  # pragma: no cover - exercised via CLI failure paths
             records.append(
                 RunRecord(
@@ -288,8 +307,12 @@ def prepare_runs(config: ExperimentConfig) -> tuple[PreparedRun, ...]:
     return tuple(prepared_runs)
 
 
-def _execute_prepared_run(prepared_run: PreparedRun, config: ExperimentConfig):
-    buyer, seller = _build_agents(config.agents)
+def _execute_prepared_run(
+    prepared_run: PreparedRun,
+    config: ExperimentConfig,
+    agent_registry: Mapping[str, AgentFactory],
+):
+    buyer, seller = _build_agents(config.agents, agent_registry)
     env = NegotiationEnvironment(
         scenario=prepared_run.scenario,
         buyer=buyer,
@@ -319,19 +342,90 @@ def _execute_prepared_run(prepared_run: PreparedRun, config: ExperimentConfig):
     return result
 
 
-def _build_agents(config: AgentPairConfig) -> tuple[AgentPort, AgentPort]:
-    return ToolAwareBuyer(), ScriptedSeller()
+def _build_agents(
+    config: AgentPairConfig,
+    agent_registry: Mapping[str, AgentFactory],
+) -> tuple[AgentPort, AgentPort]:
+    return (
+        _create_agent(config.buyer, Role.BUYER, agent_registry),
+        _create_agent(config.seller, Role.SELLER, agent_registry),
+    )
 
 
-def _validate_agent_kinds(config: AgentPairConfig) -> None:
-    if config.buyer_kind != "tool_aware_buyer":
+def _agent_factory_registry(
+    agent_factories: Mapping[str, AgentFactory] | None,
+) -> Mapping[str, AgentFactory]:
+    registry: dict[str, AgentFactory] = {
+        "tool_aware_buyer": _make_tool_aware_buyer,
+        "scripted_seller": _make_scripted_seller,
+    }
+    registry.update(agent_factories or {})
+    return registry
+
+
+def _validate_agent_kinds(
+    config: AgentPairConfig,
+    agent_registry: Mapping[str, AgentFactory],
+) -> None:
+    _create_agent(config.buyer, Role.BUYER, agent_registry)
+    _create_agent(config.seller, Role.SELLER, agent_registry)
+
+
+def _create_agent(
+    spec: AgentSpecConfig,
+    role: Role,
+    agent_registry: Mapping[str, AgentFactory],
+) -> AgentPort:
+    factory = agent_registry.get(spec.kind)
+    if factory is None:
         raise ConfigValidationError(
-            f"agents.buyer.kind: unsupported kind {config.buyer_kind!r}"
+            f"agents.{role.value}.kind: unsupported kind {spec.kind!r}"
         )
-    if config.seller_kind != "scripted_seller":
+    try:
+        agent = factory(role, spec.params)
+    except ConfigValidationError:
+        raise
+    except Exception as exc:
         raise ConfigValidationError(
-            f"agents.seller.kind: unsupported kind {config.seller_kind!r}"
+            f"agents.{role.value}.kind {spec.kind!r}: factory failed: {exc}"
+        ) from exc
+    if getattr(agent, "role", None) != role:
+        actual = getattr(agent, "role", None)
+        actual_value = actual.value if isinstance(actual, Role) else repr(actual)
+        raise ConfigValidationError(
+            f"agents.{role.value}.kind {spec.kind!r}: factory returned role "
+            f"{actual_value!r}, expected {role.value!r}"
         )
+    if not isinstance(getattr(agent, "name", None), str) or not agent.name:
+        raise ConfigValidationError(
+            f"agents.{role.value}.kind {spec.kind!r}: factory returned agent "
+            "without a non-empty string name"
+        )
+    if not callable(getattr(agent, "act", None)):
+        raise ConfigValidationError(
+            f"agents.{role.value}.kind {spec.kind!r}: factory returned agent "
+            "without callable act(context)"
+        )
+    return agent
+
+
+def _make_tool_aware_buyer(role: Role, params: Mapping[str, Any]) -> AgentPort:
+    if role != Role.BUYER:
+        raise ConfigValidationError("tool_aware_buyer requires buyer role")
+    return ToolAwareBuyer(**_agent_kwargs("tool_aware_buyer", params))
+
+
+def _make_scripted_seller(role: Role, params: Mapping[str, Any]) -> AgentPort:
+    if role != Role.SELLER:
+        raise ConfigValidationError("scripted_seller requires seller role")
+    return ScriptedSeller(**_agent_kwargs("scripted_seller", params))
+
+
+def _agent_kwargs(kind: str, params: Mapping[str, Any]) -> dict[str, Any]:
+    try:
+        return dict(params)
+    except (TypeError, ValueError) as exc:
+        raise ConfigValidationError(f"{kind}.params: expected object") from exc
 
 
 def _build_scenario(config: ScenarioConfig) -> Scenario:
@@ -586,8 +680,20 @@ def _parse_agents(data: Mapping[str, Any]) -> AgentPairConfig:
     buyer = _required_mapping(data, "buyer")
     seller = _required_mapping(data, "seller")
     return AgentPairConfig(
-        buyer_kind=_required_str(buyer, "kind"),
-        seller_kind=_required_str(seller, "kind"),
+        buyer=_parse_agent_spec(buyer, "agents.buyer"),
+        seller=_parse_agent_spec(seller, "agents.seller"),
+    )
+
+
+def _parse_agent_spec(data: Mapping[str, Any], path: str) -> AgentSpecConfig:
+    params = data.get("params", {})
+    if params is None:
+        params = {}
+    if not isinstance(params, Mapping):
+        raise ConfigValidationError(f"{path}.params: expected object")
+    return AgentSpecConfig(
+        kind=_required_str(data, "kind"),
+        params=dict(params),
     )
 
 

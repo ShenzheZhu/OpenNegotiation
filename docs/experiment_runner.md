@@ -36,6 +36,30 @@ Supported agent kinds in the first runner slice:
 - buyer: `tool_aware_buyer`
 - seller: `scripted_seller`
 
+Python API callers may also register custom provider-neutral `AgentPort`
+factories and reference those keys from the same `agents` block. Each agent spec
+may include a `params` object passed to the factory:
+
+```python
+summary = run_experiment_config(
+    "configs/custom_agent_eval.yaml",
+    agent_factories={"my_buyer": my_buyer_factory},
+)
+```
+
+```json
+"agents": {
+  "buyer": {
+    "kind": "my_buyer",
+    "params": {"name": "team_a_buyer", "max_price": 760}
+  },
+  "seller": {"kind": "scripted_seller"}
+}
+```
+
+The CLI only exposes built-in kinds; arbitrary Python module loading is out of
+scope for the current runner.
+
 Supported tool kinds in the first runner slice:
 
 - `market_price` with `name: market_price_search`
