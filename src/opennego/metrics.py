@@ -81,6 +81,7 @@ def _transaction_metrics(transaction: TransactionOutcome | None) -> dict[str, fl
             "buyer_total_transaction_cost": 0.0,
             "seller_net_transaction_revenue": 0.0,
             "transaction_risk_exposure": 0.0,
+            "transaction_dispute_risk": 0.0,
             "transaction_shipping_cost": 0.0,
             "transaction_tax": 0.0,
             "transaction_fees": 0.0,
@@ -92,6 +93,7 @@ def _transaction_metrics(transaction: TransactionOutcome | None) -> dict[str, fl
         "buyer_total_transaction_cost": transaction.buyer_total_cost,
         "seller_net_transaction_revenue": transaction.seller_net_revenue,
         "transaction_risk_exposure": transaction.risk_exposure,
+        "transaction_dispute_risk": transaction.dispute_risk,
         "transaction_shipping_cost": transaction.shipping_cost,
         "transaction_tax": transaction.tax,
         "transaction_fees": (

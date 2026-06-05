@@ -163,11 +163,17 @@ Supported transaction config in the first runner slice:
 - `payment_fee_rate`: buyer-side payment fee rate.
 - `seller_fee_rate`: seller-side platform fee rate.
 - `return_risk` and `reputation_risk`: deterministic risk placeholders.
+- `dispute_risk`: deterministic dispute-risk placeholder.
 - `payment_success`: when false, records a failed transaction outcome.
+- `shipping_success`: when false, records a post-payment shipping failure.
+- `item_matches_listing`: when false, records an item-mismatch dispute.
 - `max_buyer_total_cost`: optional buyer all-in cost cap for settlement
   validation.
 - `min_seller_net_revenue`: optional seller net revenue floor for settlement
   validation.
+- `max_dispute_risk`: optional deterministic dispute-risk cap.
+- `return_window_days`: return-window policy in days.
+- `min_return_window_days`: optional minimum acceptable return-window policy.
 
 ## Minimal Example
 
@@ -188,8 +194,12 @@ Supported transaction config in the first runner slice:
     "seller_fee_rate": 0.05,
     "return_risk": 0.03,
     "reputation_risk": 0.02,
+    "dispute_risk": 0.01,
     "max_buyer_total_cost": 900.0,
-    "min_seller_net_revenue": 700.0
+    "min_seller_net_revenue": 700.0,
+    "max_dispute_risk": 0.08,
+    "return_window_days": 14,
+    "min_return_window_days": 7
   },
   "seeds": [7],
   "agents": {

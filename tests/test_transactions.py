@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.artifacts import load_manifest, load_metric_report, load_trace
 from opennego.environment import NegotiationEnvironment
@@ -82,6 +84,81 @@ def test_fixture_transaction_simulator_computes_costs():
     assert outcome.buyer_total_cost == 858.0
     assert outcome.seller_net_revenue == 718.0
     assert outcome.risk_exposure == 0.05
+
+
+def test_fixture_transaction_simulator_includes_dispute_risk():
+    simulator = FixtureTransactionSimulator(
+        return_risk=0.03,
+        reputation_risk=0.02,
+        dispute_risk=0.04,
+    )
+
+    outcome = simulator.settle(
+        TransactionRequest(
+            scenario=make_scenario(),
+            negotiated_price=760.0,
+            accepting_role="seller",
+        )
+    )
+
+    assert outcome.status == "completed"
+    assert outcome.dispute_risk == 0.04
+    assert outcome.risk_exposure == 0.09
+    assert outcome.metadata["computed_risk_exposure"] == 0.09
+    assert outcome.metadata["lifecycle_stage"] == "completed"
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "reason", "guard", "stage"),
+    [
+        (
+            {"shipping_success": False},
+            "shipping_failed",
+            "shipping_success",
+            "shipping",
+        ),
+        (
+            {"item_matches_listing": False},
+            "item_mismatch_dispute",
+            "item_matches_listing",
+            "dispute",
+        ),
+        (
+            {"return_window_days": 7, "min_return_window_days": 14},
+            "return_window_below_minimum",
+            "min_return_window_days",
+            "returns",
+        ),
+        (
+            {"dispute_risk": 0.12, "max_dispute_risk": 0.08},
+            "dispute_risk_exceeded",
+            "max_dispute_risk",
+            "dispute",
+        ),
+    ],
+)
+def test_fixture_transaction_simulator_lifecycle_failures(
+    kwargs,
+    reason,
+    guard,
+    stage,
+):
+    simulator = FixtureTransactionSimulator(**kwargs)
+
+    outcome = simulator.settle(
+        TransactionRequest(
+            scenario=make_scenario(),
+            negotiated_price=760.0,
+            accepting_role="seller",
+        )
+    )
+
+    assert outcome.status == "failed"
+    assert outcome.failure_reason == reason
+    assert outcome.metadata["violated_guard"] == guard
+    assert outcome.metadata["lifecycle_stage"] == stage
+    assert outcome.metadata["computed_buyer_total_cost"] == 760.0
+    assert outcome.metadata["computed_seller_net_revenue"] == 760.0
 
 
 def test_fixture_transaction_simulator_fails_buyer_total_cap():
@@ -190,7 +267,7 @@ def test_transaction_artifacts_round_trip(tmp_path):
         buyer=ToolAwareBuyer(),
         seller=ScriptedSeller(),
         tools=(make_market_tool(),),
-        transaction_simulator=make_transaction_simulator(),
+        transaction_simulator=FixtureTransactionSimulator(dispute_risk=0.04),
     )
     result = env.run()
 
@@ -207,8 +284,10 @@ def test_transaction_artifacts_round_trip(tmp_path):
 
     assert trace[-1].action_type == ActionType.TRANSACTION
     assert trace[-1].transaction is not None
-    assert trace[-1].transaction.buyer_total_cost == 858.0
-    assert metrics.metrics["seller_net_transaction_revenue"] == 718.0
+    assert trace[-1].transaction.buyer_total_cost == 760.0
+    assert trace[-1].transaction.dispute_risk == 0.04
+    assert metrics.metrics["seller_net_transaction_revenue"] == 760.0
+    assert metrics.metrics["transaction_dispute_risk"] == 0.04
 
 
 def test_runner_transaction_guard_config_records_failed_settlement(tmp_path):
@@ -282,3 +361,79 @@ def test_runner_transaction_guard_config_records_failed_settlement(tmp_path):
     assert trace[-1].transaction.failure_reason == "buyer_total_cost_exceeded"
     assert trace[-1].transaction.metadata["computed_buyer_total_cost"] == 858.0
     assert metrics.metrics["failed_transaction_rate"] == 1.0
+
+
+def test_runner_transaction_lifecycle_config_records_dispute_failure(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = tmp_path / "transaction_lifecycle.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "opennego.experiment.v1",
+                "name": "transaction_lifecycle",
+                "output_dir": str(output_dir),
+                "resume": False,
+                "fail_fast": True,
+                "seeds": [5],
+                "agents": {
+                    "buyer": {"kind": "tool_aware_buyer"},
+                    "seller": {"kind": "scripted_seller"},
+                },
+                "transaction": {
+                    "kind": "fixture",
+                    "enabled": True,
+                    "dispute_risk": 0.12,
+                    "max_dispute_risk": 0.08,
+                    "return_window_days": 7,
+                    "min_return_window_days": 3,
+                    "shipping_success": True,
+                    "item_matches_listing": True,
+                },
+                "scenarios": [
+                    {
+                        "id": "camera_001",
+                        "products_file": "examples/data/products.json",
+                        "product_index": 0,
+                        "max_turns": 8,
+                    }
+                ],
+                "tool_regimes": [
+                    {
+                        "id": "buyer_private_market_search",
+                        "tools": [
+                            {
+                                "name": "market_price_search",
+                                "kind": "market_price",
+                                "source": "examples/data/market_comps.json",
+                                "visibility": "buyer_private",
+                            }
+                        ],
+                    }
+                ],
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+
+    summary = run_experiment_config(config_path)
+    run_dir = (
+        output_dir
+        / "transaction_lifecycle-camera_001-buyer_private_market_search-seed-5"
+    )
+    manifest = load_manifest(run_dir / "manifest.json")
+    trace = load_trace(run_dir / "trace.jsonl")
+    metrics = load_metric_report(run_dir / "metrics.json")
+
+    assert summary.completed == 1
+    assert manifest.metadata["transaction"]["dispute_risk"] == 0.12
+    assert manifest.metadata["transaction"]["max_dispute_risk"] == 0.08
+    assert manifest.metadata["transaction"]["return_window_days"] == 7
+    assert manifest.metadata["transaction"]["min_return_window_days"] == 3
+    assert trace[-1].transaction is not None
+    assert trace[-1].transaction.status == "failed"
+    assert trace[-1].transaction.failure_reason == "dispute_risk_exceeded"
+    assert trace[-1].transaction.dispute_risk == 0.12
+    assert trace[-1].transaction.metadata["violated_guard"] == "max_dispute_risk"
+    assert metrics.metrics["failed_transaction_rate"] == 1.0
+    assert metrics.metrics["transaction_dispute_risk"] == 0.12

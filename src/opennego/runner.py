@@ -131,9 +131,15 @@ class TransactionConfig:
     seller_fee_rate: float = 0.0
     return_risk: float = 0.0
     reputation_risk: float = 0.0
+    dispute_risk: float = 0.0
     payment_success: bool = True
+    shipping_success: bool = True
+    item_matches_listing: bool = True
     max_buyer_total_cost: float | None = None
     min_seller_net_revenue: float | None = None
+    max_dispute_risk: float | None = None
+    return_window_days: int | None = None
+    min_return_window_days: int | None = None
     failure_reason: str | None = None
     metadata: Mapping[str, Any] | None = None
 
@@ -831,9 +837,15 @@ def _parse_transaction_config(data: Any) -> TransactionConfig | None:
         seller_fee_rate=_optional_float(data, "seller_fee_rate") or 0.0,
         return_risk=_optional_float(data, "return_risk") or 0.0,
         reputation_risk=_optional_float(data, "reputation_risk") or 0.0,
+        dispute_risk=_optional_float(data, "dispute_risk") or 0.0,
         payment_success=_optional_bool(data, "payment_success", True),
+        shipping_success=_optional_bool(data, "shipping_success", True),
+        item_matches_listing=_optional_bool(data, "item_matches_listing", True),
         max_buyer_total_cost=_optional_float(data, "max_buyer_total_cost"),
         min_seller_net_revenue=_optional_float(data, "min_seller_net_revenue"),
+        max_dispute_risk=_optional_float(data, "max_dispute_risk"),
+        return_window_days=_optional_nullable_int(data, "return_window_days"),
+        min_return_window_days=_optional_nullable_int(data, "min_return_window_days"),
         failure_reason=_optional_str(data, "failure_reason"),
         metadata=_optional_mapping(data, "metadata"),
     )
@@ -852,9 +864,15 @@ def _build_transaction_simulator(
         seller_fee_rate=config.seller_fee_rate,
         return_risk=config.return_risk,
         reputation_risk=config.reputation_risk,
+        dispute_risk=config.dispute_risk,
         payment_success=config.payment_success,
+        shipping_success=config.shipping_success,
+        item_matches_listing=config.item_matches_listing,
         max_buyer_total_cost=config.max_buyer_total_cost,
         min_seller_net_revenue=config.min_seller_net_revenue,
+        max_dispute_risk=config.max_dispute_risk,
+        return_window_days=config.return_window_days,
+        min_return_window_days=config.min_return_window_days,
         failure_reason=config.failure_reason,
         metadata=dict(config.metadata or {}),
     )
@@ -873,9 +891,15 @@ def _transaction_metadata(config: TransactionConfig | None) -> Mapping[str, Any]
         "seller_fee_rate": config.seller_fee_rate,
         "return_risk": config.return_risk,
         "reputation_risk": config.reputation_risk,
+        "dispute_risk": config.dispute_risk,
         "payment_success": config.payment_success,
+        "shipping_success": config.shipping_success,
+        "item_matches_listing": config.item_matches_listing,
         "max_buyer_total_cost": config.max_buyer_total_cost,
         "min_seller_net_revenue": config.min_seller_net_revenue,
+        "max_dispute_risk": config.max_dispute_risk,
+        "return_window_days": config.return_window_days,
+        "min_return_window_days": config.min_return_window_days,
         "failure_reason": config.failure_reason,
         "metadata": dict(config.metadata or {}),
     }
@@ -945,6 +969,15 @@ def _optional_int(data: Mapping[str, Any], key: str, default: int) -> int:
     value = data.get(key, default)
     if not isinstance(value, int):
         raise ConfigValidationError(f"{key}: expected integer")
+    return value
+
+
+def _optional_nullable_int(data: Mapping[str, Any], key: str) -> int | None:
+    value = data.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, int):
+        raise ConfigValidationError(f"{key}: expected integer or null")
     return value
 
 
