@@ -149,6 +149,44 @@ Lessons cite trace events through `event_index`, `turn`, `role`, `action_type`,
 and a short event summary. This keeps policy learning tied to benchmark
 evidence instead of creating a disconnected logging format.
 
+## Strategy Evolution Artifacts
+
+`opennego evolve` turns a battle report into a versioned strategy candidate:
+
+```bash
+opennego evolve \
+  --battle-report /tmp/opennego-real-market-demo/battle_report.json \
+  --output /tmp/opennego-real-market-demo/strategy_candidate.json \
+  --parent-strategy-id buyer_baseline \
+  --iteration 1
+```
+
+The candidate artifact uses schema version `opennego.strategy_evolution.v1` and
+records:
+
+- `candidate_id`, `parent_strategy_id`, and `iteration`
+- user role, source run id, scenario id, and opponent profile id
+- strategy prompt patch text
+- applied lesson ids and patch snippets
+- expected improvements derived from trace-grounded recommendations
+- a recommended rerun command and comparison command
+
+After the user reruns their agent with the candidate strategy, `opennego compare`
+can compare the before/after battle reports:
+
+```bash
+opennego compare \
+  --before /tmp/opennego-real-market-demo/battle_report.json \
+  --after /tmp/opennego-rerun/battle_report.json \
+  --output /tmp/opennego-rerun/strategy_comparison.json
+```
+
+The comparison artifact uses schema version `opennego.strategy_comparison.v1`
+and reports score delta, outcome change, buyer/seller price movement, resolved
+failure modes, new failure modes, resolved lesson ids, and new lesson ids. This
+keeps the prompt-optimization loop auditable without automatically editing user
+agent code.
+
 When `battle_report.json` is present in the benchmark output root, the static
 HTML report renders a Training / Prompt Optimization section. The same report
 also renders the local NPC strategy marketplace from
@@ -203,6 +241,7 @@ In scope:
 - no-key battle report generation from artifacts
 - trace-grounded policy lessons
 - strategy prompt patch suggestions
+- versioned strategy candidate and comparison artifacts
 - CLI commands for listing profiles, writing battle reports, and rendering the
   one-command MVP demo
 - no-key sparring suite artifacts for selected marketplace profiles
@@ -221,5 +260,7 @@ The near-term product loop is:
 1. User runs an agent in the benchmark.
 2. OpenNego scores the run.
 3. OpenNego generates a battle report.
-4. User edits only the strategy prompt.
-5. User reruns against the same or harder NPC profile.
+4. OpenNego converts the battle report into a strategy candidate.
+5. User edits only the strategy prompt.
+6. User reruns against the same or harder NPC profile.
+7. OpenNego compares the before/after battle reports.

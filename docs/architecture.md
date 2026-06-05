@@ -10,7 +10,8 @@ OpenNego is organized around three product layers:
 1. Benchmark: run agent-to-agent negotiation and transaction scenarios, then
    write versioned artifacts.
 2. Training / prompt optimization: turn completed runs into battle reports with
-   trace-grounded lessons and strategy-layer prompt patches.
+   trace-grounded lessons, strategy-layer prompt patches, strategy candidates,
+   and before/after comparison artifacts.
 3. Strategy marketplace: expose curated NPC profiles and sparring suites so
    users can test their agents against repeatable opponent archetypes.
 
@@ -48,6 +49,7 @@ parallel logs.
 - `artifacts.py`: versioned scenario, manifest, trace, metrics, and JSON I/O.
 - `metrics.py`: run-level scoring functions.
 - `learning.py`: battle-report generation and NPC strategy registry parsing.
+- `evolution.py`: strategy candidate and before/after comparison artifacts.
 - `sparring.py`: no-key strategy sparring suite orchestration.
 - `report.py` and `sparring_report.py`: dependency-free static HTML reports.
 - `ports/`: provider-neutral contracts for agents, LLMs, tools, and

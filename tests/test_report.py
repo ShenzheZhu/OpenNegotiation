@@ -1,6 +1,7 @@
 from opennego.report import write_demo_report
 from opennego.runner import run_experiment_config
 from opennego.learning import write_battle_report
+from opennego.evolution import write_strategy_candidate
 
 
 def test_write_demo_report_from_real_market_demo_config(tmp_path):
@@ -41,11 +42,19 @@ def test_write_demo_report_includes_policy_learning_when_report_exists(tmp_path)
         user_role="buyer",
         opponent_profile_id="seller_hardline_anchor_v1",
     )
+    write_strategy_candidate(
+        runs_dir / "battle_report.json",
+        runs_dir / "strategy_candidate.json",
+        parent_strategy_id="buyer_baseline",
+    )
 
     output = write_demo_report(runs_dir, report_path)
     html = output.read_text()
 
     assert "Training / Prompt Optimization" in html
+    assert "Strategy Candidate" in html
+    assert "buyer_baseline-iter-1" in html
+    assert "opennego spar --user-role buyer" in html
     assert "buyer_overpaid_market" in html
     assert "The accepted price $608.00 is more than 5% above the market reference $575.00." in html
     assert 'href="#training"' in html

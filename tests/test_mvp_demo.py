@@ -14,12 +14,16 @@ def test_run_mvp_demo_generates_benchmark_learning_and_report(tmp_path):
     assert summary.benchmark_completed == 3
     assert summary.benchmark_failed == 0
     assert (output_dir / "battle_report.json").exists()
+    assert (output_dir / "strategy_candidate.json").exists()
     assert report_path.exists()
 
     battle_report = json.loads((output_dir / "battle_report.json").read_text())
+    candidate = json.loads((output_dir / "strategy_candidate.json").read_text())
     html = report_path.read_text()
 
     assert battle_report["opponent_profile_id"] == "seller_hardline_anchor_v1"
+    assert candidate["parent_strategy_id"] == "buyer_baseline"
+    assert "buyer_overpaid_market" in candidate["applied_lesson_ids"]
     lesson_ids = {lesson["id"] for lesson in battle_report["lessons"]}
     assert "buyer_overpaid_market" in lesson_ids
     assert "Leaderboard Preview" in html
@@ -48,5 +52,6 @@ def test_mvp_demo_cli_prints_artifact_paths(tmp_path, capsys):
     assert payload["benchmark_completed"] == 3
     assert payload["benchmark_failed"] == 0
     assert payload["battle_report"] == str(output_dir / "battle_report.json")
+    assert payload["strategy_candidate"] == str(output_dir / "strategy_candidate.json")
     assert payload["html_report"] == str(report_path)
     assert report_path.exists()

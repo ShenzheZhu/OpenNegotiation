@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from opennego.evolution import write_strategy_candidate
 from opennego.learning import write_battle_report
 from opennego.report import write_demo_report
 from opennego.runner import RunRecord, run_experiment_config
@@ -19,6 +20,7 @@ class MvpDemoSummary:
     benchmark_failed: int
     learning_input_dir: str
     battle_report: str
+    strategy_candidate: str
     html_report: str
 
 
@@ -37,6 +39,7 @@ def run_mvp_demo(
     summary = run_experiment_config(config_path, output_dir=output)
     learning_run = _select_learning_run(summary.runs, learning_tool_regime)
     battle_report = output / "battle_report.json"
+    strategy_candidate = output / "strategy_candidate.json"
     html_report = (
         Path(report_path)
         if report_path is not None
@@ -49,6 +52,12 @@ def run_mvp_demo(
         user_role=user_role,
         opponent_profile_id=opponent_profile_id,
     )
+    write_strategy_candidate(
+        battle_report,
+        strategy_candidate,
+        parent_strategy_id=f"{user_role}_baseline",
+        iteration=1,
+    )
     write_demo_report(output, html_report)
 
     return MvpDemoSummary(
@@ -58,6 +67,7 @@ def run_mvp_demo(
         benchmark_failed=summary.failed,
         learning_input_dir=learning_run.output_dir,
         battle_report=str(battle_report),
+        strategy_candidate=str(strategy_candidate),
         html_report=str(html_report),
     )
 

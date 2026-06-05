@@ -12,6 +12,11 @@ from pathlib import Path
 from opennego.artifacts import to_jsonable, write_run_artifacts
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.environment import NegotiationEnvironment
+from opennego.evolution import (
+    StrategyEvolutionError,
+    write_strategy_candidate,
+    write_strategy_comparison,
+)
 from opennego.learning import (
     DEFAULT_NPC_REGISTRY_PATH,
     registry_listing,
@@ -46,6 +51,10 @@ def main(argv: list[str] | None = None) -> int:
         return _strategies_main(argv[1:])
     if argv and argv[0] == "learn":
         return _learn_main(argv[1:])
+    if argv and argv[0] == "evolve":
+        return _evolve_main(argv[1:])
+    if argv and argv[0] == "compare":
+        return _compare_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
         return _mvp_demo_main(argv[1:])
     if argv and argv[0] == "spar":
@@ -233,6 +242,83 @@ def _learn_main(argv: list[str] | None = None) -> int:
         return 2
 
     print(json.dumps({"battle_report": str(output_path)}, indent=2))
+    return 0
+
+
+def _evolve_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Generate a versioned strategy candidate from a battle report."
+    )
+    parser.add_argument(
+        "--battle-report",
+        required=True,
+        help="Path to a policy-learning battle_report.json artifact.",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to write the strategy candidate JSON.",
+    )
+    parser.add_argument(
+        "--parent-strategy-id",
+        default="user_strategy_v0",
+        help="Stable id of the strategy being patched.",
+    )
+    parser.add_argument(
+        "--iteration",
+        type=int,
+        default=1,
+        help="Positive strategy iteration number.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        output_path = write_strategy_candidate(
+            args.battle_report,
+            args.output,
+            parent_strategy_id=args.parent_strategy_id,
+            iteration=args.iteration,
+        )
+    except (OSError, StrategyEvolutionError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps({"strategy_candidate": str(output_path)}, indent=2))
+    return 0
+
+
+def _compare_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Compare two policy-learning battle reports."
+    )
+    parser.add_argument(
+        "--before",
+        required=True,
+        help="Battle report before applying a strategy candidate.",
+    )
+    parser.add_argument(
+        "--after",
+        required=True,
+        help="Battle report after rerunning with a strategy candidate.",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to write the strategy comparison JSON.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        output_path = write_strategy_comparison(
+            args.before,
+            args.after,
+            args.output,
+        )
+    except (OSError, StrategyEvolutionError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps({"strategy_comparison": str(output_path)}, indent=2))
     return 0
 
 
