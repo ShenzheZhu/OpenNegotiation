@@ -112,9 +112,8 @@ Its current execution mode is `profile_backed_fixture_sparring`: deterministic
 local user agents spar against deterministic counterparties instantiated from
 the selected NPC profiles. The selected profile drives the counterparty actor,
 benchmark trace, battle-report opponent archetype, expected traps, failure
-modes, and strategy patch. This is not yet a hosted marketplace or a
-provider-backed model opponent, but it gives users a reproducible curriculum
-surface for prompt optimization.
+modes, and strategy patch. This is not yet a hosted marketplace, but it gives
+users a reproducible curriculum surface for prompt optimization.
 
 If no `--opponent-profile` is provided, the command selects every registry
 profile with the opposite role from `--user-role`. A buyer-owned user agent
@@ -140,7 +139,18 @@ run. Both use the same environment loop, traces, metrics, battle reports, and
 sparring summary contracts.
 
 The profile counterparty can also be swapped from deterministic profile-backed
-logic to a provider-backed profile agent through Python API:
+logic to a provider-backed profile agent through the CLI:
+
+```bash
+OPENROUTER_API_KEY=... opennego spar \
+  --output-dir /tmp/my-agent-live-npc-sparring \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --opponent-llm-model openrouter/openai/gpt-4o-mini \
+  --opponent-llm-max-tokens 256
+```
+
+`--opponent-llm-model` requires at least one explicit `--opponent-profile` to
+bound live provider calls. Python API callers can wire the same path directly:
 
 ```python
 summary = run_sparring_suite(

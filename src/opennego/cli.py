@@ -16,7 +16,7 @@ from opennego.agent_loader import (
     parse_agent_params,
 )
 from opennego.artifacts import to_jsonable, write_run_artifacts
-from opennego.agents import ScriptedSeller, ToolAwareBuyer
+from opennego.agents import ScriptedSeller, ToolAwareBuyer, make_profile_llm_agent
 from opennego.environment import NegotiationEnvironment
 from opennego.evolution import (
     StrategyEvolutionError,
@@ -611,6 +611,31 @@ def _spar_main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
+        "--opponent-llm-model",
+        help=(
+            "Use a LiteLLM-backed profile NPC for the selected opponent "
+            "profile(s). Requires explicit --opponent-profile."
+        ),
+    )
+    parser.add_argument(
+        "--opponent-llm-tool-policy",
+        default="available",
+        choices=("none", "available"),
+        help="Tool policy for --opponent-llm-model profile NPCs.",
+    )
+    parser.add_argument(
+        "--opponent-llm-temperature",
+        type=float,
+        default=0.0,
+        help="Temperature for --opponent-llm-model profile NPCs.",
+    )
+    parser.add_argument(
+        "--opponent-llm-max-tokens",
+        type=int,
+        default=512,
+        help="Max tokens for --opponent-llm-model profile NPC calls.",
+    )
+    parser.add_argument(
         "--learning-tool-regime",
         default="no_tools",
         help="Completed run tool regime to diagnose for policy learning.",
@@ -639,6 +664,24 @@ def _spar_main(argv: list[str] | None = None) -> int:
             raise AgentLoadError(
                 "--user-agent-kind requires --user-agent-factory"
             )
+        opponent_agent_factory = None
+        opponent_agent_kind = None
+        if args.opponent_llm_model:
+            if not args.opponent_profiles:
+                raise AgentLoadError(
+                    "--opponent-llm-model requires at least one "
+                    "--opponent-profile to bound live provider calls"
+                )
+            preflight_error = _run_models_preflight_error((args.opponent_llm_model,))
+            if preflight_error is not None:
+                raise AgentLoadError(preflight_error)
+            opponent_agent_factory = _profile_litellm_opponent_factory(
+                model=args.opponent_llm_model,
+                tool_policy=args.opponent_llm_tool_policy,
+                temperature=args.opponent_llm_temperature,
+                max_tokens=args.opponent_llm_max_tokens,
+            )
+            opponent_agent_kind = f"litellm_profile_npc:{args.opponent_llm_model}"
         summary = run_sparring_suite(
             output_dir=args.output_dir,
             config_path=args.config,
@@ -648,6 +691,8 @@ def _spar_main(argv: list[str] | None = None) -> int:
             user_strategy_path=args.user_strategy,
             user_agent_factory=user_agent_factory,
             user_agent_kind=user_agent_kind,
+            opponent_agent_factory=opponent_agent_factory,
+            opponent_agent_kind=opponent_agent_kind,
             learning_tool_regime=args.learning_tool_regime,
             fail_fast=not args.no_fail_fast,
         )
@@ -671,6 +716,28 @@ def _spar_main(argv: list[str] | None = None) -> int:
         payload["html_report"] = str(html_report)
     print(json.dumps(payload, indent=2))
     return 0 if summary.failed == 0 else 1
+
+
+def _profile_litellm_opponent_factory(
+    *,
+    model: str,
+    tool_policy: str,
+    temperature: float,
+    max_tokens: int | None,
+):
+    llm = make_litellm_gateway()
+
+    def factory(profile):
+        return make_profile_llm_agent(
+            profile=profile,
+            llm=llm,
+            model=model,
+            tool_policy=tool_policy,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+    return factory
 
 
 def _run_models_main(argv: list[str] | None = None) -> int:
