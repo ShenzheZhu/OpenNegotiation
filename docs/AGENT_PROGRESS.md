@@ -33,6 +33,10 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   marketplace.
 - Added `opennego mvp-demo` as the one-command no-key flow for generating the
   benchmark artifacts, battle report, and MVP HTML page.
+- Added `opennego spar` as a no-key strategy sparring suite that runs selected
+  marketplace NPC profiles through fixture-backed battle-report diagnostics.
+- Added `opennego spar --report` for rendering a compact static HTML report
+  from `sparring_suite.json`.
 
 ### Current Live-Run State
 
@@ -51,6 +55,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   report is refreshed from real provider artifacts.
 - Policy-learning / prompt-optimization scope is tracked separately in
   GitHub issue `#20` and branch `codex/policy-learning-mvp-20`.
+- Strategy sparring suite scope is tracked in GitHub issue `#22` and branch
+  `codex/strategy-sparring-22`.
 
 ### Verification
 
