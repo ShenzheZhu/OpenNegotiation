@@ -100,6 +100,8 @@ Transaction events use `action_type: "transaction"` and preserve a
 - shipping, tax, escrow, payment, and seller fee fields
 - return, reputation, and aggregate risk fields
 - optional `failure_reason`
+- optional metadata with computed buyer/seller settlement values and violated
+  guard fields when deterministic settlement validation fails
 
 ## Metrics
 
@@ -133,6 +135,10 @@ Current core metrics:
 - `transaction_shipping_cost`
 - `transaction_tax`
 - `transaction_fees`
+
+Guard-failed transactions keep `outcome: "deal"` at the negotiation level while
+recording `failed_transaction_rate: 1.0` and a transaction failure reason such as
+`buyer_total_cost_exceeded` or `seller_net_revenue_below_floor`.
 
 ## Compatibility
 

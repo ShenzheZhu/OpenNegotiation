@@ -95,6 +95,10 @@ Supported transaction config in the first runner slice:
 - `seller_fee_rate`: seller-side platform fee rate.
 - `return_risk` and `reputation_risk`: deterministic risk placeholders.
 - `payment_success`: when false, records a failed transaction outcome.
+- `max_buyer_total_cost`: optional buyer all-in cost cap for settlement
+  validation.
+- `min_seller_net_revenue`: optional seller net revenue floor for settlement
+  validation.
 
 ## Minimal Example
 
@@ -114,7 +118,9 @@ Supported transaction config in the first runner slice:
     "payment_fee_rate": 0.02,
     "seller_fee_rate": 0.05,
     "return_risk": 0.03,
-    "reputation_risk": 0.02
+    "reputation_risk": 0.02,
+    "max_buyer_total_cost": 900.0,
+    "min_seller_net_revenue": 700.0
   },
   "seeds": [7],
   "agents": {

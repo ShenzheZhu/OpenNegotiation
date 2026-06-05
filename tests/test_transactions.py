@@ -1,9 +1,12 @@
+import json
+
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
-from opennego.artifacts import load_metric_report, load_trace
+from opennego.artifacts import load_manifest, load_metric_report, load_trace
 from opennego.environment import NegotiationEnvironment
 from opennego.ports import TransactionRequest
 from opennego.schema import ActionType, Product, Scenario
 from opennego.tools import MarketComparable, MarketPriceTool
+from opennego.runner import run_experiment_config
 from opennego.transactions import FixtureTransactionSimulator
 
 
@@ -81,6 +84,60 @@ def test_fixture_transaction_simulator_computes_costs():
     assert outcome.risk_exposure == 0.05
 
 
+def test_fixture_transaction_simulator_fails_buyer_total_cap():
+    simulator = FixtureTransactionSimulator(
+        shipping_cost=18.0,
+        tax_rate=0.08,
+        escrow_fee=4.0,
+        payment_fee_rate=0.02,
+        seller_fee_rate=0.05,
+        max_buyer_total_cost=850.0,
+    )
+
+    outcome = simulator.settle(
+        TransactionRequest(
+            scenario=make_scenario(),
+            negotiated_price=760.0,
+            accepting_role="seller",
+        )
+    )
+
+    assert outcome.status == "failed"
+    assert outcome.failure_reason == "buyer_total_cost_exceeded"
+    assert outcome.buyer_total_cost == 0.0
+    assert outcome.metadata["computed_buyer_total_cost"] == 858.0
+    assert outcome.metadata["computed_seller_net_revenue"] == 718.0
+    assert outcome.metadata["max_buyer_total_cost"] == 850.0
+    assert outcome.metadata["violated_guard"] == "max_buyer_total_cost"
+
+
+def test_fixture_transaction_simulator_fails_seller_net_floor():
+    simulator = FixtureTransactionSimulator(
+        shipping_cost=18.0,
+        tax_rate=0.08,
+        escrow_fee=4.0,
+        payment_fee_rate=0.02,
+        seller_fee_rate=0.05,
+        min_seller_net_revenue=720.0,
+    )
+
+    outcome = simulator.settle(
+        TransactionRequest(
+            scenario=make_scenario(),
+            negotiated_price=760.0,
+            accepting_role="seller",
+        )
+    )
+
+    assert outcome.status == "failed"
+    assert outcome.failure_reason == "seller_net_revenue_below_floor"
+    assert outcome.seller_net_revenue == 0.0
+    assert outcome.metadata["computed_buyer_total_cost"] == 858.0
+    assert outcome.metadata["computed_seller_net_revenue"] == 718.0
+    assert outcome.metadata["min_seller_net_revenue"] == 720.0
+    assert outcome.metadata["violated_guard"] == "min_seller_net_revenue"
+
+
 def test_scripted_deal_appends_transaction_event_and_metrics():
     env = NegotiationEnvironment(
         scenario=make_scenario(),
@@ -123,6 +180,8 @@ def test_failed_transaction_is_distinct_from_negotiated_deal():
     assert result.metrics["failed_transaction_rate"] == 1.0
     assert result.metrics["buyer_total_transaction_cost"] == 0.0
     assert result.metrics["seller_net_transaction_revenue"] == 0.0
+    assert result.transaction.metadata["computed_buyer_total_cost"] == 858.0
+    assert result.transaction.metadata["computed_seller_net_revenue"] == 718.0
 
 
 def test_transaction_artifacts_round_trip(tmp_path):
@@ -150,3 +209,76 @@ def test_transaction_artifacts_round_trip(tmp_path):
     assert trace[-1].transaction is not None
     assert trace[-1].transaction.buyer_total_cost == 858.0
     assert metrics.metrics["seller_net_transaction_revenue"] == 718.0
+
+
+def test_runner_transaction_guard_config_records_failed_settlement(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = tmp_path / "transaction_guard.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "opennego.experiment.v1",
+                "name": "transaction_guard",
+                "output_dir": str(output_dir),
+                "resume": False,
+                "fail_fast": True,
+                "seeds": [5],
+                "agents": {
+                    "buyer": {"kind": "tool_aware_buyer"},
+                    "seller": {"kind": "scripted_seller"},
+                },
+                "transaction": {
+                    "kind": "fixture",
+                    "enabled": True,
+                    "shipping_cost": 18.0,
+                    "tax_rate": 0.08,
+                    "escrow_fee": 4.0,
+                    "payment_fee_rate": 0.02,
+                    "seller_fee_rate": 0.05,
+                    "max_buyer_total_cost": 850.0,
+                    "min_seller_net_revenue": 700.0,
+                },
+                "scenarios": [
+                    {
+                        "id": "camera_001",
+                        "products_file": "examples/data/products.json",
+                        "product_index": 0,
+                        "max_turns": 8,
+                    }
+                ],
+                "tool_regimes": [
+                    {
+                        "id": "buyer_private_market_search",
+                        "tools": [
+                            {
+                                "name": "market_price_search",
+                                "kind": "market_price",
+                                "source": "examples/data/market_comps.json",
+                                "visibility": "buyer_private",
+                            }
+                        ],
+                    }
+                ],
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+
+    summary = run_experiment_config(config_path)
+    run_dir = (
+        output_dir
+        / "transaction_guard-camera_001-buyer_private_market_search-seed-5"
+    )
+    manifest = load_manifest(run_dir / "manifest.json")
+    trace = load_trace(run_dir / "trace.jsonl")
+    metrics = load_metric_report(run_dir / "metrics.json")
+
+    assert summary.completed == 1
+    assert manifest.metadata["transaction"]["max_buyer_total_cost"] == 850.0
+    assert manifest.metadata["transaction"]["min_seller_net_revenue"] == 700.0
+    assert trace[-1].transaction is not None
+    assert trace[-1].transaction.status == "failed"
+    assert trace[-1].transaction.failure_reason == "buyer_total_cost_exceeded"
+    assert trace[-1].transaction.metadata["computed_buyer_total_cost"] == 858.0
+    assert metrics.metrics["failed_transaction_rate"] == 1.0

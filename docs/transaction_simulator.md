@@ -20,6 +20,10 @@ real payment, escrow, shipping, tax, or marketplace APIs.
 - `return_risk`: deterministic return-risk placeholder.
 - `reputation_risk`: deterministic counterparty/reputation-risk placeholder.
 - `payment_success`: when false, the transaction is recorded as failed.
+- `max_buyer_total_cost`: optional all-in buyer cost cap. Settlement fails if
+  computed buyer total cost exceeds this value.
+- `min_seller_net_revenue`: optional seller net revenue floor. Settlement fails
+  if computed seller net revenue is below this value.
 
 For a completed transaction:
 
@@ -32,6 +36,18 @@ risk_exposure = return_risk + reputation_risk
 For a failed transaction, buyer cost and seller revenue are recorded as `0.0`,
 while the failed transaction still preserves the computed costs, fees, risks,
 and `failure_reason` for audit.
+
+Settlement guard failures use deterministic reasons:
+
+- `buyer_total_cost_exceeded`
+- `seller_net_revenue_below_floor`
+
+The failed transaction metadata records:
+
+- `computed_buyer_total_cost`
+- `computed_seller_net_revenue`
+- the configured guard values
+- `violated_guard`
 
 ## Trace Contract
 
