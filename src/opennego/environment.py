@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Mapping
 
 from .metrics import compute_metrics
@@ -17,6 +18,24 @@ from .schema import (
 )
 
 
+@dataclass(frozen=True)
+class ToolRuntimeConfig:
+    """Runtime access policy for one tool."""
+
+    name: str
+    roles: tuple[Role, ...] = (Role.BUYER, Role.SELLER)
+    visibility: str = "private"
+    fail_fast: bool = False
+
+    def __post_init__(self) -> None:
+        roles = tuple(Role(role) for role in self.roles)
+        if not roles:
+            raise ValueError("tool runtime config requires at least one role")
+        object.__setattr__(self, "roles", roles)
+        if self.visibility not in {"private", "public"}:
+            raise ValueError("tool visibility must be 'private' or 'public'")
+
+
 class NegotiationEnvironment:
     """Runs a two-party negotiation while preserving private tool traces."""
 
@@ -26,6 +45,7 @@ class NegotiationEnvironment:
         buyer: AgentPort,
         seller: AgentPort,
         tools: tuple[ToolPort, ...] = (),
+        tool_configs: tuple[ToolRuntimeConfig, ...] | None = None,
     ) -> None:
         if buyer.role != Role.BUYER:
             raise ValueError("buyer agent must have role=Role.BUYER")
@@ -35,6 +55,7 @@ class NegotiationEnvironment:
         self.buyer = buyer
         self.seller = seller
         self.tools = {tool.name: tool for tool in tools}
+        self.tool_configs = self._normalize_tool_configs(tool_configs)
         self.events: list[TranscriptEvent] = []
         self._latest_offer_role: Role | None = None
         self._latest_offer_price: float | None = None
@@ -74,7 +95,11 @@ class NegotiationEnvironment:
         return self._result("timeout", None, public_turns)
 
     def _context_for(self, role: Role) -> AgentContext:
-        visible_events = tuple(event for event in self.events if not event.private or event.role == role)
+        visible_events = tuple(
+            event
+            for event in self.events
+            if not event.private or event.role == role
+        )
         private_state = {}
         if role == Role.BUYER:
             private_state["budget"] = self.scenario.buyer_budget
@@ -84,28 +109,21 @@ class NegotiationEnvironment:
             scenario=self.scenario,
             role=role,
             transcript=visible_events,
-            available_tools=tuple(self.tools.keys()),
+            available_tools=self._available_tools_for(role),
             private_state=private_state,
         )
 
     def _event_from_action(
         self,
         turn: int,
-        actor: NegotiationAgent,
+        actor: AgentPort,
         action: AgentAction,
         context: AgentContext,
     ) -> TranscriptEvent:
         if action.type == ActionType.TOOL_CALL:
             if action.tool_call is None:
                 raise ValueError("tool_call action requires a ToolCall payload")
-            tool = self.tools.get(action.tool_call.name)
-            if tool is None:
-                result: Mapping[str, object] = {
-                    "ok": False,
-                    "error": f"unknown tool: {action.tool_call.name}",
-                }
-            else:
-                result = tool.call(action.tool_call.arguments, context)
+            result, private = self._execute_tool_call(actor, action, context)
             return TranscriptEvent(
                 turn=turn,
                 role=actor.role,
@@ -114,7 +132,7 @@ class NegotiationEnvironment:
                 content=action.content,
                 tool_call=action.tool_call,
                 tool_result=result,
-                private=True,
+                private=private,
             )
 
         return TranscriptEvent(
@@ -147,3 +165,127 @@ class NegotiationEnvironment:
             completed_turns=completed_turns,
             metrics=metrics,
         )
+
+    def _normalize_tool_configs(
+        self,
+        tool_configs: tuple[ToolRuntimeConfig, ...] | None,
+    ) -> dict[str, ToolRuntimeConfig]:
+        if tool_configs is None:
+            return {
+                name: ToolRuntimeConfig(name=name)
+                for name in self.tools
+            }
+        configs = {config.name: config for config in tool_configs}
+        missing_configs = set(self.tools) - set(configs)
+        if missing_configs:
+            raise ValueError(
+                f"missing tool runtime config for: {sorted(missing_configs)}"
+            )
+        unknown_configs = set(configs) - set(self.tools)
+        if unknown_configs:
+            raise ValueError(
+                "tool runtime config references unknown tools: "
+                f"{sorted(unknown_configs)}"
+            )
+        return configs
+
+    def _available_tools_for(self, role: Role) -> tuple[str, ...]:
+        return tuple(
+            name
+            for name, config in self.tool_configs.items()
+            if role in config.roles
+        )
+
+    def _execute_tool_call(
+        self,
+        actor: AgentPort,
+        action: AgentAction,
+        context: AgentContext,
+    ) -> tuple[Mapping[str, object], bool]:
+        assert action.tool_call is not None
+        tool_name = action.tool_call.name
+        config = self.tool_configs.get(tool_name)
+        private = True if config is None else config.visibility == "private"
+        if config is None or tool_name not in self.tools:
+            return (
+                self._tool_error_result(
+                    tool_name=tool_name,
+                    arguments=action.tool_call.arguments,
+                    error=f"unknown tool: {tool_name}",
+                    visibility="private",
+                ),
+                True,
+            )
+        if actor.role not in config.roles:
+            return (
+                self._tool_error_result(
+                    tool_name=tool_name,
+                    arguments=action.tool_call.arguments,
+                    error=f"tool {tool_name} is not available to role {actor.role.value}",
+                    visibility=config.visibility,
+                ),
+                private,
+            )
+
+        try:
+            raw_result = self.tools[tool_name].call(action.tool_call.arguments, context)
+        except Exception as exc:
+            if config.fail_fast:
+                raise
+            return (
+                self._tool_error_result(
+                    tool_name=tool_name,
+                    arguments=action.tool_call.arguments,
+                    error=str(exc),
+                    visibility=config.visibility,
+                ),
+                private,
+            )
+        return (
+            self._tool_result_envelope(
+                tool_name=tool_name,
+                arguments=action.tool_call.arguments,
+                visibility=config.visibility,
+                raw_result=raw_result,
+            ),
+            private,
+        )
+
+    def _tool_result_envelope(
+        self,
+        *,
+        tool_name: str,
+        arguments: Mapping[str, object],
+        visibility: str,
+        raw_result: Mapping[str, object],
+    ) -> Mapping[str, object]:
+        result = dict(raw_result)
+        result.setdefault("ok", True)
+        result["tool_name"] = tool_name
+        result["arguments"] = dict(arguments)
+        result["visibility"] = visibility
+        result.setdefault("provenance", [])
+        result.setdefault("latency_ms", None)
+        result.setdefault("cost_usd", None)
+        if result.get("ok") is False:
+            result.setdefault("error", "tool call failed")
+        return result
+
+    def _tool_error_result(
+        self,
+        *,
+        tool_name: str,
+        arguments: Mapping[str, object],
+        error: str,
+        visibility: str,
+    ) -> Mapping[str, object]:
+        return {
+            "ok": False,
+            "tool_name": tool_name,
+            "arguments": dict(arguments),
+            "visibility": visibility,
+            "provenance": [],
+            "latency_ms": None,
+            "cost_usd": None,
+            "error": error,
+        }

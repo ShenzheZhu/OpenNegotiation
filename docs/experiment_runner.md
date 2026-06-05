@@ -39,6 +39,25 @@ Supported tool kinds in the first runner slice:
 
 - `market_price` with `name: market_price_search`
 
+Supported market-price tool modes:
+
+- `clean`: use fixture prices as-is.
+- `noisy`: deterministically perturb returned prices.
+- `stale`: preserve prices but mark evidence with `stale_as_of` provenance.
+- `adversarial`: inflate fixture prices with `adversarial_multiplier`.
+- `failure`: return a structured tool failure instead of evidence.
+
+Supported visibility shorthands:
+
+- `buyer_private`: only the buyer can call the tool; result is private.
+- `seller_private`: only the seller can call the tool; result is private.
+- `symmetric_private`: both roles can call the tool; result is private.
+- `shared_public` or `symmetric_public`: both roles can call the tool; result is
+  visible in both transcripts.
+
+Tool specs may also provide explicit `roles`, for example
+`"roles": ["buyer", "seller"]`.
+
 ## Minimal Example
 
 ```json
@@ -70,7 +89,8 @@ Supported tool kinds in the first runner slice:
           "name": "market_price_search",
           "kind": "market_price",
           "source": "examples/data/market_comps.json",
-          "visibility": "buyer_private"
+          "visibility": "buyer_private",
+          "mode": "clean"
         }
       ]
     }
@@ -106,6 +126,7 @@ runs/no_key_smoke/
     scenario.json
     trace.jsonl
     metrics.json
+  ...
 ```
 
 A run is considered complete for resume only when all four artifact files exist
