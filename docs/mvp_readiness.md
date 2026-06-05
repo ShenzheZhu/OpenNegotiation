@@ -8,10 +8,9 @@ architecture, and tests.
 ## Summary
 
 No-key MVP development is implemented and locally verified on the current
-stacked branch set. It is not fully shipped because the PR stack is still draft
-and not merged to `main`. Live five-model provider execution is also not
-verified in this environment because provider API keys are not present in shell
-environment variables.
+stacked branch set. A small live five-model OpenRouter run is also verified
+after fixing the strict JSON-schema response format used by LLM agents. It is
+not fully shipped until the stacked PRs are merged to `main`.
 
 ## Website / Demo Surfaces
 
@@ -34,8 +33,8 @@ Browser smoke evidence:
 Not complete:
 
 - There is no hosted website in this repository.
-- Live provider attempt status can render, but a fresh live five-model run was
-  not executed in this environment.
+- The website/demo surface is currently a generated local static report, not a
+  hosted public site.
 
 ## Architecture
 
@@ -71,25 +70,32 @@ Verified commands:
 pytest -q
 PYTHONPYCACHEPREFIX=/tmp/opennego-pycache PYTHONPATH=src python3 -m compileall -q src tests
 git diff --check
+opennego run-models --output-dir /tmp/opennego-live-five-fixed-20260605 --max-turns 3 --max-tokens 220
 secret-pattern scan for common provider key prefixes
 ```
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 55 passed.
+- `pytest -q`: 57 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Secret-pattern scan: no matches.
 
 Live provider status:
 
-- `OPENROUTER_API_KEY`: unset.
-- `OPENAI_API_KEY`: unset.
-- `ANTHROPIC_API_KEY`: unset.
-- `GEMINI_API_KEY`: unset.
-- `GOOGLE_API_KEY`: unset.
+- OpenRouter credentials were supplied from local Keychain at command time.
+- No API keys were written to the repository or generated live artifacts.
+- Live five-model run: 5 completed, 0 failed.
 
-Therefore live provider execution is not verified in this audit.
+Live run summary:
+
+| Model | Status | Outcome | Deal price | LLM calls | Total tokens | Cost USD |
+| --- | --- | --- | --- | --- | --- | --- |
+| `openrouter/openai/gpt-5.4-pro` | completed | timeout | - | 4 | 3500 | 0.237 |
+| `openrouter/anthropic/claude-opus-4.8` | completed | timeout | - | 2 | 2937 | 0.019025 |
+| `openrouter/google/gemini-3.1-pro-preview` | completed | timeout | - | 4 | 3642 | 0.015924 |
+| `openrouter/x-ai/grok-4.3` | completed | deal | 550.0 | 1 | 1011 | 0.0015356 |
+| `openrouter/qwen/qwen3-235b-a22b` | completed | timeout | - | 4 | 7220 | 0.009732 |
 
 ## PR Stack Status
 
@@ -99,7 +105,8 @@ Current stack:
 2. `#21`: policy-learning MVP and NPC registry, draft, stacked on `#19`.
 3. `#23`: no-key strategy sparring suite, draft, stacked on `#21`.
 4. `#25`: sparring suite HTML report, draft, stacked on `#23`.
-5. `#26`: MVP readiness audit and architecture handoff, stacked on `#25`.
+5. `#27`: MVP readiness audit, live-model schema fix, and architecture
+   handoff, stacked on `#25`.
 
 Readiness conclusion:
 
@@ -107,5 +114,6 @@ Readiness conclusion:
 - Website/demo surfaces: implemented as static local reports and verified.
 - Architecture: documented and guarded by tests.
 - Tests: passing locally.
-- Shipped status: not complete until the draft PR stack is reviewed, merged, and
-  any desired live provider demo is run with credentials supplied safely.
+- Live provider smoke: verified with five OpenRouter models.
+- Shipped status: not complete until the draft PR stack is merged and any
+  hosted/public demo target is selected.

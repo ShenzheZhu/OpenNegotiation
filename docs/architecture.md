@@ -91,4 +91,6 @@ the base sandbox protocol.
   profile-backed model opponents.
 - Hosted marketplace, live marketplace collection, and provider-backed coaching
   are out of scope for the no-key MVP.
-- Live five-model demos require provider credentials in the shell environment.
+- Live five-model demos require provider credentials supplied through
+  environment variables, Keychain, or another local secret manager. Credentials
+  must not be committed to the repository or generated artifacts.

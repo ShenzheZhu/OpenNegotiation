@@ -47,7 +47,7 @@ Confirm:
   `docs/agent_integration.md`.
 - Make clear that `configs/no_key_smoke.yaml` is fixture-backed, not live market
   evidence.
-- Ask live-model users to keep provider keys in environment variables or a
-  LiteLLM proxy config.
+- Ask live-model users to keep provider keys in environment variables,
+  Keychain, another local secret manager, or a LiteLLM proxy config.
 - Do not accept benchmark result submissions without `manifest.json`,
   `trace.jsonl`, and `metrics.json`.

@@ -120,6 +120,65 @@ def test_fake_llm_covers_structured_actions(response, expected_type):
         assert action.tool_call.name == "market_price_search"
 
 
+def test_llm_action_response_format_is_strict_provider_schema():
+    response_format = llm_agents.LLM_ACTION_RESPONSE_FORMAT
+
+    assert response_format["json_schema"]["strict"] is True
+    schema = response_format["json_schema"]["schema"]
+    object_schemas = _collect_object_schemas(schema)
+    assert object_schemas
+    assert all(item.get("additionalProperties") is False for item in object_schemas)
+
+    arguments_schema = schema["properties"]["tool"]["properties"]["arguments"]
+    assert arguments_schema["additionalProperties"] is False
+    assert set(arguments_schema["properties"]) == {"query", "condition", "limit"}
+
+
+def test_tool_action_parser_drops_null_structured_output_arguments():
+    action = llm_agents.parse_llm_agent_action(
+        json.dumps(
+            {
+                "type": "tool_call",
+                "content": None,
+                "price": None,
+                "note": None,
+                "tool": {
+                    "name": "market_price_search",
+                    "arguments": {
+                        "query": "Sony Alpha a6400 Mirrorless Camera Body",
+                        "condition": None,
+                        "limit": None,
+                    },
+                },
+            }
+        ),
+        allowed_tools=("market_price_search",),
+    )
+
+    assert action.type == ActionType.TOOL_CALL
+    assert action.content == ""
+    assert action.tool_call is not None
+    assert action.tool_call.arguments == {
+        "query": "Sony Alpha a6400 Mirrorless Camera Body"
+    }
+
+
+def _collect_object_schemas(schema):
+    found = []
+    if isinstance(schema, dict):
+        schema_type = schema.get("type")
+        if schema_type == "object" or (
+            isinstance(schema_type, list) and "object" in schema_type
+        ):
+            found.append(schema)
+        for value in schema.values():
+            found.extend(_collect_object_schemas(value))
+    elif isinstance(schema, list):
+        for item in schema:
+            found.extend(_collect_object_schemas(item))
+    return found
+
+
 def test_no_tool_llm_agent_repairs_disallowed_tool_call_even_when_tools_exist():
     fake_llm = FakeLLM(
         [
