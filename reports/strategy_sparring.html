@@ -1,0 +1,112 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenNego Strategy Sparring</title>
+  <style>
+    :root {
+      --bg: #f6f3ec;
+      --ink: #17201f;
+      --muted: #66706d;
+      --line: #d8ded9;
+      --card: #ffffff;
+      --accent: #256f67;
+      --accent-2: #ad5a2a;
+      --danger: #a33d35;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 40px; }
+    .hero {
+      display: grid;
+      gap: 16px;
+      padding: 36px 0 24px;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow { margin: 0; color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0; }
+    h1 { margin: 0; font-size: 58px; line-height: .98; max-width: 920px; }
+    h2 { margin: 0 0 12px; font-size: 26px; }
+    h3 { margin: 0 0 8px; font-size: 17px; }
+    p { margin: 0; }
+    .subtitle { max-width: 780px; color: var(--muted); font-size: 18px; }
+    .section { padding: 24px 0; border-bottom: 1px solid var(--line); }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; font-weight: 700; }
+    .value { font-size: 24px; font-weight: 800; }
+    .pill { display: inline-block; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 12px; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .link { display: inline-block; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--accent); font-weight: 700; text-decoration: none; }
+    .muted { color: var(--muted); }
+    .score { color: var(--accent); font-weight: 800; }
+    .failed { color: var(--danger); font-weight: 800; }
+    .table-scroll { width: 100%; overflow-x: auto; }
+    table { width: 100%; min-width: 860px; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+      .shell { width: min(100% - 24px, 1120px); }
+      h1 { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">Strategy marketplace training loop</p>
+      <h1>OpenNego strategy sparring report</h1>
+      <p class="subtitle">A no-key curriculum view over marketplace NPC profiles, benchmark artifacts, and policy-learning battle reports.</p>
+      <p><span class="pill">fixture_profile_diagnosis</span> <span class="pill">schema opennego.sparring_suite.v1</span></p>
+      <p class="links"><a class="link" href="../">Dashboard</a><a class="link" href="real_market_benchmark.html">Benchmark report</a></p>
+    </section>
+
+    <section class="section">
+      <div class="grid">
+        <div class="card"><div class="label">Profiles</div><div class="value">2</div></div>
+        <div class="card"><div class="label">Completed</div><div class="value">2</div></div>
+        <div class="card"><div class="label">Failed</div><div class="value">0</div></div>
+        <div class="card"><div class="label">User Role</div><div class="value">buyer</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>NPC Profile Results</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Profile</th>
+              <th>Difficulty</th>
+              <th>Status</th>
+              <th>Outcome</th>
+              <th>Policy Score</th>
+              <th>Failure Modes</th>
+              <th>Lessons</th>
+              <th>Battle Report</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Hardline Anchor Seller</strong><br><code>seller_hardline_anchor_v1</code></td><td>medium</td><td class="score">completed</td><td>deal at $608.00</td><td><span class="score">85.0</span></td><td>price_discipline</td><td>buyer_overpaid_market</td><td><code>battle_report.json</code></td></tr>
+<tr><td><strong>Hidden Fees Seller</strong><br><code>seller_hidden_fees_v1</code></td><td>hard</td><td class="score">completed</td><td>deal at $608.00</td><td><span class="score">85.0</span></td><td>price_discipline</td><td>buyer_overpaid_market</td><td><code>battle_report.json</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Boundary</h2>
+      <p class="muted">This report is generated from local sparring artifacts. In the current fixture_profile_diagnosis mode, deterministic local agents create the benchmark traces while strategy profiles provide opponent archetypes and expected traps for prompt optimization.</p>
+    </section>
+  </main>
+</body>
+</html>
