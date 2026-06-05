@@ -72,6 +72,15 @@ class BattleReportView:
     suggested_strategy_prompt: str
 
 
+@dataclass(frozen=True)
+class StrategyCandidateView:
+    candidate_id: str
+    parent_strategy_id: str
+    iteration: int
+    applied_lesson_ids: tuple[str, ...]
+    rerun_command: str
+
+
 def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
     """Write a static HTML dashboard for a small benchmark artifact directory."""
 
@@ -80,6 +89,7 @@ def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
         raise ValueError(f"{input_dir}: no benchmark run artifacts found")
     attempts = load_model_attempts(input_dir)
     battle_reports = load_battle_reports(input_dir)
+    strategy_candidates = load_strategy_candidates(input_dir)
     strategy_profiles = load_strategy_profiles()
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -87,6 +97,7 @@ def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
         runs,
         attempts=attempts,
         battle_reports=battle_reports,
+        strategy_candidates=strategy_candidates,
         strategy_profiles=strategy_profiles,
     )
     output_path.write_text(
@@ -154,6 +165,23 @@ def load_battle_reports(input_dir: str | Path) -> tuple[BattleReportView, ...]:
     return tuple(reports)
 
 
+def load_strategy_candidates(input_dir: str | Path) -> tuple[StrategyCandidateView, ...]:
+    base = Path(input_dir)
+    candidate_paths = sorted(base.glob("strategy_candidate*.json"))
+    candidates = []
+    for path in candidate_paths:
+        try:
+            data = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if (
+            isinstance(data, Mapping)
+            and data.get("schema_version") == "opennego.strategy_evolution.v1"
+        ):
+            candidates.append(_strategy_candidate_from_mapping(data))
+    return tuple(candidates)
+
+
 def load_strategy_profiles(
     registry_path: str | Path = DEFAULT_NPC_REGISTRY_PATH,
 ) -> tuple[StrategyProfile, ...]:
@@ -168,6 +196,7 @@ def render_demo_report(
     *,
     attempts: Sequence[ModelAttempt] = (),
     battle_reports: Sequence[BattleReportView] = (),
+    strategy_candidates: Sequence[StrategyCandidateView] = (),
     strategy_profiles: Sequence[StrategyProfile] = (),
 ) -> str:
     primary = runs[0]
@@ -436,7 +465,7 @@ def render_demo_report(
 
     {_attempt_status_section(attempts)}
 
-    {_policy_learning_section(battle_reports)}
+    {_policy_learning_section(battle_reports, strategy_candidates)}
 
     {_strategy_marketplace_section(strategy_profiles)}
 
@@ -518,10 +547,14 @@ def _training_button(reports: Sequence[BattleReportView]) -> str:
     return '<a class="button" href="#training">Review training advice</a>'
 
 
-def _policy_learning_section(reports: Sequence[BattleReportView]) -> str:
+def _policy_learning_section(
+    reports: Sequence[BattleReportView],
+    candidates: Sequence[StrategyCandidateView],
+) -> str:
     if not reports:
         return ""
     report = reports[0]
+    candidate = candidates[0] if candidates else None
     return f"""
     <section id="training" class="section">
       <div class="section-head">
@@ -542,12 +575,29 @@ def _policy_learning_section(reports: Sequence[BattleReportView]) -> str:
           <h3>Strategy Patch</h3>
           <div class="prompt-patch">{_escape(report.suggested_strategy_prompt)}</div>
         </div>
+        {_strategy_candidate_card(candidate)}
       </div>
       <div class="grid-2" style="margin-top:14px;">
         {_lesson_cards(report.lessons)}
       </div>
     </section>
 """
+
+
+def _strategy_candidate_card(candidate: StrategyCandidateView | None) -> str:
+    if candidate is None:
+        return ""
+    applied = ", ".join(candidate.applied_lesson_ids) or "none"
+    return (
+        '<div class="card">'
+        "<h3>Strategy Candidate</h3>"
+        f"<p class=\"muted\">{_escape(candidate.candidate_id)}</p>"
+        f"<p class=\"muted\">Parent: {_escape(candidate.parent_strategy_id)} "
+        f"iteration {candidate.iteration}</p>"
+        f"<p class=\"muted\">Applied lessons: {_escape(applied)}</p>"
+        f"<div class=\"prompt-patch\">{_escape(candidate.rerun_command)}</div>"
+        "</div>"
+    )
 
 
 def _strategy_marketplace_section(profiles: Sequence[StrategyProfile]) -> str:
@@ -750,6 +800,21 @@ def _battle_report_from_mapping(data: Mapping[str, Any]) -> BattleReportView:
             if isinstance(item, Mapping)
         ),
         suggested_strategy_prompt=str(data.get("suggested_strategy_prompt", "")),
+    )
+
+
+def _strategy_candidate_from_mapping(data: Mapping[str, Any]) -> StrategyCandidateView:
+    evaluation_plan = data.get("evaluation_plan", {})
+    if not isinstance(evaluation_plan, Mapping):
+        evaluation_plan = {}
+    return StrategyCandidateView(
+        candidate_id=str(data.get("candidate_id", "")),
+        parent_strategy_id=str(data.get("parent_strategy_id", "")),
+        iteration=int(data.get("iteration") or 0),
+        applied_lesson_ids=tuple(
+            str(item) for item in data.get("applied_lesson_ids", ())
+        ),
+        rerun_command=str(evaluation_plan.get("rerun_command", "")),
     )
 
 
