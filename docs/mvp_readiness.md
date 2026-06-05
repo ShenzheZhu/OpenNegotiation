@@ -19,7 +19,7 @@ The no-key test suite also includes a shared workflow contract smoke for the
 benchmark -> policy learning -> strategy candidate -> sparring rerun ->
 comparison -> marketplace export loop.
 Benchmark outputs can also be aggregated into a machine-readable leaderboard
-with buyer/seller role-track summaries.
+with participant role-coverage summaries and buyer/seller role-track summaries.
 
 A small live five-model OpenRouter smoke was verified earlier on 2026-06-05.
 It was not rerun for this docs refresh; live provider execution remains an
@@ -147,7 +147,9 @@ Live run summary:
 
 Current state:
 
-- Current `main` includes the backend workflow slices through PR `#54`.
+- Current `main` includes the local backend workflow slices for benchmark,
+  training, marketplace export, transaction guards, offline data, and
+  leaderboard artifacts.
 - Open issue `#29` tracks remaining backend/product loop scale-up work.
 - Open issue `#28` tracks public GitHub Pages hosting and remains blocked by
   repository/private-plan support for Pages.
