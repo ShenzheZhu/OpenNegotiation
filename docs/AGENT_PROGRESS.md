@@ -16,13 +16,15 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added `opennego report` for rendering versioned artifacts into the demo panel.
 - Added `opennego run-models` for a small five-model live demo path.
 - Added no-key tests for model-demo artifact generation with fake LLMs.
+- Selected a high-quality OpenRouter-backed five-model default set for the
+  demo: GPT-5.4 Pro, Claude Opus 4.8, Gemini 3.1 Pro Preview, Grok 4.3, and
+  Qwen3 235B A22B.
 
 ### Current Live-Run State
 
 - Default five-model set is configured through LiteLLM/OpenRouter model IDs.
 - Real provider execution requires optional LiteLLM dependencies and provider
   credentials in environment variables.
-- The current local environment did not have LiteLLM installed when checked.
 - The current local environment did not expose provider API keys through shell
   environment variables when checked.
 

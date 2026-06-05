@@ -73,15 +73,22 @@ opennego report --input-dir /tmp/opennego-five-model-demo --output /tmp/opennego
 ```
 
 The default model set uses LiteLLM OpenRouter model IDs so one provider key can
-cover multiple model families:
+cover multiple frontier and open-weight model families:
 
-- `openrouter/openai/gpt-4o-mini`
-- `openrouter/anthropic/claude-3.5-haiku`
-- `openrouter/google/gemini-2.5-flash-lite`
-- `openrouter/meta-llama/llama-3.3-70b-instruct`
-- `openrouter/mistralai/mistral-small-3.2-24b-instruct`
+- `openrouter/openai/gpt-5.4-pro`
+- `openrouter/anthropic/claude-opus-4.8`
+- `openrouter/google/gemini-3.1-pro-preview`
+- `openrouter/x-ai/grok-4.3`
+- `openrouter/qwen/qwen3-235b-a22b`
 
 This command runs each model as the buyer-side LLM agent against the scripted
 seller on the real-market fixture. It writes the same benchmark artifacts as the
 main runner, so `opennego report` can render the results as a leaderboard
 preview.
+
+This is intentionally a small demo path, not a batch benchmark. For cost and
+latency control, prefer a low turn/token budget during live demos:
+
+```bash
+opennego run-models --output-dir /tmp/opennego-five-model-demo --max-turns 4 --max-tokens 256
+```

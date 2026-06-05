@@ -17,11 +17,11 @@ from opennego.tools import MarketPriceTool
 from opennego.transactions import FixtureTransactionSimulator
 
 DEFAULT_MODEL_DEMO_MODELS: tuple[str, ...] = (
-    "openrouter/openai/gpt-4o-mini",
-    "openrouter/anthropic/claude-3.5-haiku",
-    "openrouter/google/gemini-2.5-flash-lite",
-    "openrouter/meta-llama/llama-3.3-70b-instruct",
-    "openrouter/mistralai/mistral-small-3.2-24b-instruct",
+    "openrouter/openai/gpt-5.4-pro",
+    "openrouter/anthropic/claude-opus-4.8",
+    "openrouter/google/gemini-3.1-pro-preview",
+    "openrouter/x-ai/grok-4.3",
+    "openrouter/qwen/qwen3-235b-a22b",
 )
 
 
