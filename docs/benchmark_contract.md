@@ -217,6 +217,24 @@ records:
 
 The handoff package is ready only when the manifest `status` is `passed`.
 
+## Arena Planning
+
+`opennego arena-plan --participant <id> ... --output <plan.json>` writes
+`opennego.arena_plan.v1`. The plan does not run a benchmark batch. It defines
+the methodology contract for larger reciprocal schedules:
+
+- participants
+- scenario ids and seeds
+- reciprocal buyer/seller matchups for each unordered participant pair
+- required buyer/seller role coverage for every participant
+- deterministic scorecard as the primary implemented ranking layer
+- Elo or Bradley-Terry as a planned optional layer only after reciprocal pair
+  coverage is available
+
+Use this artifact before scaling beyond the no-key role-swapped track. It makes
+large-batch schedule coverage auditable without implying that arena ratings have
+already been fitted.
+
 ## Compatibility
 
 The artifact contract is provider-neutral. It does not assume LiteLLM, OpenAI,

@@ -329,3 +329,24 @@ buyer and seller against fixed counterparties, copies completed runs into
 `role_swap_summary.json` artifact uses schema `opennego.role_swap_benchmark.v1`
 and records the participant roles and role coverage. This track is intentionally
 small and deterministic; it is not an Elo or Bradley-Terry arena.
+
+## Arena Plan
+
+Before running a larger reciprocal batch, write a schedule plan:
+
+```bash
+opennego arena-plan \
+  --participant model_a \
+  --participant model_b \
+  --participant model_c \
+  --scenario-id real_market_demo \
+  --seed 13 \
+  --output /tmp/opennego-arena-plan.json
+```
+
+The plan artifact uses schema `opennego.arena_plan.v1`. It records reciprocal
+buyer/seller matchup rows, required buyer/seller role coverage for each
+participant, and ranking-methodology boundaries. Deterministic scorecards remain
+the implemented primary summary. Elo or Bradley-Terry fitting is a future
+optional arena layer and should only be used after reciprocal pair coverage
+exists for shared scenarios and seeds.

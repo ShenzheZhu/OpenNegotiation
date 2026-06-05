@@ -83,6 +83,24 @@ This evaluates one strategy identity as both buyer and seller against fixed
 fixture counterparties, then writes `role_swap_summary.json` and a combined
 `leaderboard_summary.json` where role coverage can be checked directly.
 
+For a reciprocal arena schedule plan without running a large batch:
+
+```bash
+opennego arena-plan \
+  --participant model_a \
+  --participant model_b \
+  --participant model_c \
+  --scenario-id real_market_demo \
+  --seed 13 \
+  --output /tmp/opennego-arena-plan.json
+```
+
+The plan uses schema `opennego.arena_plan.v1`. It records reciprocal
+buyer/seller matchups, required participant role coverage, and the methodology
+boundary: deterministic scorecards are the current primary summary, while
+Elo/Bradley-Terry fitting is an optional future layer only after reciprocal pair
+coverage exists.
+
 For a tiny live-model demo, install the optional LiteLLM dependency and keep
 provider credentials in environment variables:
 

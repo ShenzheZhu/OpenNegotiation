@@ -15,6 +15,7 @@ from opennego.agent_loader import (
     load_sparring_user_agent_factory,
     parse_agent_params,
 )
+from opennego.arena import ArenaPlanError, write_arena_plan
 from opennego.artifacts import to_jsonable, write_run_artifacts
 from opennego.agents import ScriptedSeller, ToolAwareBuyer, make_profile_llm_agent
 from opennego.environment import NegotiationEnvironment
@@ -90,6 +91,8 @@ def main(argv: list[str] | None = None) -> int:
         return _compare_main(argv[1:])
     if argv and argv[0] == "leaderboard":
         return _leaderboard_main(argv[1:])
+    if argv and argv[0] == "arena-plan":
+        return _arena_plan_main(argv[1:])
     if argv and argv[0] == "role-swap":
         return _role_swap_main(argv[1:])
     if argv and argv[0] == "marketplace-export":
@@ -483,6 +486,58 @@ def _leaderboard_main(argv: list[str] | None = None) -> int:
         return 2
 
     print(json.dumps(to_jsonable(summary), indent=2))
+    return 0
+
+
+def _arena_plan_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Write a reciprocal arena planning artifact without running it."
+    )
+    parser.add_argument(
+        "--participant",
+        action="append",
+        dest="participants",
+        required=True,
+        help="Participant id to include. Provide at least two.",
+    )
+    parser.add_argument(
+        "--scenario-id",
+        action="append",
+        dest="scenario_ids",
+        help="Scenario id to schedule. Defaults to real_market_demo.",
+    )
+    parser.add_argument(
+        "--seed",
+        action="append",
+        dest="seeds",
+        type=int,
+        help="Seed to schedule. Defaults to 13.",
+    )
+    parser.add_argument(
+        "--include-self-play",
+        action="store_true",
+        help="Include diagnostic self-play rows. These should not drive rankings.",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to write opennego.arena_plan.v1 JSON.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        plan = write_arena_plan(
+            args.output,
+            participants=tuple(args.participants or ()),
+            scenario_ids=tuple(args.scenario_ids or ("real_market_demo",)),
+            seeds=tuple(args.seeds or (13,)),
+            include_self_play=args.include_self_play,
+        )
+    except (OSError, ArenaPlanError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(plan), indent=2))
     return 0
 
 
