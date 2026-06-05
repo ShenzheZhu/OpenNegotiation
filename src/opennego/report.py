@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import html
+import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Mapping, Sequence
 
 from opennego.artifacts import (
     ArtifactValidationError,
@@ -29,15 +30,31 @@ class DemoRun:
     trace: Sequence[TraceEventRecord]
 
 
+@dataclass(frozen=True)
+class ModelAttempt:
+    model: str
+    status: str
+    output_dir: str
+    outcome: str | None = None
+    deal_price: float | None = None
+    completed_turns: int | None = None
+    llm_call_count: int = 0
+    total_tokens: int | None = None
+    cost_usd: float | None = None
+    error_type: str | None = None
+    error: str | None = None
+
+
 def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
     """Write a static HTML dashboard for a small benchmark artifact directory."""
 
     runs = load_demo_runs(input_dir)
     if not runs:
         raise ValueError(f"{input_dir}: no benchmark run artifacts found")
+    attempts = load_model_attempts(input_dir)
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(render_demo_report(runs), encoding="utf-8")
+    output_path.write_text(render_demo_report(runs, attempts=attempts), encoding="utf-8")
     return output_path
 
 
@@ -63,7 +80,29 @@ def load_demo_runs(input_dir: str | Path) -> tuple[DemoRun, ...]:
     return tuple(sorted(runs, key=lambda run: run.manifest.run_id))
 
 
-def render_demo_report(runs: Sequence[DemoRun]) -> str:
+def load_model_attempts(input_dir: str | Path) -> tuple[ModelAttempt, ...]:
+    summary_path = Path(input_dir) / "summary.json"
+    if not summary_path.exists():
+        return ()
+    try:
+        data = json.loads(summary_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return ()
+    runs = data.get("runs") if isinstance(data, Mapping) else None
+    if not isinstance(runs, list):
+        return ()
+    attempts = []
+    for item in runs:
+        if isinstance(item, Mapping):
+            attempts.append(_attempt_from_mapping(item))
+    return tuple(attempts)
+
+
+def render_demo_report(
+    runs: Sequence[DemoRun],
+    *,
+    attempts: Sequence[ModelAttempt] = (),
+) -> str:
     primary = runs[0]
     leaderboard = sorted(runs, key=_demo_score, reverse=True)
     product = primary.scenario.product
@@ -223,6 +262,7 @@ def render_demo_report(runs: Sequence[DemoRun]) -> str:
         <a href="#overview">Overview</a>
         <a href="#mechanism">Mechanism</a>
         <a href="#leaderboard">Leaderboard</a>
+        {_attempt_nav_link(attempts)}
         <a href="#trace">Trace</a>
         <a href="#findings">Findings</a>
       </div>
@@ -239,7 +279,7 @@ def render_demo_report(runs: Sequence[DemoRun]) -> str:
         <a class="button" href="../../docs/real_market_benchmark_design.md">Design notes</a>
       </div>
       <div class="kpis">
-        <div class="kpi"><div class="label">Demo Runs</div><div class="value">{len(runs)}</div></div>
+        <div class="kpi"><div class="label">Demo Runs</div><div class="value">{len(attempts) if attempts else len(runs)}</div></div>
         <div class="kpi"><div class="label">Product Cluster</div><div class="value">{_escape(_humanize(product.condition))}</div></div>
         <div class="kpi"><div class="label">Market Reference</div><div class="value">{reference_price}</div></div>
         <div class="kpi"><div class="label">Sold Comps</div><div class="value">{_escape(sample_size)}</div></div>
@@ -317,6 +357,8 @@ def render_demo_report(runs: Sequence[DemoRun]) -> str:
       </div>
     </section>
 
+    {_attempt_status_section(attempts)}
+
     <section id="findings" class="section">
       <h2>Key Findings From This Smoke</h2>
       <div class="grid-3">
@@ -341,6 +383,56 @@ def render_demo_report(runs: Sequence[DemoRun]) -> str:
 </body>
 </html>
 """
+
+
+def _attempt_status_section(attempts: Sequence[ModelAttempt]) -> str:
+    if not attempts:
+        return ""
+    return f"""
+    <section id="attempts" class="section">
+      <h2>Run Attempt Status</h2>
+      <p class="section-copy">Live model demos keep every model attempt visible. Completed attempts feed the leaderboard; failed attempts keep a redacted failure artifact for audit.</p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Status</th>
+              <th>Outcome</th>
+              <th>LLM Calls</th>
+              <th>Total Tokens</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody>
+            {_attempt_rows(attempts)}
+          </tbody>
+        </table>
+      </div>
+    </section>
+"""
+
+
+def _attempt_nav_link(attempts: Sequence[ModelAttempt]) -> str:
+    if not attempts:
+        return ""
+    return '<a href="#attempts">Runs</a>'
+
+
+def _attempt_rows(attempts: Sequence[ModelAttempt]) -> str:
+    rows = []
+    for attempt in attempts:
+        rows.append(
+            "<tr>"
+            f"<td>{_escape(_shorten_model(attempt.model))}</td>"
+            f"<td><span class=\"pill\">{_escape(attempt.status)}</span></td>"
+            f"<td>{_escape(attempt.outcome or 'n/a')} {_money_or_empty(attempt.deal_price) if attempt.deal_price is not None else ''}</td>"
+            f"<td>{attempt.llm_call_count}</td>"
+            f"<td>{_escape(attempt.total_tokens if attempt.total_tokens is not None else 'n/a')}</td>"
+            f"<td>{_escape(_attempt_error(attempt))}</td>"
+            "</tr>"
+        )
+    return "\n".join(rows)
 
 
 def _leaderboard_rows(runs: Sequence[DemoRun]) -> str:
@@ -431,6 +523,29 @@ def _shorten_model(model: str) -> str:
     return model.removeprefix("openrouter/")
 
 
+def _attempt_from_mapping(data: Mapping[str, Any]) -> ModelAttempt:
+    return ModelAttempt(
+        model=str(data.get("model", "")),
+        status=str(data.get("status", "unknown")),
+        output_dir=str(data.get("output_dir", "")),
+        outcome=_optional_str(data.get("outcome")),
+        deal_price=_optional_float(data.get("deal_price")),
+        completed_turns=_optional_int(data.get("completed_turns")),
+        llm_call_count=int(data.get("llm_call_count") or 0),
+        total_tokens=_optional_int(data.get("total_tokens")),
+        cost_usd=_optional_float(data.get("cost_usd")),
+        error_type=_optional_str(data.get("error_type")),
+        error=_optional_str(data.get("error")),
+    )
+
+
+def _attempt_error(attempt: ModelAttempt) -> str:
+    if attempt.status == "completed":
+        return "n/a"
+    prefix = f"{attempt.error_type}: " if attempt.error_type else ""
+    return _truncate(prefix + (attempt.error or "unknown failure"), 120)
+
+
 def _money_or_empty(value: float | None) -> str:
     return "n/a" if value is None else _money(value)
 
@@ -446,3 +561,27 @@ def _escape(value: object) -> str:
 
 def _humanize(value: object) -> str:
     return str(value).replace("_", " ")
+
+
+def _optional_str(value: object) -> str | None:
+    if value is None:
+        return None
+    return str(value)
+
+
+def _optional_int(value: object) -> int | None:
+    if value is None:
+        return None
+    return int(value)
+
+
+def _optional_float(value: object) -> float | None:
+    if value is None:
+        return None
+    return float(value)
+
+
+def _truncate(value: str, limit: int) -> str:
+    if len(value) <= limit:
+        return value
+    return value[: limit - 3] + "..."

@@ -200,5 +200,6 @@ The model demo writes a top-level `summary.json` next to the per-model run
 directories. Completed runs use the standard benchmark artifacts. Failed runs
 write a redacted `failure.json` with model id, error type, safe error text, and
 usage counters collected before failure. The static HTML report only includes
-completed benchmark runs because it requires `manifest.json`, `scenario.json`,
-`trace.jsonl`, and `metrics.json`.
+completed benchmark runs in the leaderboard because it requires `manifest.json`,
+`scenario.json`, `trace.jsonl`, and `metrics.json`, but it renders a separate
+attempt-status table when `summary.json` is present.

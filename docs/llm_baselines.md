@@ -97,4 +97,5 @@ The command writes `/tmp/opennego-five-model-demo/summary.json` for the full
 attempt. Completed model directories contain the normal benchmark artifacts.
 Failed model directories contain `failure.json` with redacted error text and
 usage counters, so provider failures remain auditable without storing raw
-provider payloads or credentials.
+provider payloads or credentials. `opennego report` renders these attempts in a
+separate status table while keeping the leaderboard limited to completed runs.

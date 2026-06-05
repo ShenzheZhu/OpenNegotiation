@@ -19,3 +19,4 @@ def test_write_demo_report_from_real_market_demo_config(tmp_path):
     assert "Leaderboard Preview" in html
     assert "Trace Replay" in html
     assert "Market Reference" in html
+    assert 'href="#attempts"' not in html

@@ -18,6 +18,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added no-key tests for model-demo artifact generation with fake LLMs.
 - Added model-demo `summary.json` and redacted per-model `failure.json`
   artifacts for live-provider failure auditability.
+- Added a live-model attempt-status table to the static report when
+  `summary.json` is present.
 - Selected a high-quality OpenRouter-backed five-model default set for the
   demo: GPT-5.4 Pro, Claude Opus 4.8, Gemini 3.1 Pro Preview, Grok 4.3, and
   Qwen3 235B A22B.

@@ -29,6 +29,16 @@ class FailingModelDemoLLM:
         raise RuntimeError("provider rejected key " + "s" "k-or-v1-do-not-store")
 
 
+class MixedModelDemoLLM:
+    def __init__(self):
+        self.success = FakeModelDemoLLM()
+
+    def complete(self, request: LLMRequest) -> LLMResponse:
+        if "failing" in request.model:
+            raise RuntimeError("provider unavailable")
+        return self.success.complete(request)
+
+
 def test_model_demo_writes_artifacts_and_report_with_fake_llm(tmp_path):
     output_dir = tmp_path / "model-runs"
     summary = run_model_demo(
@@ -69,6 +79,24 @@ def test_model_demo_writes_redacted_failure_artifacts(tmp_path):
     assert "s" "k-or-v1" not in failure_path.read_text()
     assert summary_payload["schema_version"] == "opennego.model_demo.v1"
     assert summary_payload["runs"][0]["failure_path"] == str(failure_path)
+
+
+def test_model_demo_report_shows_attempt_status_for_failures(tmp_path):
+    output_dir = tmp_path / "model-runs"
+    run_model_demo(
+        models=("fake/model-a", "fake/failing-model"),
+        output_dir=output_dir,
+        llm_factory=MixedModelDemoLLM,
+    )
+    report_path = write_demo_report(output_dir, tmp_path / "report.html")
+
+    html = report_path.read_text()
+    assert "Leaderboard Preview" in html
+    assert "Run Attempt Status" in html
+    assert 'href="#attempts"' in html
+    assert "fake/model-a" in html
+    assert "fake/failing-model" in html
+    assert "RuntimeError: provider unavailable" in html
 
 
 def test_run_models_preflight_reports_missing_litellm(monkeypatch):
