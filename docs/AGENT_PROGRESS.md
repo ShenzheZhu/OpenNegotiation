@@ -37,6 +37,22 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   marketplace NPC profiles through fixture-backed battle-report diagnostics.
 - Added `opennego spar --report` for rendering a compact static HTML report
   from `sparring_suite.json`.
+- Added profile-backed sparring where NPC strategy profiles are instantiated as
+  actual deterministic buyer/seller counterparties in traces and manifests.
+- Added versioned strategy candidates, candidate-backed sparring reruns, and
+  before/after strategy comparison artifacts.
+- Added Python API custom agent registration for the config runner and sparring
+  suite.
+- Added local marketplace profile export from strategy candidates, including
+  optional registry installation.
+- Added deterministic transaction settlement guards for buyer all-in cost caps
+  and seller net-revenue floors.
+- Added profile-backed LLM NPC factories behind `LLMPort` for Python API
+  sparring.
+- Added config-runner `llm_buyer` and `llm_seller` agent kinds behind
+  provider-neutral `LLMPort` factories and CLI LiteLLM preflight.
+- Added explicit CLI local agent factory loading for benchmark configs and
+  sparring user agents.
 
 ### Current Live-Run State
 
@@ -49,25 +65,27 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Issue And PR State
 
-- Scope is tracked in GitHub issue `#18`.
-- Draft PR `#19` is open from `proto/real-market-benchmark-18` to `main`.
-- Keep PR `#19` in draft until a tiny live five-model run is generated and the
-  report is refreshed from real provider artifacts.
-- Policy-learning / prompt-optimization scope is tracked separately in
-  GitHub issue `#20` and branch `codex/policy-learning-mvp-20`.
-- Strategy sparring suite scope is tracked in GitHub issue `#22` and branch
-  `codex/strategy-sparring-22`.
+- Current backend workflow scope is tracked in GitHub issue `#29`.
+- Public hosted website work is tracked in GitHub issue `#28` and currently
+  depends on resolving GitHub Pages support for the private repository.
+- The earlier stacked MVP PR train has been superseded by merged mainline
+  slices through PR `#48`.
+- No active PR is required for the current local no-key MVP state.
 
 ### Verification
 
-- `pytest -q`: passing after the model-demo runner was added.
+- `pytest -q`: 88 passed after CLI local agent factory loading.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next
 
-- Run the five-model demo with a small token budget and refresh the report from
-  real provider artifacts.
-- Review live traces for malformed JSON, invalid offers, and provider-specific
-  failures before presenting results as anything beyond a demo.
+- Keep live provider demos small and label them as smoke runs, not batch
+  benchmark evidence.
+- Expand the transaction layer beyond deterministic settlement guards into
+  richer shipping, payment, return, warranty, and dispute workflows.
+- Add offline/live real-market data ingestion once API, scraping, and privacy
+  boundaries are decided.
+- Resolve public hosted site deployment for the `web` branch or choose another
+  hosting target.

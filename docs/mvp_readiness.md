@@ -2,15 +2,20 @@
 
 Date: 2026-06-05
 
-This audit answers the current readiness question for website/demo surfaces,
-architecture, and tests.
+This audit answers the current readiness question for local demo surfaces,
+architecture, CLI integration, and tests on `main`.
 
 ## Summary
 
-No-key MVP development is implemented and locally verified on the current
-stacked branch set. A small live five-model OpenRouter run is also verified
-after fixing the strict JSON-schema response format used by LLM agents. It is
-not fully shipped until the stacked PRs are merged to `main`.
+The no-key local MVP and the main user-centric workflow slices are implemented
+on `main`: benchmark runs, policy-learning battle reports, strategy candidate
+reruns, local marketplace export, strategy sparring, transaction settlement
+guards, config-level LLM agents, provider-neutral profile LLM NPCs, and CLI
+loading for local user-agent factories.
+
+A small live five-model OpenRouter smoke was verified earlier on 2026-06-05.
+It was not rerun for this docs refresh; live provider execution remains an
+optional demo path that requires local credentials.
 
 ## Website / Demo Surfaces
 
@@ -32,9 +37,11 @@ Browser smoke evidence:
 
 Not complete:
 
-- There is no hosted website in this repository.
-- The website/demo surface is currently a generated local static report, not a
-  hosted public site.
+- The public hosted website work lives on the `web` branch. GitHub Pages
+  configuration is blocked while the repository/private-plan combination does
+  not support Pages for this repo.
+- The generated local static reports are still the canonical no-key demo
+  artifacts on `main`.
 
 ## Architecture
 
@@ -45,7 +52,18 @@ Implemented:
 - LiteLLM isolated behind `opennego.adapters`.
 - Versioned benchmark artifacts for scenario, manifest, trace, and metrics.
 - Policy-learning battle reports that read benchmark artifacts.
-- Local NPC strategy registry and no-key sparring suite.
+- Local NPC strategy registry and profile-backed no-key sparring suite.
+- Versioned strategy candidate generation, sparring reruns, and before/after
+  comparison artifacts.
+- Local strategy marketplace profile export and registry installation.
+- Config-runner custom `AgentPort` registration through Python API and explicit
+  CLI local factory loading.
+- Config-runner `llm_buyer` and `llm_seller` kinds behind injected `LLMPort`
+  factories or CLI LiteLLM preflight.
+- Profile-backed LLM NPC factory support through `LLMPort` for Python API
+  sparring.
+- Fixture transaction settlement guards for buyer all-in cost caps and seller
+  net-revenue floors.
 - Static HTML report generators for benchmark/MVP and sparring surfaces.
 - Architecture overview in `docs/architecture.md`.
 - Python runtime declaration aligned to current syntax: Python 3.10+.
@@ -57,10 +75,18 @@ Guardrail:
 
 Known architecture limits:
 
-- Runner-level custom agent registration is not implemented.
-- Strategy profiles are instantiated as deterministic fixture counterparties,
-  not live provider-backed model opponents.
-- Hosted marketplace backend and provider-backed coaching are not implemented.
+- CLI local agent loading is explicit only: no automatic module discovery,
+  remote plugin installation, or hosted strategy execution.
+- Strategy sparring defaults to deterministic fixture counterparties. Python API
+  callers can supply profile-backed provider agents behind `LLMPort`; CLI
+  provider-backed NPC loading is not implemented.
+- Hosted marketplace backend, account-backed sharing, and provider-backed
+  coaching are not implemented.
+- Real-market evidence remains fixture/offline-data backed. Live eBay or C2C
+  marketplace collection is not implemented.
+- Transaction simulation validates deterministic settlement fees and guard
+  failures, but richer shipping, payment, return, warranty, and dispute
+  workflows are not implemented.
 
 ## Tests And Static Checks
 
@@ -76,16 +102,16 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 57 passed.
+- `pytest -q`: 88 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Secret-pattern scan: no matches.
 
-Live provider status:
+Historical live provider status:
 
 - OpenRouter credentials were supplied from local Keychain at command time.
 - No API keys were written to the repository or generated live artifacts.
-- Live five-model run: 5 completed, 0 failed.
+- Live five-model run earlier on 2026-06-05: 5 completed, 0 failed.
 
 Live run summary:
 
@@ -97,23 +123,26 @@ Live run summary:
 | `openrouter/x-ai/grok-4.3` | completed | deal | 550.0 | 1 | 1011 | 0.0015356 |
 | `openrouter/qwen/qwen3-235b-a22b` | completed | timeout | - | 4 | 7220 | 0.009732 |
 
-## PR Stack Status
+## Issue And PR Status
 
-Current stack:
+Current state:
 
-1. `#19`: real-market demo gym, draft.
-2. `#21`: policy-learning MVP and NPC registry, draft, stacked on `#19`.
-3. `#23`: no-key strategy sparring suite, draft, stacked on `#21`.
-4. `#25`: sparring suite HTML report, draft, stacked on `#23`.
-5. `#27`: MVP readiness audit, live-model schema fix, and architecture
-   handoff, stacked on `#25`.
+- Current `main` includes the backend workflow slices through PR `#48`.
+- Open issue `#29` tracks remaining backend/product loop scale-up work.
+- Open issue `#28` tracks public GitHub Pages hosting and remains blocked by
+  repository/private-plan support for Pages.
+- There is no active stacked PR train for the current local MVP path.
 
 Readiness conclusion:
 
 - No-key local MVP: implemented and verified.
-- Website/demo surfaces: implemented as static local reports and verified.
+- User-agent onboarding: Python API registration, CLI local factory loading,
+  config LLM agents, and sparring custom user agents are implemented.
+- Website/demo surfaces on `main`: implemented as static local reports and
+  verified.
 - Architecture: documented and guarded by tests.
 - Tests: passing locally.
-- Live provider smoke: verified with five OpenRouter models.
-- Shipped status: not complete until the draft PR stack is merged and any
-  hosted/public demo target is selected.
+- Live provider smoke: historically verified with five OpenRouter models, not
+  rerun in this docs refresh.
+- Hosted/public site: not complete until the GitHub Pages/private-repo blocker
+  is resolved or another hosting target is selected.
