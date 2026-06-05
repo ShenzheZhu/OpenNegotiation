@@ -10,6 +10,11 @@ and prompted constraints. OpenNego shifts the setting toward current agentic
 systems: agents can call tools, gather market evidence, reduce information
 asymmetry, and then negotiate or transact.
 
+The intended scope is broader than a single consumer-negotiation benchmark:
+OpenNego treats negotiation as one phase in a market lifecycle that can include
+search, private tools, messaging, structured offers, payment, fulfillment, and
+post-transaction validation.
+
 ## Why This Exists
 
 Real buyer and seller agents should not negotiate only from static prompts. A
@@ -104,7 +109,10 @@ OpenNego should support a ladder of increasingly realistic agentic settings:
 
 See [docs/research_agenda.md](docs/research_agenda.md) for the initial roadmap
 and [docs/benchmark_contract.md](docs/benchmark_contract.md) for the current
-artifact contract.
+artifact contract. See
+[docs/magentic_marketplace_architecture_notes.md](docs/magentic_marketplace_architecture_notes.md)
+for architecture lessons from recent agentic marketplace work and how those
+lessons translate into OpenNego-specific design choices.
 
 ## Status
 

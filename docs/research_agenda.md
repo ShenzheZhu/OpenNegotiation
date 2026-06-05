@@ -60,11 +60,37 @@ tool-call cost.
 - Preserve deterministic fixtures for tests even when live tools are added.
 - Treat transaction safety as part of the task, not only as post-hoc labeling.
 
+## Architecture Reference Pass
+
+OpenNego should learn from mature agentic market simulators such as
+[Magentic Marketplace](https://arxiv.org/abs/2510.25779), but it should not
+become a compatibility wrapper for one paper or one synthetic marketplace. See
+[Magentic Marketplace Architecture Notes](magentic_marketplace_architecture_notes.md)
+for the current research-to-engineering translation.
+
+The key design shift is to treat negotiation as one phase in a broader market
+lifecycle:
+
+1. Agent registration and capability discovery.
+2. Search and information gathering.
+3. Agent-to-agent communication and negotiation.
+4. Structured offers, acceptances, and payments.
+5. Transaction validation and utility computation.
+6. Artifact-backed analytics and replay.
+
 ## Near-Term Roadmap
 
-- Add LLM agent adapters behind the `NegotiationAgent` protocol.
-- Add a dataset loader for A2A-NT-style product JSON.
-- Add richer anomaly labels for overpayment, constraint violation, deadlock, and
-  tool-induced failures.
-- Add experiment runners for model x tool-regime sweeps.
-- Add provenance-aware live market search behind an offline-cache interface.
+1. Add a config-driven experiment runner for model x scenario x tool-regime
+   sweeps.
+2. Add no-tool and tool-aware LLM baselines behind `AgentPort` and `LLMPort`.
+3. Add explicit information and tool regimes, including private, symmetric,
+   noisy, stale, and adversarial tool settings.
+4. Add protocol-level action models for search, messages, structured offers,
+   acceptances, and payments.
+5. Add richer anomaly labels for overpayment, constraint violation, invalid
+   proposals, deadlocks, payment failure, and tool-induced failures.
+6. Add dataset loaders for A2A-NT-style product JSON and domain-general market
+   scenario files.
+7. Add provenance-aware live market search behind an offline-cache interface.
+8. Add an optional server runtime only after the in-process benchmark contract is
+   stable.
