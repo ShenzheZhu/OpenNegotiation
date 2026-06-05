@@ -4,7 +4,12 @@ from opennego.cli import main
 from opennego.evolution import STRATEGY_EVOLUTION_SCHEMA_VERSION
 from opennego.leaderboard import LEADERBOARD_SCHEMA_VERSION
 from opennego.learning import POLICY_LEARNING_SCHEMA_VERSION
-from opennego.mvp_demo import MVP_DEMO_BUNDLE_SCHEMA_VERSION, run_mvp_demo
+from opennego.mvp_demo import (
+    MVP_DEMO_BUNDLE_SCHEMA_VERSION,
+    MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION,
+    run_mvp_demo,
+    validate_mvp_demo_bundle,
+)
 
 
 def test_run_mvp_demo_generates_benchmark_learning_and_report(tmp_path):
@@ -100,3 +105,82 @@ def test_mvp_demo_cli_prints_artifact_paths(tmp_path, capsys):
     assert (output_dir / "leaderboard_summary.json").exists()
     assert (output_dir / "mvp_demo_manifest.json").exists()
     assert report_path.exists()
+
+
+def test_validate_mvp_demo_bundle_passes_for_generated_demo(tmp_path):
+    output_dir = tmp_path / "mvp"
+    summary = run_mvp_demo(output_dir=output_dir)
+
+    result = validate_mvp_demo_bundle(summary.bundle_manifest)
+
+    assert result.schema_version == MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION
+    assert result.status == "passed"
+    assert result.bundle_schema_version == MVP_DEMO_BUNDLE_SCHEMA_VERSION
+    assert result.errors == ()
+    assert result.artifact_schema_versions == {
+        "leaderboard_summary": LEADERBOARD_SCHEMA_VERSION,
+        "battle_report": POLICY_LEARNING_SCHEMA_VERSION,
+        "strategy_candidate": STRATEGY_EVOLUTION_SCHEMA_VERSION,
+    }
+    assert result.artifacts["html_report"].endswith("opennego_mvp_demo.html")
+
+
+def test_validate_demo_bundle_cli_reports_pass_and_fail(tmp_path, capsys):
+    output_dir = tmp_path / "mvp"
+    summary = run_mvp_demo(output_dir=output_dir)
+
+    pass_code = main(["validate-demo-bundle", "--manifest", summary.bundle_manifest])
+    pass_payload = json.loads(capsys.readouterr().out)
+
+    assert pass_code == 0
+    assert pass_payload["status"] == "passed"
+    assert pass_payload["schema_version"] == MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION
+
+    (output_dir / "strategy_candidate.json").unlink()
+
+    fail_code = main(["validate-demo-bundle", "--manifest", summary.bundle_manifest])
+    fail_payload = json.loads(capsys.readouterr().out)
+
+    assert fail_code == 1
+    assert fail_payload["status"] == "failed"
+    assert any("strategy_candidate" in item for item in fail_payload["errors"])
+
+
+def test_validate_mvp_demo_bundle_fails_on_schema_mismatch(tmp_path):
+    output_dir = tmp_path / "mvp"
+    summary = run_mvp_demo(output_dir=output_dir)
+    battle_report_path = output_dir / "battle_report.json"
+    battle_report = json.loads(battle_report_path.read_text())
+    battle_report["schema_version"] = "wrong.schema"
+    battle_report_path.write_text(json.dumps(battle_report, indent=2) + "\n")
+
+    result = validate_mvp_demo_bundle(summary.bundle_manifest)
+
+    assert result.status == "failed"
+    assert any("battle_report.schema_version" in item for item in result.errors)
+    assert result.artifact_schema_versions["battle_report"] == "wrong.schema"
+
+
+def test_validate_mvp_demo_bundle_fails_on_workflow_order_drift(tmp_path):
+    output_dir = tmp_path / "mvp"
+    summary = run_mvp_demo(output_dir=output_dir)
+    manifest_path = output_dir / "mvp_demo_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["workflow_steps"] = ["benchmark", "html_report"]
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+
+    result = validate_mvp_demo_bundle(summary.bundle_manifest)
+
+    assert result.status == "failed"
+    assert any("workflow_steps" in item for item in result.errors)
+
+
+def test_validate_mvp_demo_bundle_reports_malformed_manifest(tmp_path):
+    manifest_path = tmp_path / "bad_manifest.json"
+    manifest_path.write_text("{not valid json\n")
+
+    result = validate_mvp_demo_bundle(manifest_path)
+
+    assert result.status == "failed"
+    assert result.bundle_schema_version is None
+    assert any("manifest: cannot read JSON object" in item for item in result.errors)

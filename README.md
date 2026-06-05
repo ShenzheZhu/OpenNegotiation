@@ -92,6 +92,7 @@ optimization, and the local strategy marketplace:
 
 ```bash
 opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp-demo.html
+opennego validate-demo-bundle --manifest /tmp/opennego-mvp-demo/mvp_demo_manifest.json
 ```
 
 This runs the real-market fixture benchmark, writes a machine-readable
@@ -99,7 +100,9 @@ This runs the real-market fixture benchmark, writes a machine-readable
 trace-grounded battle report for a buyer agent against a curated seller NPC, and
 renders a static HTML report. The battle report produces strategy-layer lessons
 and prompt optimization suggestions while keeping OpenNego's base sandbox
-protocol fixed.
+protocol fixed. The validation command returns
+`opennego.mvp_demo_bundle_validation.v1` JSON and fails nonzero when required
+artifacts are missing or their schema versions drift.
 A curated no-key MVP page is available at
 `examples/reports/opennego_mvp_demo.html`.
 

@@ -68,6 +68,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   `leaderboard_summary.json` is present.
 - Added `opennego.mvp_demo_bundle.v1` as a durable manifest for one-command MVP
   demo artifact handoff.
+- Added `opennego validate-demo-bundle` for no-key MVP bundle release checks
+  across manifest schema, artifact existence, workflow order, and artifact
+  schema versions.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   leaderboard summaries, artifact-backed reports, battle reports, strategy
   candidates, sparring reruns, comparison artifacts, and local marketplace
@@ -96,9 +99,10 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 113 passed after adding the MVP demo bundle manifest.
+- `pytest -q`: 118 passed after adding the MVP demo bundle validator.
 - `compileall`: passing.
 - `git diff --check`: passing.
+- `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next

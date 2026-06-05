@@ -17,6 +17,7 @@ from opennego.report import write_demo_report
 from opennego.runner import RunRecord, run_experiment_config
 
 MVP_DEMO_BUNDLE_SCHEMA_VERSION = "opennego.mvp_demo_bundle.v1"
+MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION = "opennego.mvp_demo_bundle_validation.v1"
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,18 @@ class MvpDemoSummary:
     strategy_candidate: str
     html_report: str
     bundle_manifest: str
+
+
+@dataclass(frozen=True)
+class MvpDemoBundleValidationResult:
+    schema_version: str
+    status: str
+    manifest_file: str
+    bundle_schema_version: str | None
+    artifacts: Mapping[str, str]
+    artifact_schema_versions: Mapping[str, str]
+    errors: tuple[str, ...]
+    warnings: tuple[str, ...]
 
 
 def run_mvp_demo(
@@ -97,6 +110,79 @@ def run_mvp_demo(
     )
 
 
+def validate_mvp_demo_bundle(manifest_file: str | Path) -> MvpDemoBundleValidationResult:
+    """Validate a one-command MVP demo bundle manifest and referenced artifacts."""
+
+    manifest_path = Path(manifest_file)
+    errors: list[str] = []
+    warnings: list[str] = []
+    manifest = _load_manifest_for_validation(manifest_path, errors)
+    artifacts = _mapping_value(manifest.get("artifacts") if manifest else None)
+    expected_versions = _mapping_value(
+        manifest.get("expected_schema_versions") if manifest else None
+    )
+
+    if manifest:
+        version = manifest.get("schema_version")
+        if version != MVP_DEMO_BUNDLE_SCHEMA_VERSION:
+            errors.append(
+                "manifest.schema_version: expected "
+                f"{MVP_DEMO_BUNDLE_SCHEMA_VERSION!r}, got {version!r}"
+            )
+        _validate_benchmark_section(manifest, errors)
+        _validate_workflow_steps(manifest, errors)
+    else:
+        version = None
+
+    observed_versions: dict[str, str] = {}
+    resolved_artifacts: dict[str, str] = {}
+    for key in (
+        "leaderboard_summary",
+        "battle_report",
+        "strategy_candidate",
+        "html_report",
+    ):
+        artifact_value = artifacts.get(key)
+        if artifact_value is None:
+            errors.append(f"artifacts.{key}: missing")
+            continue
+        artifact_path = _resolve_bundle_artifact_path(
+            manifest_path,
+            str(artifact_value),
+        )
+        resolved_artifacts[key] = str(artifact_path)
+        if not artifact_path.exists():
+            errors.append(f"artifacts.{key}: missing file {artifact_path}")
+            continue
+        if key == "html_report":
+            if artifact_path.suffix.lower() not in {".html", ".htm"}:
+                warnings.append(f"artifacts.{key}: expected HTML file path")
+            continue
+        observed = _artifact_schema_version(artifact_path)
+        observed_versions[key] = observed
+        expected = expected_versions.get(key)
+        if expected and observed != expected:
+            errors.append(
+                f"artifacts.{key}.schema_version: expected {expected!r}, got {observed!r}"
+            )
+
+    for key in ("leaderboard_summary", "battle_report", "strategy_candidate"):
+        if key not in expected_versions:
+            errors.append(f"expected_schema_versions.{key}: missing")
+
+    status = "passed" if not errors else "failed"
+    return MvpDemoBundleValidationResult(
+        schema_version=MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION,
+        status=status,
+        manifest_file=str(manifest_path),
+        bundle_schema_version=str(version) if version is not None else None,
+        artifacts=resolved_artifacts,
+        artifact_schema_versions=observed_versions,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+    )
+
+
 def _write_bundle_manifest(
     output_path: Path,
     *,
@@ -154,6 +240,81 @@ def _artifact_schema_version(path: Path) -> str:
         return "missing"
     value = payload.get("schema_version")
     return str(value or "unknown")
+
+
+def _load_manifest_for_validation(
+    manifest_path: Path,
+    errors: list[str],
+) -> Mapping[str, Any]:
+    try:
+        return read_json(manifest_path)
+    except (OSError, ValueError) as exc:
+        errors.append(f"manifest: cannot read JSON object from {manifest_path}: {exc}")
+        return {}
+
+
+def _mapping_value(value: object) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _validate_benchmark_section(
+    manifest: Mapping[str, Any],
+    errors: list[str],
+) -> None:
+    benchmark = manifest.get("benchmark")
+    if not isinstance(benchmark, Mapping):
+        errors.append("benchmark: expected object")
+        return
+    completed = benchmark.get("completed")
+    failed = benchmark.get("failed")
+    if not isinstance(completed, int) or completed < 0:
+        errors.append("benchmark.completed: expected non-negative integer")
+    if not isinstance(failed, int) or failed < 0:
+        errors.append("benchmark.failed: expected non-negative integer")
+    if not benchmark.get("learning_run_id"):
+        errors.append("benchmark.learning_run_id: missing")
+    if not benchmark.get("learning_input_dir"):
+        errors.append("benchmark.learning_input_dir: missing")
+
+
+def _validate_workflow_steps(
+    manifest: Mapping[str, Any],
+    errors: list[str],
+) -> None:
+    steps = manifest.get("workflow_steps")
+    expected = (
+        "benchmark",
+        "leaderboard",
+        "policy_learning",
+        "strategy_evolution",
+        "html_report",
+    )
+    if not isinstance(steps, list):
+        errors.append("workflow_steps: expected list")
+        return
+    observed = tuple(str(step) for step in steps)
+    if observed != expected:
+        errors.append(
+            "workflow_steps: expected "
+            f"{', '.join(expected)}, got {', '.join(observed)}"
+        )
+
+
+def _resolve_bundle_artifact_path(
+    manifest_path: Path,
+    artifact_value: str,
+) -> Path:
+    artifact_path = Path(artifact_value)
+    if artifact_path.exists() or artifact_path.is_absolute():
+        return artifact_path
+    manifest_dir = manifest_path.parent
+    manifest_relative = manifest_dir / artifact_path
+    if manifest_relative.exists():
+        return manifest_relative
+    sibling = manifest_dir / artifact_path.name
+    if sibling.exists():
+        return sibling
+    return artifact_path
 
 
 def _select_learning_run(

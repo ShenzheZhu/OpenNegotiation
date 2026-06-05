@@ -175,6 +175,14 @@ separate scoring surface. It records:
 - observed and expected schema versions for machine-readable artifacts
 - ordered workflow steps used by the one-command no-key demo
 
+`opennego validate-demo-bundle --manifest <mvp_demo_manifest.json>` validates
+that handoff bundle and returns `opennego.mvp_demo_bundle_validation.v1` JSON.
+It checks the bundle schema, benchmark summary fields, workflow step order,
+required artifact paths, and the expected schema versions for the leaderboard
+summary, battle report, and strategy candidate artifacts. A failed validation
+returns a nonzero CLI exit code so release scripts can gate curated demo
+bundles before handoff.
+
 ## Compatibility
 
 The artifact contract is provider-neutral. It does not assume LiteLLM, OpenAI,
