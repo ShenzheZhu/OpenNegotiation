@@ -85,9 +85,10 @@ It writes a policy-learning report:
 opennego run --config configs/real_market_demo.yaml --output-dir /tmp/opennego-real-market-demo
 opennego learn \
   --input-dir /tmp/opennego-real-market-demo/real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13 \
-  --output /tmp/opennego-battle-report.json \
+  --output /tmp/opennego-real-market-demo/battle_report.json \
   --user-role buyer \
   --opponent-profile seller_hardline_anchor_v1
+opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennego-mvp-demo.html
 ```
 
 The JSON report uses schema version `opennego.policy_learning.v1` and contains:
@@ -107,6 +108,11 @@ The JSON report uses schema version `opennego.policy_learning.v1` and contains:
 Lessons cite trace events through `event_index`, `turn`, `role`, `action_type`,
 and a short event summary. This keeps policy learning tied to benchmark
 evidence instead of creating a disconnected logging format.
+
+When `battle_report.json` is present in the benchmark output root, the static
+HTML report renders a Training / Prompt Optimization section. The same report
+also renders the local NPC strategy marketplace from
+`examples/data/npc_strategies.json`.
 
 Example lesson excerpt from the no-key real-market demo:
 

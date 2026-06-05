@@ -26,6 +26,11 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added the first no-key policy-learning MVP slice: NPC strategy registry,
   `opennego strategies`, `opennego learn`, battle-report JSON, and
   trace-grounded strategy prompt patches.
+- Integrated policy-learning reports and NPC strategy profiles into the static
+  HTML demo report.
+- Added `examples/reports/opennego_mvp_demo.html` as the curated no-key MVP
+  page covering benchmark, training/prompt optimization, and strategy
+  marketplace.
 
 ### Current Live-Run State
 

@@ -19,6 +19,7 @@ from opennego.artifacts import (
     load_scenario_artifact,
     load_trace,
 )
+from opennego.learning import DEFAULT_NPC_REGISTRY_PATH, StrategyProfile, load_strategy_registry
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,32 @@ class ModelAttempt:
     error: str | None = None
 
 
+@dataclass(frozen=True)
+class BattleLessonView:
+    id: str
+    severity: str
+    category: str
+    finding: str
+    recommendation: str
+    suggested_strategy_patch: str | None = None
+    evidence: tuple[Mapping[str, Any], ...] = ()
+
+
+@dataclass(frozen=True)
+class BattleReportView:
+    run_id: str
+    user_role: str
+    opponent_profile_id: str | None
+    outcome: str
+    deal_price: float | None
+    score: float
+    summary: str
+    failure_modes: tuple[str, ...]
+    strengths: tuple[str, ...]
+    lessons: tuple[BattleLessonView, ...]
+    suggested_strategy_prompt: str
+
+
 def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
     """Write a static HTML dashboard for a small benchmark artifact directory."""
 
@@ -52,9 +79,19 @@ def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
     if not runs:
         raise ValueError(f"{input_dir}: no benchmark run artifacts found")
     attempts = load_model_attempts(input_dir)
+    battle_reports = load_battle_reports(input_dir)
+    strategy_profiles = load_strategy_profiles()
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(render_demo_report(runs, attempts=attempts), encoding="utf-8")
+    output_path.write_text(
+        render_demo_report(
+            runs,
+            attempts=attempts,
+            battle_reports=battle_reports,
+            strategy_profiles=strategy_profiles,
+        ),
+        encoding="utf-8",
+    )
     return output_path
 
 
@@ -98,10 +135,35 @@ def load_model_attempts(input_dir: str | Path) -> tuple[ModelAttempt, ...]:
     return tuple(attempts)
 
 
+def load_battle_reports(input_dir: str | Path) -> tuple[BattleReportView, ...]:
+    base = Path(input_dir)
+    candidate_paths = sorted(base.glob("battle_report*.json"))
+    reports = []
+    for path in candidate_paths:
+        try:
+            data = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(data, Mapping) and data.get("schema_version") == "opennego.policy_learning.v1":
+            reports.append(_battle_report_from_mapping(data))
+    return tuple(reports)
+
+
+def load_strategy_profiles(
+    registry_path: str | Path = DEFAULT_NPC_REGISTRY_PATH,
+) -> tuple[StrategyProfile, ...]:
+    try:
+        return load_strategy_registry(registry_path).profiles
+    except (OSError, ValueError):
+        return ()
+
+
 def render_demo_report(
     runs: Sequence[DemoRun],
     *,
     attempts: Sequence[ModelAttempt] = (),
+    battle_reports: Sequence[BattleReportView] = (),
+    strategy_profiles: Sequence[StrategyProfile] = (),
 ) -> str:
     primary = runs[0]
     leaderboard = sorted(runs, key=_demo_score, reverse=True)
@@ -209,7 +271,14 @@ def render_demo_report(
     .section-head {{ display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }}
     .section-copy {{ max-width: 720px; color: var(--muted); }}
     .grid-3 {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }}
+    .grid-2 {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }}
     .card {{ padding: 16px; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; }}
+    .lesson-card {{ padding: 16px; background: #fffaf0; border: 1px solid #f3d7a4; border-radius: 8px; }}
+    .profile-card {{ padding: 16px; background: #f8fbff; border: 1px solid var(--line); border-radius: 8px; }}
+    .prompt-patch {{ margin-top: 12px; padding: 12px; background: #10212b; color: #e7f6f2; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }}
+    .severity-high {{ color: #b91c1c; font-weight: 750; }}
+    .severity-medium {{ color: #b45309; font-weight: 750; }}
+    .severity-low {{ color: var(--accent-dark); font-weight: 750; }}
     .muted {{ color: var(--muted); }}
     .overview-figure {{
       padding: 18px;
@@ -247,7 +316,7 @@ def render_demo_report(
     footer {{ margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }}
     @media (max-width: 860px) {{
       .nav {{ align-items: flex-start; flex-direction: column; }}
-      .hero, .grid-3, .flow, .figure-grid, .kpis {{ grid-template-columns: 1fr; }}
+      .hero, .grid-3, .grid-2, .flow, .figure-grid, .kpis {{ grid-template-columns: 1fr; }}
       h1 {{ font-size: 36px; }}
       .section-head {{ align-items: flex-start; flex-direction: column; }}
       .kpi .value {{ font-size: 20px; }}
@@ -263,6 +332,8 @@ def render_demo_report(
         <a href="#mechanism">Mechanism</a>
         <a href="#leaderboard">Leaderboard</a>
         {_attempt_nav_link(attempts)}
+        {_training_nav_link(battle_reports)}
+        {_marketplace_nav_link(strategy_profiles)}
         <a href="#trace">Trace</a>
         <a href="#findings">Findings</a>
       </div>
@@ -276,13 +347,14 @@ def render_demo_report(
       <div class="actions">
         <a class="button primary" href="#leaderboard">View leaderboard preview</a>
         <a class="button" href="#overview">Explore mechanism</a>
+        {_training_button(battle_reports)}
         <a class="button" href="../../docs/real_market_benchmark_design.md">Design notes</a>
       </div>
       <div class="kpis">
         <div class="kpi"><div class="label">Demo Runs</div><div class="value">{len(attempts) if attempts else len(runs)}</div></div>
         <div class="kpi"><div class="label">Product Cluster</div><div class="value">{_escape(_humanize(product.condition))}</div></div>
         <div class="kpi"><div class="label">Market Reference</div><div class="value">{reference_price}</div></div>
-        <div class="kpi"><div class="label">Sold Comps</div><div class="value">{_escape(sample_size)}</div></div>
+        <div class="kpi"><div class="label">Training Reports</div><div class="value">{len(battle_reports)}</div></div>
       </div>
     </section>
 
@@ -298,10 +370,10 @@ def render_demo_report(
         <div class="figure-grid">
           <div class="figure-node"><strong>Buyer Agent</strong><span class="muted">Budget, preferences, search tools, and offer policy.</span></div>
           <div class="figure-node"><strong>Market Evidence</strong><span class="muted">Sold comps, provenance, noisy/stale/failure regimes.</span></div>
-          <div class="figure-node"><strong>Negotiation Protocol</strong><span class="muted">Messages, offers, accepts, rejects, and private tool traces.</span></div>
-          <div class="figure-node"><strong>Transaction Layer</strong><span class="muted">Shipping, tax, fees, escrow, payment, and risk outcomes.</span></div>
+          <div class="figure-node"><strong>Policy Learning</strong><span class="muted">Battle reports extract trace-grounded lessons and strategy prompt patches.</span></div>
+          <div class="figure-node"><strong>Strategy Marketplace</strong><span class="muted">Preset NPC profiles expose anchors, stale evidence, hidden fees, and probing tactics.</span></div>
         </div>
-        <p class="figure-caption">The public benchmark reads versioned artifacts: scenario, manifest, trace JSONL, and metrics.</p>
+        <p class="figure-caption">The MVP loop is benchmark, diagnose, patch strategy, and spar against harder NPC profiles.</p>
       </div>
     </section>
 
@@ -309,8 +381,8 @@ def render_demo_report(
       <h2>Why Choose OpenNego</h2>
       <div class="grid-3">
         <div class="card"><h3>Agentic, not prompt-only</h3><p class="muted">Agents can use tools for market search, provenance checks, and transaction reasoning before making offers.</p></div>
-        <div class="card"><h3>Market-grounded</h3><p class="muted">Scenarios are anchored to comparable sale distributions instead of assuming a hidden human cost price.</p></div>
-        <div class="card"><h3>Transaction-aware</h3><p class="muted">Accepted offers can be settled through shipping, tax, fees, escrow, payment, and risk simulators.</p></div>
+        <div class="card"><h3>Training-ready</h3><p class="muted">Every run can become a battle report with failure diagnoses and strategy-layer prompt patches.</p></div>
+        <div class="card"><h3>Marketplace-driven</h3><p class="muted">Curated NPC strategies give users repeatable sparring partners for systematic optimization.</p></div>
       </div>
     </section>
 
@@ -359,12 +431,16 @@ def render_demo_report(
 
     {_attempt_status_section(attempts)}
 
+    {_policy_learning_section(battle_reports)}
+
+    {_strategy_marketplace_section(strategy_profiles)}
+
     <section id="findings" class="section">
-      <h2>Key Findings From This Smoke</h2>
+      <h2>Key Findings From This MVP</h2>
       <div class="grid-3">
-        <div class="card"><h3>Tools change price formation</h3><p class="muted">The buyer-private market tool pulls offers toward the sold-comparable reference instead of the inflated asking price.</p></div>
-        <div class="card"><h3>Noisy evidence remains visible</h3><p class="muted">Tool regime metadata and trace provenance make clean, noisy, stale, adversarial, and failure cases auditable.</p></div>
-        <div class="card"><h3>Transactions are part of eval</h3><p class="muted">The accepted offer is not the final story: buyer total cost, seller net revenue, fees, and risk are separately scored.</p></div>
+        <div class="card"><h3>Benchmark is the evidence layer</h3><p class="muted">Scenario, manifest, trace, and metrics artifacts remain the source of truth for scoring and replay.</p></div>
+        <div class="card"><h3>Training turns scores into edits</h3><p class="muted">Battle reports cite trace events before recommending strategy prompt patches.</p></div>
+        <div class="card"><h3>NPCs define the curriculum</h3><p class="muted">Marketplace profiles expose anchors, stale evidence, hidden fees, reservation probes, and tool overuse.</p></div>
       </div>
     </section>
 
@@ -377,7 +453,7 @@ def render_demo_report(
     </section>
 
     <footer>
-      Generated from OpenNego benchmark artifacts. This is a no-key demo surface, not a live marketplace collection.
+      Generated from OpenNego benchmark and policy-learning artifacts. This is a no-key demo surface, not a live marketplace collection.
     </footer>
   </main>
 </body>
@@ -417,6 +493,111 @@ def _attempt_nav_link(attempts: Sequence[ModelAttempt]) -> str:
     if not attempts:
         return ""
     return '<a href="#attempts">Runs</a>'
+
+
+def _training_nav_link(reports: Sequence[BattleReportView]) -> str:
+    if not reports:
+        return ""
+    return '<a href="#training">Training</a>'
+
+
+def _marketplace_nav_link(profiles: Sequence[StrategyProfile]) -> str:
+    if not profiles:
+        return ""
+    return '<a href="#marketplace">Marketplace</a>'
+
+
+def _training_button(reports: Sequence[BattleReportView]) -> str:
+    if not reports:
+        return ""
+    return '<a class="button" href="#training">Review training advice</a>'
+
+
+def _policy_learning_section(reports: Sequence[BattleReportView]) -> str:
+    if not reports:
+        return ""
+    report = reports[0]
+    return f"""
+    <section id="training" class="section">
+      <div class="section-head">
+        <div>
+          <h2>Training / Prompt Optimization</h2>
+          <p class="section-copy">Battle reports turn benchmark artifacts into strategy-layer edits. The base protocol remains fixed; only the user's strategy prompt changes.</p>
+        </div>
+        <span class="pill">Policy score {report.score:.1f}</span>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Battle Summary</h3>
+          <p class="muted">{_escape(report.summary)}</p>
+          <p class="muted">Run: {_escape(report.run_id)}</p>
+          <p class="muted">Failure modes: {_escape(', '.join(report.failure_modes) or 'none')}</p>
+        </div>
+        <div class="card">
+          <h3>Strategy Patch</h3>
+          <div class="prompt-patch">{_escape(report.suggested_strategy_prompt)}</div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:14px;">
+        {_lesson_cards(report.lessons)}
+      </div>
+    </section>
+"""
+
+
+def _strategy_marketplace_section(profiles: Sequence[StrategyProfile]) -> str:
+    if not profiles:
+        return ""
+    return f"""
+    <section id="marketplace" class="section">
+      <div class="section-head">
+        <div>
+          <h2>Strategy Marketplace</h2>
+          <p class="section-copy">Preset NPC profiles provide repeatable sparring partners. Each profile separates fixed sandbox base logic from editable strategy behavior.</p>
+        </div>
+        <span class="pill">{len(profiles)} NPC profiles</span>
+      </div>
+      <div class="grid-3">
+        {_profile_cards(profiles[:6])}
+      </div>
+    </section>
+"""
+
+
+def _lesson_cards(lessons: Sequence[BattleLessonView]) -> str:
+    if not lessons:
+        return '<div class="lesson-card"><h3>No deterministic lessons</h3><p class="muted">No high-signal policy issue was detected.</p></div>'
+    cards = []
+    for lesson in lessons[:4]:
+        evidence = "; ".join(_evidence_label(item) for item in lesson.evidence[:2])
+        cards.append(
+            "<div class=\"lesson-card\">"
+            f"<h3>{_escape(lesson.category.replace('_', ' ').title())}</h3>"
+            f"<p class=\"muted\">{_escape(lesson.id)}</p>"
+            f"<p class=\"severity-{_escape(lesson.severity)}\">{_escape(lesson.severity.upper())}</p>"
+            f"<p>{_escape(lesson.finding)}</p>"
+            f"<p class=\"muted\">{_escape(lesson.recommendation)}</p>"
+            f"<p class=\"muted\">Evidence: {_escape(evidence or 'trace-linked')}</p>"
+            "</div>"
+        )
+    return "\n".join(cards)
+
+
+def _profile_cards(profiles: Sequence[StrategyProfile]) -> str:
+    cards = []
+    for profile in profiles:
+        traps = "; ".join(profile.expected_traps[:2])
+        tags = ", ".join(profile.tags[:4])
+        cards.append(
+            "<div class=\"profile-card\">"
+            f"<h3>{_escape(profile.name)}</h3>"
+            f"<p><span class=\"pill\">{_escape(profile.role.value)}</span> <span class=\"pill\">{_escape(profile.difficulty)}</span></p>"
+            f"<p class=\"muted\">{_escape(profile.summary)}</p>"
+            f"<p class=\"muted\">Tests: {_escape(traps)}</p>"
+            f"<p class=\"muted\">Tags: {_escape(tags)}</p>"
+            "</div>"
+        )
+    return "\n".join(cards)
 
 
 def _attempt_rows(attempts: Sequence[ModelAttempt]) -> str:
@@ -544,6 +725,47 @@ def _attempt_error(attempt: ModelAttempt) -> str:
         return "n/a"
     prefix = f"{attempt.error_type}: " if attempt.error_type else ""
     return _truncate(prefix + (attempt.error or "unknown failure"), 120)
+
+
+def _battle_report_from_mapping(data: Mapping[str, Any]) -> BattleReportView:
+    lessons = data.get("lessons", ())
+    return BattleReportView(
+        run_id=str(data.get("run_id", "")),
+        user_role=str(data.get("user_role", "")),
+        opponent_profile_id=_optional_str(data.get("opponent_profile_id")),
+        outcome=str(data.get("outcome", "")),
+        deal_price=_optional_float(data.get("deal_price")),
+        score=float(data.get("score", 0.0)),
+        summary=str(data.get("summary", "")),
+        failure_modes=tuple(str(item) for item in data.get("failure_modes", ())),
+        strengths=tuple(str(item) for item in data.get("strengths", ())),
+        lessons=tuple(
+            _lesson_from_mapping(item)
+            for item in lessons
+            if isinstance(item, Mapping)
+        ),
+        suggested_strategy_prompt=str(data.get("suggested_strategy_prompt", "")),
+    )
+
+
+def _lesson_from_mapping(data: Mapping[str, Any]) -> BattleLessonView:
+    evidence = data.get("evidence", ())
+    return BattleLessonView(
+        id=str(data.get("id", "")),
+        severity=str(data.get("severity", "low")),
+        category=str(data.get("category", "optimization")),
+        finding=str(data.get("finding", "")),
+        recommendation=str(data.get("recommendation", "")),
+        suggested_strategy_patch=_optional_str(data.get("suggested_strategy_patch")),
+        evidence=tuple(item for item in evidence if isinstance(item, Mapping)),
+    )
+
+
+def _evidence_label(item: Mapping[str, Any]) -> str:
+    turn = item.get("turn", "?")
+    role = item.get("role", "?")
+    action = item.get("action_type", "?")
+    return f"turn {turn} {role} {action}"
 
 
 def _money_or_empty(value: float | None) -> str:

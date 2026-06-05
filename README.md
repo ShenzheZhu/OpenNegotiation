@@ -80,13 +80,17 @@ trace-grounded battle report from one completed benchmark run:
 opennego strategies --role seller
 opennego learn \
   --input-dir /tmp/opennego-real-market-demo/real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13 \
-  --output /tmp/opennego-battle-report.json \
+  --output /tmp/opennego-real-market-demo/battle_report.json \
   --user-role buyer \
   --opponent-profile seller_hardline_anchor_v1
+opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennego-mvp-demo.html
 ```
 
 This produces strategy-layer lessons and prompt optimization suggestions while
-keeping OpenNego's base sandbox protocol fixed.
+keeping OpenNego's base sandbox protocol fixed. The static report automatically
+renders the battle report and local NPC strategy marketplace when those
+artifacts are present. A curated no-key MVP page is available at
+`examples/reports/opennego_mvp_demo.html`.
 
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
 
