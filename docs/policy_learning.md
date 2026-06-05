@@ -171,6 +171,23 @@ records:
 - expected improvements derived from trace-grounded recommendations
 - a recommended rerun command and comparison command
 
+The deterministic sparring runtime can consume the candidate directly:
+
+```bash
+opennego spar \
+  --user-role buyer \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-strategy /tmp/opennego-real-market-demo/strategy_candidate.json \
+  --output-dir /tmp/opennego-rerun
+```
+
+For the no-key MVP, the candidate is applied as deterministic policy knobs for
+the user agent. Buyer candidates can tighten market-reference price discipline
+and seller candidates can tighten reservation or market-floor behavior. The
+sparring summary and per-run manifests record the candidate id, parent strategy
+id, source run id, and applied lesson ids so before/after runs remain
+auditable.
+
 After the user reruns their agent with the candidate strategy, `opennego compare`
 can compare the before/after battle reports:
 
@@ -245,6 +262,7 @@ In scope:
 - CLI commands for listing profiles, writing battle reports, and rendering the
   one-command MVP demo
 - no-key sparring suite artifacts for selected marketplace profiles
+- no-key runtime application of versioned strategy candidates in sparring
 
 Out of scope:
 
@@ -261,6 +279,7 @@ The near-term product loop is:
 2. OpenNego scores the run.
 3. OpenNego generates a battle report.
 4. OpenNego converts the battle report into a strategy candidate.
-5. User edits only the strategy prompt.
+5. User applies the candidate through `opennego spar --user-strategy` or edits
+   only the strategy prompt in their own agent integration.
 6. User reruns against the same or harder NPC profile.
 7. OpenNego compares the before/after battle reports.

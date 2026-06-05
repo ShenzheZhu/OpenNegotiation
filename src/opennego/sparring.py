@@ -9,6 +9,7 @@ from typing import Sequence
 from opennego.agents import make_profile_agent_pair
 from opennego.artifacts import write_json, write_run_artifacts
 from opennego.environment import NegotiationEnvironment
+from opennego.evolution import StrategyCandidate, load_strategy_candidate
 from opennego.learning import (
     DEFAULT_NPC_REGISTRY_PATH,
     BattleReport,
@@ -43,6 +44,7 @@ class SparringOpponentResult:
     benchmark_output_dir: str
     benchmark_completed: int
     benchmark_failed: int
+    user_strategy_candidate_id: str | None = None
     learning_input_dir: str | None = None
     battle_report: str | None = None
     outcome: str | None = None
@@ -63,6 +65,8 @@ class SparringSuiteSummary:
     registry_path: str
     user_role: Role
     opponent_role: Role
+    user_strategy_candidate_id: str | None
+    user_strategy_path: str | None
     total_profiles: int
     completed: int
     failed: int
@@ -77,6 +81,7 @@ def run_sparring_suite(
     registry_path: str | Path = DEFAULT_NPC_REGISTRY_PATH,
     user_role: Role | str = Role.BUYER,
     opponent_profile_ids: Sequence[str] | None = None,
+    user_strategy_path: str | Path | None = None,
     learning_tool_regime: str = "no_tools",
     fail_fast: bool = True,
 ) -> SparringSuiteSummary:
@@ -85,6 +90,16 @@ def run_sparring_suite(
     output = Path(output_dir)
     registry = load_strategy_registry(registry_path)
     normalized_user_role = Role(user_role)
+    user_strategy = (
+        load_strategy_candidate(user_strategy_path)
+        if user_strategy_path is not None
+        else None
+    )
+    if user_strategy is not None and user_strategy.user_role != normalized_user_role:
+        raise ValueError(
+            f"user strategy role {user_strategy.user_role.value!r} does not "
+            f"match user_role {normalized_user_role.value!r}"
+        )
     opponent_role = _opponent_role(normalized_user_role)
     profiles = _select_profiles(
         registry.profiles,
@@ -102,6 +117,7 @@ def run_sparring_suite(
                     config_path=config_path,
                     registry_path=registry_path,
                     user_role=normalized_user_role,
+                    user_strategy=user_strategy,
                     learning_tool_regime=learning_tool_regime,
                 )
             )
@@ -115,6 +131,9 @@ def run_sparring_suite(
                 benchmark_output_dir=str(output / "profiles" / profile.id),
                 benchmark_completed=0,
                 benchmark_failed=1,
+                user_strategy_candidate_id=(
+                    user_strategy.candidate_id if user_strategy else None
+                ),
                 error=str(exc),
             )
             results.append(result)
@@ -131,6 +150,8 @@ def run_sparring_suite(
         registry_path=str(registry_path),
         user_role=normalized_user_role,
         opponent_role=opponent_role,
+        user_strategy_candidate_id=user_strategy.candidate_id if user_strategy else None,
+        user_strategy_path=str(user_strategy_path) if user_strategy_path else None,
         total_profiles=len(profiles),
         completed=sum(1 for result in results if result.status == "completed"),
         failed=sum(1 for result in results if result.status == "failed"),
@@ -148,6 +169,7 @@ def _run_profile_sparring(
     config_path: str | Path,
     registry_path: str | Path,
     user_role: Role,
+    user_strategy: StrategyCandidate | None,
     learning_tool_regime: str,
 ) -> SparringOpponentResult:
     benchmark = _run_profile_benchmark(
@@ -155,6 +177,7 @@ def _run_profile_sparring(
         output_dir=output_dir / "benchmark",
         config_path=config_path,
         user_role=user_role,
+        user_strategy=user_strategy,
     )
     learning_run = _select_completed_run(benchmark.runs, learning_tool_regime)
     report = generate_battle_report(
@@ -171,6 +194,7 @@ def _run_profile_sparring(
         learning_run=learning_run,
         report=report,
         battle_report_path=battle_report_path,
+        user_strategy=user_strategy,
     )
 
 
@@ -181,6 +205,7 @@ def _opponent_result(
     learning_run: RunRecord,
     report: BattleReport,
     battle_report_path: Path,
+    user_strategy: StrategyCandidate | None,
 ) -> SparringOpponentResult:
     return SparringOpponentResult(
         profile_id=profile.id,
@@ -191,6 +216,9 @@ def _opponent_result(
         benchmark_output_dir=str(Path(benchmark.output_dir)),
         benchmark_completed=benchmark.completed,
         benchmark_failed=benchmark.failed,
+        user_strategy_candidate_id=(
+            user_strategy.candidate_id if user_strategy else None
+        ),
         learning_input_dir=learning_run.output_dir,
         battle_report=str(battle_report_path),
         outcome=report.outcome,
@@ -248,6 +276,7 @@ def _run_profile_benchmark(
     output_dir: Path,
     config_path: str | Path,
     user_role: Role,
+    user_strategy: StrategyCandidate | None,
 ) -> ExperimentSummary:
     config = replace(
         load_experiment_config(config_path),
@@ -263,6 +292,7 @@ def _run_profile_benchmark(
                 config=config,
                 profile=profile,
                 user_role=user_role,
+                user_strategy=user_strategy,
             )
         except Exception as exc:  # pragma: no cover - CLI failure path
             records.append(
@@ -305,8 +335,13 @@ def _execute_profile_prepared_run(
     config: ExperimentConfig,
     profile: StrategyProfile,
     user_role: Role,
+    user_strategy: StrategyCandidate | None,
 ):
-    buyer, seller = _profile_agent_pair(profile=profile, user_role=user_role)
+    buyer, seller = _profile_agent_pair(
+        profile=profile,
+        user_role=user_role,
+        user_strategy=user_strategy,
+    )
     env = NegotiationEnvironment(
         scenario=prepared_run.scenario,
         buyer=buyer,
@@ -335,6 +370,7 @@ def _execute_profile_prepared_run(
             "opponent_profile_name": profile.name,
             "opponent_archetype": profile.archetype,
             "opponent_difficulty": profile.difficulty,
+            "user_strategy": _strategy_metadata(user_strategy),
         },
     )
     return result
@@ -344,10 +380,12 @@ def _profile_agent_pair(
     *,
     profile: StrategyProfile,
     user_role: Role,
+    user_strategy: StrategyCandidate | None,
 ):
     return make_profile_agent_pair(
         profile=profile,
         user_role=user_role,
+        user_strategy=user_strategy,
     )
 
 
@@ -366,9 +404,31 @@ def _agent_manifest(agent, *, profile: StrategyProfile) -> dict[str, object]:
                 "difficulty": profile.difficulty,
             }
         )
+    elif getattr(agent, "strategy_candidate_id", None):
+        payload.update(
+            {
+                "kind": f"strategy_candidate_{agent.role.value}",
+                "candidate_id": agent.strategy_candidate_id,
+                "parent_strategy_id": agent.parent_strategy_id,
+                "applied_lesson_ids": list(agent.applied_lesson_ids),
+            }
+        )
     else:
         payload["kind"] = f"user_{agent.role.value}"
     return payload
+
+
+def _strategy_metadata(candidate: StrategyCandidate | None) -> dict[str, object]:
+    if candidate is None:
+        return {"enabled": False}
+    return {
+        "enabled": True,
+        "candidate_id": candidate.candidate_id,
+        "parent_strategy_id": candidate.parent_strategy_id,
+        "iteration": candidate.iteration,
+        "applied_lesson_ids": list(candidate.applied_lesson_ids),
+        "source_run_id": candidate.source_run_id,
+    }
 
 
 def _tool_regime_manifest(tool_regime: ToolRegimeConfig) -> dict[str, object]:

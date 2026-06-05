@@ -28,6 +28,7 @@ Config / CLI
   -> ToolPort / TransactionPort implementations
   -> artifact writers
   -> metrics, battle reports, and static HTML reports
+  -> optional strategy candidate reruns through sparring
 ```
 
 Core run artifacts are the source of truth:
@@ -49,8 +50,10 @@ parallel logs.
 - `artifacts.py`: versioned scenario, manifest, trace, metrics, and JSON I/O.
 - `metrics.py`: run-level scoring functions.
 - `learning.py`: battle-report generation and NPC strategy registry parsing.
-- `evolution.py`: strategy candidate and before/after comparison artifacts.
-- `sparring.py`: no-key strategy sparring suite orchestration.
+- `evolution.py`: strategy candidate loading, strategy patch artifacts, and
+  before/after comparison artifacts.
+- `sparring.py`: no-key strategy sparring suite orchestration, including
+  optional application of versioned user strategy candidates.
 - `report.py` and `sparring_report.py`: dependency-free static HTML reports.
 - `ports/`: provider-neutral contracts for agents, LLMs, tools, and
   transactions.

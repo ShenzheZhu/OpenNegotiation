@@ -9,6 +9,7 @@ from opennego.evolution import (
     StrategyEvolutionError,
     generate_strategy_candidate,
     generate_strategy_comparison,
+    load_strategy_candidate,
     write_strategy_candidate,
 )
 from opennego.learning import write_battle_report
@@ -33,6 +34,10 @@ def test_strategy_candidate_turns_battle_report_into_versioned_patch(tmp_path):
     assert candidate.applied_patches
     assert candidate.metadata["base_prompt_fixed"] is True
     assert "opennego spar --user-role buyer" in candidate.evaluation_plan["rerun_command"]
+    assert (
+        "--user-strategy <strategy_candidate.json>"
+        in candidate.evaluation_plan["rerun_command"]
+    )
 
 
 def test_write_strategy_candidate_writes_json_artifact(tmp_path):
@@ -51,6 +56,11 @@ def test_write_strategy_candidate_writes_json_artifact(tmp_path):
     assert payload["schema_version"] == STRATEGY_EVOLUTION_SCHEMA_VERSION
     assert payload["candidate_id"] == "buyer_baseline-iter-1"
     assert payload["source_battle_report"] == str(battle_report)
+    assert f"--user-strategy {output_path}" in payload["evaluation_plan"]["rerun_command"]
+
+    loaded = load_strategy_candidate(written)
+    assert loaded.candidate_id == "buyer_baseline-iter-1"
+    assert loaded.evaluation_plan["rerun_command"] == payload["evaluation_plan"]["rerun_command"]
 
 
 def test_strategy_comparison_scores_before_after_reports(tmp_path):
@@ -123,6 +133,34 @@ def test_strategy_evolution_rejects_malformed_policy_schema(tmp_path):
         ]
     )
     assert status == 2
+
+
+def test_load_strategy_candidate_rejects_malformed_role(tmp_path):
+    candidate_path = tmp_path / "bad_candidate.json"
+    candidate_path.write_text(
+        json.dumps(
+            {
+                "schema_version": STRATEGY_EVOLUTION_SCHEMA_VERSION,
+                "candidate_id": "bad-iter-1",
+                "parent_strategy_id": "bad",
+                "iteration": 1,
+                "user_role": "system",
+                "source_battle_report": "battle_report.json",
+                "source_run_id": "run-1",
+                "scenario_id": "scenario-1",
+                "strategy_prompt": "patch",
+                "evaluation_plan": {},
+                "metadata": {},
+            }
+        )
+        + "\n"
+    )
+
+    with pytest.raises(
+        StrategyEvolutionError,
+        match="user_role: expected buyer or seller",
+    ):
+        load_strategy_candidate(candidate_path)
 
 
 def _write_real_market_battle_report(tmp_path, tool_regime):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -125,15 +125,65 @@ def write_strategy_candidate(
     parent_strategy_id: str = "user_strategy_v0",
     iteration: int = 1,
 ) -> Path:
+    path = Path(output_path)
     candidate = generate_strategy_candidate(
         battle_report_path,
         parent_strategy_id=parent_strategy_id,
         iteration=iteration,
     )
-    path = Path(output_path)
+    candidate = replace(
+        candidate,
+        evaluation_plan=_evaluation_plan(
+            candidate_id=candidate.candidate_id,
+            user_role=candidate.user_role,
+            opponent_profile_id=candidate.opponent_profile_id,
+            source_battle_report=candidate.source_battle_report,
+            user_strategy_path=str(path),
+        ),
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     write_json(path, candidate)
     return path
+
+
+def load_strategy_candidate(path: str | Path) -> StrategyCandidate:
+    """Load and validate a versioned strategy candidate artifact."""
+
+    candidate_path = Path(path)
+    data = read_json(candidate_path)
+    version = data.get("schema_version")
+    if version != STRATEGY_EVOLUTION_SCHEMA_VERSION:
+        raise StrategyEvolutionError(
+            f"{candidate_path}: expected {STRATEGY_EVOLUTION_SCHEMA_VERSION}, "
+            f"got {version!r}"
+        )
+    iteration = data.get("iteration")
+    if not isinstance(iteration, int) or iteration <= 0:
+        raise StrategyEvolutionError("iteration: expected positive integer")
+    evaluation_plan = data.get("evaluation_plan", {})
+    if not isinstance(evaluation_plan, Mapping):
+        raise StrategyEvolutionError("evaluation_plan: expected object")
+    metadata = data.get("metadata", {})
+    if not isinstance(metadata, Mapping):
+        raise StrategyEvolutionError("metadata: expected object")
+    user_role = _required_role(data, "user_role")
+    return StrategyCandidate(
+        schema_version=STRATEGY_EVOLUTION_SCHEMA_VERSION,
+        candidate_id=_required_str(data, "candidate_id"),
+        parent_strategy_id=_required_str(data, "parent_strategy_id"),
+        iteration=iteration,
+        user_role=user_role,
+        source_battle_report=_required_str(data, "source_battle_report"),
+        source_run_id=_required_str(data, "source_run_id"),
+        scenario_id=_required_str(data, "scenario_id"),
+        opponent_profile_id=_optional_str(data, "opponent_profile_id"),
+        strategy_prompt=_required_str(data, "strategy_prompt"),
+        applied_lesson_ids=_string_list(data, "applied_lesson_ids"),
+        applied_patches=_string_list(data, "applied_patches"),
+        expected_improvements=_string_list(data, "expected_improvements"),
+        evaluation_plan=evaluation_plan,
+        metadata=metadata,
+    )
 
 
 def generate_strategy_comparison(
@@ -231,10 +281,12 @@ def _evaluation_plan(
     user_role: Role,
     opponent_profile_id: str | None,
     source_battle_report: str,
+    user_strategy_path: str = "<strategy_candidate.json>",
 ) -> Mapping[str, Any]:
     rerun_command = (
         f"opennego spar --user-role {user_role.value} "
-        f"--output-dir runs/evolution/{candidate_id}"
+        f"--output-dir runs/evolution/{candidate_id} "
+        f"--user-strategy {user_strategy_path}"
     )
     if opponent_profile_id:
         rerun_command += f" --opponent-profile {opponent_profile_id}"
@@ -342,6 +394,17 @@ def _required_number(data: Mapping[str, Any], key: str) -> float:
     if not isinstance(value, (int, float)):
         raise StrategyEvolutionError(f"{key}: expected number")
     return float(value)
+
+
+def _required_role(data: Mapping[str, Any], key: str) -> Role:
+    value = _required_str(data, key)
+    try:
+        role = Role(value)
+    except ValueError as exc:
+        raise StrategyEvolutionError(f"{key}: expected buyer or seller") from exc
+    if role not in (Role.BUYER, Role.SELLER):
+        raise StrategyEvolutionError(f"{key}: expected buyer or seller")
+    return role
 
 
 def _string_list(data: Mapping[str, Any], key: str) -> tuple[str, ...]:

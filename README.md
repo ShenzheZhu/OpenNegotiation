@@ -113,6 +113,15 @@ profile diagnosis: deterministic local agents generate the benchmark artifacts,
 while marketplace profiles define the opponent archetype and lessons used for
 prompt optimization.
 
+To rerun sparring with a generated strategy candidate:
+
+```bash
+opennego spar \
+  --output-dir /tmp/opennego-rerun \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-strategy /tmp/opennego-mvp-demo/strategy_candidate.json
+```
+
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
 
 ```bash
