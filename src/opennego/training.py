@@ -16,6 +16,7 @@ from opennego.sparring import (
     SparringSuiteSummary,
     run_sparring_suite,
 )
+from opennego.strategy_config import write_strategy_config
 
 TRAINING_LOOP_SCHEMA_VERSION = "opennego.training_loop.v1"
 TRAINING_LOOP_EXECUTION_MODE = "sparring_strategy_evolution_v1"
@@ -37,6 +38,7 @@ class TrainingLoopSummary:
     baseline_completed: int
     baseline_failed: int
     strategy_candidate: str
+    strategy_config: str
     rerun_sparring_artifact: str
     rerun_battle_report: str
     rerun_completed: int
@@ -87,6 +89,8 @@ def run_training_loop(
         parent_strategy_id=parent_strategy_id,
         iteration=iteration,
     )
+    strategy_config_path = output / "strategy_config.json"
+    write_strategy_config(candidate_path, strategy_config_path)
 
     rerun = run_sparring_suite(
         output_dir=output / "rerun",
@@ -125,6 +129,7 @@ def run_training_loop(
         baseline_completed=baseline.completed,
         baseline_failed=baseline.failed,
         strategy_candidate=str(candidate_path),
+        strategy_config=str(strategy_config_path),
         rerun_sparring_artifact=rerun.artifact_path,
         rerun_battle_report=rerun_result.battle_report,
         rerun_completed=rerun.completed,

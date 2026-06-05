@@ -16,10 +16,14 @@ from opennego.learning import (
     load_strategy_registry,
 )
 from opennego.schema import Role
+from opennego.strategy_config import (
+    STRATEGY_CONFIG_SCHEMA_VERSION,
+    base_prompt_for_role,
+    prompt_layer_contract,
+)
 
 MARKETPLACE_PROFILE_SCHEMA_VERSION = "opennego.strategy_marketplace_profile.v1"
 MARKETPLACE_VALIDATION_SCHEMA_VERSION = "opennego.strategy_marketplace_validation.v1"
-STRATEGY_CONFIG_SCHEMA_VERSION = "opennego.strategy_config.v1"
 
 
 class MarketplaceError(ValueError):
@@ -287,26 +291,11 @@ def _default_summary(candidate: StrategyCandidate) -> str:
 
 
 def _base_prompt(role: Role) -> str:
-    return (
-        f"Follow OpenNego {role.value} protocol exactly: return one valid action, "
-        "respect role constraints, never alter tool permissions, and keep the "
-        "base sandbox rules fixed."
-    )
+    return base_prompt_for_role(role)
 
 
 def _prompt_layers() -> Mapping[str, Mapping[str, object]]:
-    return {
-        "base_prompt": {
-            "field": "base_prompt",
-            "editable": False,
-            "scope": "sandbox_protocol",
-        },
-        "strategy_prompt": {
-            "field": "strategy_prompt",
-            "editable": True,
-            "scope": "strategy_policy",
-        },
-    }
+    return prompt_layer_contract()
 
 
 def _validate_registry_file(

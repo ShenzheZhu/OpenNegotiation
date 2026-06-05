@@ -7,6 +7,7 @@ from opennego.evolution import (
     STRATEGY_EVOLUTION_SCHEMA_VERSION,
 )
 from opennego.sparring import SPARRING_EXECUTION_MODE, SPARRING_SUITE_SCHEMA_VERSION
+from opennego.strategy_config import STRATEGY_CONFIG_SCHEMA_VERSION
 from opennego.training import TRAINING_LOOP_SCHEMA_VERSION, run_training_loop
 
 
@@ -21,6 +22,7 @@ def test_training_loop_writes_candidate_rerun_and_comparison(tmp_path):
 
     payload = json.loads((output_dir / "training_loop.json").read_text())
     candidate = json.loads((output_dir / "strategy_candidate.json").read_text())
+    config = json.loads((output_dir / "strategy_config.json").read_text())
     comparison = json.loads((output_dir / "strategy_comparison.json").read_text())
     baseline = json.loads((output_dir / "baseline" / "sparring_suite.json").read_text())
     rerun = json.loads((output_dir / "rerun" / "sparring_suite.json").read_text())
@@ -42,6 +44,10 @@ def test_training_loop_writes_candidate_rerun_and_comparison(tmp_path):
     }
     assert candidate["schema_version"] == STRATEGY_EVOLUTION_SCHEMA_VERSION
     assert candidate["candidate_id"] == "buyer_baseline-iter-1"
+    assert config["schema_version"] == STRATEGY_CONFIG_SCHEMA_VERSION
+    assert config["source_candidate_id"] == "buyer_baseline-iter-1"
+    assert config["metadata"]["strategy_config_version"] == STRATEGY_CONFIG_SCHEMA_VERSION
+    assert payload["strategy_config"] == str(output_dir / "strategy_config.json")
     assert comparison["schema_version"] == STRATEGY_COMPARISON_SCHEMA_VERSION
     assert comparison["before_battle_report"] == payload["selected_battle_report"]
     assert comparison["after_battle_report"] == payload["rerun_battle_report"]
@@ -72,6 +78,7 @@ def test_train_cli_runs_no_key_training_loop(tmp_path, capsys):
     assert payload["status"] == "completed"
     assert payload["artifact_path"] == str(output_dir / "training_loop.json")
     assert (output_dir / "strategy_candidate.json").exists()
+    assert (output_dir / "strategy_config.json").exists()
     assert (output_dir / "strategy_comparison.json").exists()
 
 

@@ -52,6 +52,8 @@ parallel logs.
 - `learning.py`: battle-report generation and NPC strategy registry parsing.
 - `evolution.py`: strategy candidate loading, strategy patch artifacts, and
   before/after comparison artifacts.
+- `strategy_config.py`: applied strategy config artifacts with fixed-base and
+  editable-strategy prompt-layer contracts for user-agent evolution.
 - `marketplace.py`: local strategy candidate export, registry installation, and
   validation for shareable marketplace profiles.
 - `sparring.py`: no-key strategy sparring suite orchestration, including

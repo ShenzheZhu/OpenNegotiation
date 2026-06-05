@@ -79,6 +79,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   selection and no-key fake-gateway tests.
 - Added `opennego train` as a one-command no-key training loop for baseline
   sparring, strategy extraction, candidate rerun, and before/after comparison.
+- Added `opennego apply-strategy` for applying strategy candidates into
+  versioned `opennego.strategy_config.v1` artifacts with fixed-base/editable
+  strategy prompt-layer metadata.
 - Added `opennego validate-marketplace` for local strategy registry and shared
   marketplace profile release checks.
 - Added `opennego role-swap` for a small no-key role-swapped benchmark track
@@ -105,11 +108,12 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 126 passed after adding the no-key role-swapped track.
+- `pytest -q`: 130 passed after adding strategy config application.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
-- `opennego train` no-key training loop: passing.
+- `opennego train` no-key training loop: passing and writing strategy configs.
+- `opennego apply-strategy`: passing for candidate-to-config application.
 - `opennego validate-marketplace`: passing for the curated registry and an
   exported shared strategy profile.
 - `opennego role-swap`: passing with buyer/seller role coverage 1.0.

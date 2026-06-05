@@ -68,7 +68,8 @@ Implemented:
 - Versioned strategy candidate generation, sparring reruns, and before/after
   comparison artifacts.
 - One-command no-key training loop that runs sparring, extracts a strategy
-  candidate, reruns the same profile, and compares before/after reports.
+  candidate, applies it into a versioned strategy config, reruns the same
+  profile, and compares before/after reports.
 - Local strategy marketplace profile export, registry installation, and no-key
   marketplace config validation.
 - No-key role-swapped benchmark track with combined leaderboard role coverage.
@@ -134,6 +135,7 @@ opennego run-models --output-dir /tmp/opennego-live-five-fixed-20260605 --max-tu
 opennego mvp-demo --output-dir "$tmpdir/mvp" --report "$tmpdir/mvp.html"
 opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
 opennego train --output-dir "$tmpdir/training" --opponent-profile seller_hardline_anchor_v1 --parent-strategy-id buyer_baseline
+opennego apply-strategy --candidate "$tmpdir/training/strategy_candidate.json" --output "$tmpdir/training/manual_strategy_config.json" --strategy-id buyer_baseline_manual_v1
 opennego validate-marketplace --registry examples/data/npc_strategies.json
 opennego role-swap --output-dir "$tmpdir/role_swap" --participant-id baseline_strategy
 secret-pattern scan for common provider key prefixes
@@ -141,11 +143,13 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 126 passed.
+- `pytest -q`: 130 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - MVP demo bundle validation smoke: passed with no errors or warnings.
-- Training loop smoke: passed and wrote `opennego.training_loop.v1`.
+- Training loop smoke: passed and wrote `opennego.training_loop.v1` plus
+  `opennego.strategy_config.v1`.
+- Strategy application smoke: passed and wrote `opennego.strategy_config.v1`.
 - Marketplace validation smoke: curated registry and exported profile registry
   passed with no errors or warnings.
 - Role-swapped benchmark smoke: passed with buyer/seller role coverage 1.0.
