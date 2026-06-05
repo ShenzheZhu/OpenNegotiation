@@ -92,14 +92,6 @@
     th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
     .score { font-weight: 800; color: var(--accent); }
     .pill { display: inline-block; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 12px; }
-    .trace { display: grid; gap: 10px; }
-    .event { padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd; }
-    .event-head { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
-    .role { font-weight: 700; }
-    .buyer { color: var(--accent-3); }
-    .seller { color: var(--accent-2); }
-    .system { color: var(--danger); }
-    .private { color: var(--muted); font-size: 12px; }
     footer { margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }
     @media (max-width: 860px) {
       .nav { align-items: flex-start; flex-direction: column; }
@@ -248,17 +240,6 @@ Keep OpenNego base protocol fixed. Edit only the strategy layer.
       </div>
     </section>
 
-
-    <section id="trace" class="section">
-      <h2>Trace Replay</h2>
-      <p class="muted">Showing a tool-aware fixture trace used to validate private market-search provenance and transaction settlement.</p>
-      <div class="trace">
-        <div class="event"><div class="event-head"><span><span class="role buyer">buyer</span> | tool_call | turn 1</span><span class="private">private</span></div><div class="muted">tool market_price_search | median $599.40 | 3 comps</div></div>
-<div class="event"><div class="event-head"><span><span class="role buyer">buyer</span> | offer | turn 2</span><span class="private">public</span></div><div class="muted">offer $569.43 | My offer is $569.43.</div></div>
-<div class="event"><div class="event-head"><span><span class="role seller">seller</span> | accept | turn 3</span><span class="private">public</span></div><div class="muted">Accepted at $569.43.</div></div>
-<div class="event"><div class="event-head"><span><span class="role system">system</span> | transaction | turn 4</span><span class="private">public</span></div><div class="muted">transaction completed | completed</div></div>
-      </div>
-    </section>
 
     <footer>
       Generated from OpenNego benchmark and policy-learning artifacts. This is a no-key demo surface, not a live marketplace collection.
