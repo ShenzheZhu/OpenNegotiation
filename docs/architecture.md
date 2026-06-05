@@ -52,6 +52,8 @@ parallel logs.
 - `learning.py`: battle-report generation and NPC strategy registry parsing.
 - `evolution.py`: strategy candidate loading, strategy patch artifacts, and
   before/after comparison artifacts.
+- `marketplace.py`: local strategy candidate export and registry installation
+  for shareable marketplace profiles.
 - `sparring.py`: no-key strategy sparring suite orchestration, including
   optional application of versioned user strategy candidates.
 - `report.py` and `sparring_report.py`: dependency-free static HTML reports.
@@ -94,8 +96,9 @@ the base sandbox protocol.
   factories, but the CLI does not load arbitrary Python modules.
 - Strategy sparring instantiates selected profiles as deterministic fixture
   counterparties, not live provider-backed model opponents.
-- Hosted marketplace, live marketplace collection, and provider-backed coaching
-  are out of scope for the no-key MVP.
+- Local marketplace profile export is supported, but hosted marketplace,
+  account-backed sharing, live marketplace collection, and provider-backed
+  coaching are out of scope for the no-key MVP.
 - Live five-model demos require provider credentials supplied through
   environment variables, Keychain, or another local secret manager. Credentials
   must not be committed to the repository or generated artifacts.
