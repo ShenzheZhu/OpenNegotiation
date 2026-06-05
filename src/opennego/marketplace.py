@@ -287,7 +287,7 @@ def _default_summary(candidate: StrategyCandidate) -> str:
     if candidate.applied_lesson_ids:
         lessons = ", ".join(candidate.applied_lesson_ids[:3])
         return f"Shared strategy candidate derived from lessons: {lessons}."
-    return "Shared strategy candidate derived from an OpenNego training run."
+    return "Shared strategy candidate derived from an OpenNegotiation training run."
 
 
 def _base_prompt(role: Role) -> str:

@@ -1,4 +1,4 @@
-"""Command-line entry points for OpenNego."""
+"""Command-line entry points for OpenNegotiation."""
 
 from __future__ import annotations
 
@@ -111,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] == "spar":
         return _spar_main(argv[1:])
 
-    parser = argparse.ArgumentParser(description="Run a deterministic OpenNego smoke demo.")
+    parser = argparse.ArgumentParser(description="Run a deterministic OpenNegotiation smoke demo.")
     parser.add_argument("--products-file", default="examples/data/products.json")
     parser.add_argument("--market-comps-file", default="examples/data/market_comps.json")
     parser.add_argument("--max-turns", type=int, default=8)
@@ -177,11 +177,11 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _run_config_main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run an OpenNego experiment config.")
+    parser = argparse.ArgumentParser(description="Run an OpenNegotiation experiment config.")
     parser.add_argument(
         "--config",
         required=True,
-        help="Path to an OpenNego experiment config.",
+        help="Path to an OpenNegotiation experiment config.",
     )
     parser.add_argument("--output-dir", help="Override the config output_dir.")
     parser.add_argument("--resume", dest="resume", action="store_true", default=None)
@@ -239,7 +239,7 @@ def _config_llm_models(config_path: str | Path) -> tuple[str, ...] | None:
 
 
 def _report_main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Generate an OpenNego demo HTML report.")
+    parser = argparse.ArgumentParser(description="Generate an OpenNegotiation demo HTML report.")
     parser.add_argument(
         "--input-dir",
         required=True,
@@ -263,7 +263,7 @@ def _report_main(argv: list[str] | None = None) -> int:
 
 
 def _strategies_main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="List OpenNego NPC strategy profiles.")
+    parser = argparse.ArgumentParser(description="List OpenNegotiation NPC strategy profiles.")
     parser.add_argument(
         "--registry",
         default=str(DEFAULT_NPC_REGISTRY_PATH),
@@ -588,7 +588,7 @@ def _marketplace_export_main(argv: list[str] | None = None) -> int:
 
 def _validate_marketplace_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Validate local OpenNego strategy marketplace configs."
+        description="Validate local OpenNegotiation strategy marketplace configs."
     )
     parser.add_argument(
         "--registry",
@@ -616,7 +616,7 @@ def _validate_marketplace_main(argv: list[str] | None = None) -> int:
 
 def _ingest_market_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Normalize offline sold-comps CSV/JSON into OpenNego fixtures."
+        description="Normalize offline sold-comps CSV/JSON into OpenNegotiation fixtures."
     )
     parser.add_argument(
         "--input",
@@ -677,7 +677,7 @@ def _ingest_market_main(argv: list[str] | None = None) -> int:
 
 def _validate_market_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Validate normalized OpenNego market fixture files."
+        description="Validate normalized OpenNegotiation market fixture files."
     )
     parser.add_argument(
         "--products-file",
@@ -706,7 +706,7 @@ def _validate_market_main(argv: list[str] | None = None) -> int:
 
 def _validate_demo_bundle_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Validate an OpenNego MVP demo bundle manifest."
+        description="Validate an OpenNegotiation MVP demo bundle manifest."
     )
     parser.add_argument(
         "--manifest",
@@ -722,7 +722,7 @@ def _validate_demo_bundle_main(argv: list[str] | None = None) -> int:
 
 def _mvp_demo_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Generate the no-key OpenNego MVP demo end to end."
+        description="Generate the no-key OpenNegotiation MVP demo end to end."
     )
     parser.add_argument(
         "--output-dir",
@@ -1090,7 +1090,7 @@ def _profile_litellm_opponent_factory(
 
 
 def _run_models_main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run a tiny live-model OpenNego demo.")
+    parser = argparse.ArgumentParser(description="Run a tiny live-model OpenNegotiation demo.")
     parser.add_argument(
         "--models",
         default=",".join(DEFAULT_MODEL_DEMO_MODELS),

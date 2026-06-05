@@ -1,6 +1,6 @@
 # Agent Integration Guide
 
-This guide is for external teams plugging a negotiation model into OpenNego.
+This guide is for external teams plugging a negotiation model into OpenNegotiation.
 
 ## Option 1: Implement `AgentPort`
 
@@ -97,7 +97,7 @@ the user.
 
 ## Option 2: Use `LLMNegotiationAgent`
 
-Use the built-in LLM baseline when your model can emit the OpenNego structured
+Use the built-in LLM baseline when your model can emit the OpenNegotiation structured
 action JSON:
 
 ```python

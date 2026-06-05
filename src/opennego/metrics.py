@@ -1,4 +1,4 @@
-"""Evaluation metrics for OpenNego runs."""
+"""Evaluation metrics for OpenNegotiation runs."""
 
 from __future__ import annotations
 

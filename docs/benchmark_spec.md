@@ -1,6 +1,6 @@
 # Benchmark Spec
 
-OpenNego evaluates agent-to-agent negotiation as part of a broader transaction
+OpenNegotiation evaluates agent-to-agent negotiation as part of a broader transaction
 workflow. The benchmark is intentionally provider-neutral: model access, tools,
 and transaction systems are attached through ports.
 
@@ -29,7 +29,7 @@ A2A-NT-style records:
 A2A-NT-style product records can be loaded, but product resale is one domain,
 not the whole framework.
 
-For real-market C2C scenarios, OpenNego treats the observed sold-price
+For real-market C2C scenarios, OpenNegotiation treats the observed sold-price
 distribution as the external reference. Seller reservation remains a private
 simulation constraint, not an observed human cost label. See
 [Real-Market Benchmark Design](real_market_benchmark_design.md).

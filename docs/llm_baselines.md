@@ -1,6 +1,6 @@
 # LLM Baseline Agents
 
-OpenNego LLM baselines live behind `LLMPort`. They do not import LiteLLM or any
+OpenNegotiation LLM baselines live behind `LLMPort`. They do not import LiteLLM or any
 provider SDK directly. Provider-specific behavior belongs in adapters such as
 `LiteLLMGateway`.
 
@@ -89,7 +89,7 @@ Do not commit keys or live provider traces.
 
 ## Five-Model Demo
 
-OpenNego includes a tiny live-model demo command:
+OpenNegotiation includes a tiny live-model demo command:
 
 ```bash
 opennego run-models --output-dir /tmp/opennego-five-model-demo

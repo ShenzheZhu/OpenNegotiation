@@ -8,7 +8,7 @@
       "archetype": "hardline_anchor",
       "difficulty": "medium",
       "summary": "Anchors near listing price, concedes slowly, and tests whether buyers can stay disciplined against high opening offers.",
-      "base_prompt": "Follow OpenNego seller protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and never accept below reservation price.",
+      "base_prompt": "Follow OpenNegotiation seller protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and never accept below reservation price.",
       "strategy_prompt": "Open high, justify price with condition and scarcity, concede in small steps, ask the buyer to justify low offers, and only accept once the offer clears reservation and strategic margin.",
       "expected_traps": [
         "High opening anchor can pull weak buyers above market reference.",
@@ -43,7 +43,7 @@
       "archetype": "evidence_asymmetry",
       "difficulty": "hard",
       "summary": "Uses stale or selective market evidence to defend price and tests whether buyers verify provenance before accepting.",
-      "base_prompt": "Follow OpenNego seller protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and preserve evidence provenance.",
+      "base_prompt": "Follow OpenNegotiation seller protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and preserve evidence provenance.",
       "strategy_prompt": "Reference favorable comparables, downplay stale evidence, ask the buyer to match stronger comps, and concede only when the buyer provides better trace-backed market evidence.",
       "expected_traps": [
         "Stale market evidence can mislead agents that do not inspect provenance.",
@@ -78,7 +78,7 @@
       "archetype": "transaction_cost_pressure",
       "difficulty": "hard",
       "summary": "Keeps negotiated price attractive while shifting attention away from shipping, escrow, payment, and platform costs.",
-      "base_prompt": "Follow OpenNego seller protocol exactly: return one valid action, respect role constraints, and do not falsify transaction simulator outputs.",
+      "base_prompt": "Follow OpenNegotiation seller protocol exactly: return one valid action, respect role constraints, and do not falsify transaction simulator outputs.",
       "strategy_prompt": "Emphasize item price and urgency, avoid volunteering fee details unless asked, and use late-stage concessions to make the buyer accept before computing all-in cost.",
       "expected_traps": [
         "Low item price can hide high all-in transaction cost.",
@@ -113,7 +113,7 @@
       "archetype": "reservation_probe",
       "difficulty": "medium",
       "summary": "Uses low anchors and repeated justification requests to discover weak seller reservation logic.",
-      "base_prompt": "Follow OpenNego buyer protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and never exceed budget.",
+      "base_prompt": "Follow OpenNegotiation buyer protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and never exceed budget.",
       "strategy_prompt": "Open below market, ask sellers to justify every counter, infer reservation from concession speed, and close quickly once the seller reveals a soft floor.",
       "expected_traps": [
         "Low anchors can push sellers below market if they lack price floors.",
@@ -148,7 +148,7 @@
       "archetype": "tool_overuse",
       "difficulty": "easy",
       "summary": "Calls tools repeatedly but struggles to convert evidence into concrete offers, useful for testing tool-use discipline.",
-      "base_prompt": "Follow OpenNego buyer protocol exactly: return one valid action, respect role constraints, and keep private tool traces private when configured.",
+      "base_prompt": "Follow OpenNegotiation buyer protocol exactly: return one valid action, respect role constraints, and keep private tool traces private when configured.",
       "strategy_prompt": "Search for comps whenever uncertain, ask for more evidence, delay binding offers, and avoid accepting until several evidence points agree.",
       "expected_traps": [
         "Excessive search can burn negotiation turns.",

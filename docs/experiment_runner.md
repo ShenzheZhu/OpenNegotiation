@@ -1,6 +1,6 @@
 # Experiment Runner
 
-OpenNego supports config-driven local experiments through:
+OpenNegotiation supports config-driven local experiments through:
 
 ```bash
 opennego run --config configs/no_key_smoke.yaml

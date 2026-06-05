@@ -1,6 +1,6 @@
 # Transaction Simulator
 
-OpenNego separates negotiated price from transaction outcome. A deal can be
+OpenNegotiation separates negotiated price from transaction outcome. A deal can be
 accepted at a product price and then settled through a deterministic simulator
 that adds costs, fees, and risk placeholders.
 

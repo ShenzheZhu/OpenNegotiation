@@ -1,4 +1,4 @@
-"""Built-in OpenNego tools."""
+"""Built-in OpenNegotiation tools."""
 
 from .market import MarketComparable, MarketPriceTool
 

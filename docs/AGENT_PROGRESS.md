@@ -1,6 +1,6 @@
 # Agent Progress Log
 
-This file tracks concrete engineering progress during the OpenNego bootstrap.
+This file tracks concrete engineering progress during the OpenNegotiation bootstrap.
 Do not record API keys, cookies, credentials, or raw live-provider payloads here.
 
 ## 2026-06-05
@@ -11,7 +11,7 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   cluster.
 - Added market-reference schema and metrics so C2C scenarios can be scored
   against sold-comparable anchors instead of pretending seller cost is observed.
-- Added a static HTML report generator with an OpenNego overview, mechanism,
+- Added a static HTML report generator with an OpenNegotiation overview, mechanism,
   why-choose-us cards, leaderboard preview, key findings, and trace replay.
 - Added `opennego report` for rendering versioned artifacts into the demo panel.
 - Added `opennego run-models` for a small five-model live demo path.
@@ -111,12 +111,14 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 132 passed after adding external handoff packaging.
+- `pytest -q`: 134 passed after adding OpenNegotiation public naming.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
 - `opennego handoff`: passing with MVP, market, marketplace, and role-swap
   validations.
+- Product naming guard: passing; public-facing copy uses OpenNegotiation while
+  legacy handles remain only in technical compatibility contexts.
 - `opennego train` no-key training loop: passing and writing strategy configs.
 - `opennego apply-strategy`: passing for candidate-to-config application.
 - `opennego validate-marketplace`: passing for the curated registry and an

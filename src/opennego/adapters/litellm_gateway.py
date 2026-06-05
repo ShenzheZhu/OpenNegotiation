@@ -1,4 +1,4 @@
-"""LiteLLM-backed implementation of the OpenNego LLM port."""
+"""LiteLLM-backed implementation of the OpenNegotiation LLM port."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from opennego.ports import LLMPort, LLMRequest, LLMResponse, LLMUsage
 
 
 class LiteLLMGateway(LLMPort):
-    """Call any LiteLLM-supported provider through the OpenNego LLM port.
+    """Call any LiteLLM-supported provider through the OpenNegotiation LLM port.
 
     The dependency is imported lazily so scripted agents and deterministic tests
     do not require LiteLLM or provider credentials.
@@ -44,7 +44,7 @@ class LiteLLMGateway(LLMPort):
             import litellm  # type: ignore[import-not-found]
         except ImportError as exc:
             raise RuntimeError(
-                "LiteLLM is not installed. Install OpenNego with the optional "
+                "LiteLLM is not installed. Install OpenNegotiation with the optional "
                 "LLM dependencies: python -m pip install -e '.[llm]'"
             ) from exc
         return litellm

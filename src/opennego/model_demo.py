@@ -1,4 +1,4 @@
-"""Small live-model demo runner for OpenNego."""
+"""Small live-model demo runner for OpenNegotiation."""
 
 from __future__ import annotations
 

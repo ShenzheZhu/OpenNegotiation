@@ -1,4 +1,4 @@
-# Example model aliases for OpenNego LLM-backed agents.
+# Example model aliases for OpenNegotiation LLM-backed agents.
 #
 # These aliases are resolved by the LiteLLMGateway adapter. Keep provider keys in
 # environment variables or a LiteLLM proxy config, not in this repository.

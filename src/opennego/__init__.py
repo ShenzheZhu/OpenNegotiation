@@ -1,4 +1,4 @@
-"""OpenNego evaluation gym."""
+"""OpenNegotiation evaluation gym."""
 
 from .environment import NegotiationEnvironment
 from .schema import AgentAction, MarketReference, Offer, Product, Role, Scenario, ToolCall

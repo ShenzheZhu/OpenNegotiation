@@ -1,6 +1,6 @@
 # Policy Learning And Strategy Marketplace
 
-OpenNego has three connected product layers:
+OpenNegotiation has three connected product layers:
 
 1. Benchmark: measure negotiation and transaction performance under realistic
    market, tool, and settlement conditions.
@@ -16,7 +16,7 @@ without calling a live model provider.
 
 ## Base Versus Strategy
 
-OpenNego separates prompt and policy state into two layers.
+OpenNegotiation separates prompt and policy state into two layers.
 
 `Base` is fixed by the sandbox:
 
@@ -290,7 +290,7 @@ The config artifact uses schema version `opennego.strategy_config.v1`. It keeps
 the base sandbox prompt fixed, stores the editable strategy prompt, records the
 prompt-layer contract, and preserves candidate lineage, applied lesson ids,
 patch snippets, source run id, source battle report, and expected improvements.
-External user agents can consume this config without OpenNego mutating their
+External user agents can consume this config without OpenNegotiation mutating their
 source code.
 
 The deterministic sparring runtime can consume the candidate directly:
@@ -403,14 +403,14 @@ Out of scope:
 The near-term product loop is:
 
 1. User runs an agent in the benchmark.
-2. OpenNego scores the run.
-3. OpenNego generates a battle report.
-4. OpenNego converts the battle report into a strategy candidate.
-5. OpenNego applies the candidate into a versioned `strategy_config.json`.
+2. OpenNegotiation scores the run.
+3. OpenNegotiation generates a battle report.
+4. OpenNegotiation converts the battle report into a strategy candidate.
+5. OpenNegotiation applies the candidate into a versioned `strategy_config.json`.
 6. User consumes that config in their own agent integration, or reruns the
    no-key local candidate through `opennego spar --user-strategy`.
 7. User reruns against the same or harder NPC profile.
-8. OpenNego compares the before/after battle reports.
+8. OpenNegotiation compares the before/after battle reports.
 
 `opennego train` automates steps 3-8 for the no-key local strategy-candidate
 runtime and writes `strategy_config.json` next to the candidate.

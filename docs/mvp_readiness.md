@@ -40,7 +40,7 @@ Browser smoke evidence:
 
 - MVP dashboard rendered Leaderboard Preview, Training / Prompt Optimization,
   Strategy Marketplace, Hardline Anchor Seller, and `buyer_overpaid_market`.
-- Sparring report rendered OpenNego strategy sparring report,
+- Sparring report rendered OpenNegotiation strategy sparring report,
   `profile_backed_fixture_sparring`, Hardline Anchor Seller, Hidden Fees
   Seller, and `buyer_overpaid_market`.
 - Both pages passed desktop 1280px and mobile 390px checks.
@@ -147,12 +147,14 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 132 passed.
+- `pytest -q`: 134 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - MVP demo bundle validation smoke: passed with no errors or warnings.
 - External handoff package smoke: passed and wrote
   `opennego.external_handoff.v1`.
+- Product naming scan: public-facing copy uses OpenNegotiation; remaining
+  legacy handles are limited to repository/package compatibility contexts.
 - Training loop smoke: passed and wrote `opennego.training_loop.v1` plus
   `opennego.strategy_config.v1`.
 - Strategy application smoke: passed and wrote `opennego.strategy_config.v1`.

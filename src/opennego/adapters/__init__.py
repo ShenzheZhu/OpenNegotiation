@@ -1,4 +1,4 @@
-"""Adapters that bind OpenNego ports to concrete providers."""
+"""Adapters that bind OpenNegotiation ports to concrete providers."""
 
 from .litellm_gateway import LiteLLMGateway
 
