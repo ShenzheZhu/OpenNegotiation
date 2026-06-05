@@ -23,6 +23,7 @@ from opennego.report import write_demo_report
 from opennego.runner import ConfigValidationError, run_experiment_config
 from opennego.schema import Product, Scenario
 from opennego.sparring import run_sparring_suite
+from opennego.sparring_report import write_sparring_report
 from opennego.tools import MarketPriceTool
 
 
@@ -327,6 +328,10 @@ def _spar_main(argv: list[str] | None = None) -> int:
         default="no_tools",
         help="Completed run tool regime to diagnose for policy learning.",
     )
+    parser.add_argument(
+        "--report",
+        help="Optional HTML report path for the generated sparring suite.",
+    )
     parser.add_argument("--no-fail-fast", action="store_true")
     args = parser.parse_args(argv)
 
@@ -340,11 +345,19 @@ def _spar_main(argv: list[str] | None = None) -> int:
             learning_tool_regime=args.learning_tool_regime,
             fail_fast=not args.no_fail_fast,
         )
+        html_report = (
+            write_sparring_report(summary.artifact_path, args.report)
+            if args.report
+            else None
+        )
     except (OSError, ValueError, KeyError, ConfigValidationError) as exc:
         print(json.dumps({"error": str(exc)}, indent=2))
         return 2
 
-    print(json.dumps(to_jsonable(summary), indent=2))
+    payload = dict(to_jsonable(summary))
+    if html_report is not None:
+        payload["html_report"] = str(html_report)
+    print(json.dumps(payload, indent=2))
     return 0 if summary.failed == 0 else 1
 
 
