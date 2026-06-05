@@ -47,6 +47,8 @@ parallel logs.
 - `environment.py`: buyer-seller loop, tool visibility, transaction invocation,
   and transcript construction.
 - `runner.py`: config-driven experiment execution and artifact emission.
+- `arena.py`: reciprocal schedule planning and scorecard-vs-arena methodology
+  boundaries for larger benchmark runs.
 - `artifacts.py`: versioned scenario, manifest, trace, metrics, and JSON I/O.
 - `metrics.py`: run-level scoring functions.
 - `learning.py`: battle-report generation and NPC strategy registry parsing.

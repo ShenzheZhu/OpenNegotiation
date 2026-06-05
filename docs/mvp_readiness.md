@@ -88,6 +88,9 @@ Implemented:
   manifest consistency checks.
 - Machine-readable leaderboard aggregation with ranked run rows, participant
   role-coverage summaries, and buyer/seller role-track summaries.
+- Reciprocal `opennego arena-plan` methodology artifact for large-batch
+  schedules, keeping deterministic scorecards primary and Elo/Bradley-Terry as
+  optional future arena fitting.
 - Artifact-backed leaderboard rendering in the static demo report when
   `leaderboard_summary.json` is present.
 - Versioned `opennego.mvp_demo_bundle.v1` handoff manifest for one-command MVP
@@ -142,12 +145,13 @@ opennego train --output-dir "$tmpdir/training" --opponent-profile seller_hardlin
 opennego apply-strategy --candidate "$tmpdir/training/strategy_candidate.json" --output "$tmpdir/training/manual_strategy_config.json" --strategy-id buyer_baseline_manual_v1
 opennego validate-marketplace --registry examples/data/npc_strategies.json
 opennego role-swap --output-dir "$tmpdir/role_swap" --participant-id baseline_strategy
+opennego arena-plan --participant model_a --participant model_b --participant model_c --scenario-id real_market_demo --seed 13 --output "$tmpdir/arena_plan.json"
 secret-pattern scan for common provider key prefixes
 ```
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 134 passed.
+- `pytest -q`: 138 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - MVP demo bundle validation smoke: passed with no errors or warnings.
@@ -155,6 +159,7 @@ Latest local result on this readiness branch:
   `opennego.external_handoff.v1`.
 - Product naming scan: public-facing copy uses OpenNegotiation; remaining
   legacy handles are limited to repository/package compatibility contexts.
+- Arena plan smoke: passed and wrote `opennego.arena_plan.v1`.
 - Training loop smoke: passed and wrote `opennego.training_loop.v1` plus
   `opennego.strategy_config.v1`.
 - Strategy application smoke: passed and wrote `opennego.strategy_config.v1`.

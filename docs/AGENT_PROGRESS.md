@@ -89,6 +89,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   marketplace profile release checks.
 - Added `opennego role-swap` for a small no-key role-swapped benchmark track
   with combined leaderboard role coverage.
+- Added `opennego arena-plan` for reciprocal large-batch schedule planning and
+  scorecard-vs-arena methodology boundaries.
 
 ### Current Live-Run State
 
@@ -111,7 +113,7 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 134 passed after adding OpenNegotiation public naming.
+- `pytest -q`: 138 passed after adding arena planning.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
@@ -124,6 +126,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - `opennego validate-marketplace`: passing for the curated registry and an
   exported shared strategy profile.
 - `opennego role-swap`: passing with buyer/seller role coverage 1.0.
+- `opennego arena-plan`: passing with reciprocal buyer/seller matchups and
+  `opennego.arena_plan.v1`.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next
