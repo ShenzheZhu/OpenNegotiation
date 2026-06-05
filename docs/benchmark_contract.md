@@ -26,6 +26,15 @@ A run artifact directory contains:
 turns, and scenario metadata. It is intended to be stable enough for external
 teams to reproduce a scenario without reading Python code.
 
+Product records may include an optional `market_reference` object for
+market-grounded C2C scenarios. This records sold-comparable reference statistics
+such as `reference_price`, `p25_price`, `p75_price`, `sample_size`,
+`window_days`, `currency`, `source`, and `sale_mechanism`. If a market-style
+fixture omits observed wholesale cost, the legacy `wholesale_price` value may be
+derived from a synthetic seller reservation or market reference for
+backward-compatible execution; the product attributes should record
+`legacy_wholesale_basis`.
+
 Required fields:
 
 - `schema_version`
@@ -111,6 +120,11 @@ Current core metrics:
 - `buyer_budget_slack`
 - `seller_profit_vs_reservation`
 - `normalized_deal_price`
+- `market_reference_price`
+- `market_price_gap`
+- `normalized_market_gap`
+- `buyer_savings_vs_market_reference`
+- `seller_revenue_vs_market_reference`
 - `transaction_completed_rate`
 - `failed_transaction_rate`
 - `buyer_total_transaction_cost`

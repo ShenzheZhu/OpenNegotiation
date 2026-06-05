@@ -168,3 +168,17 @@ Runtime failures are reported in the JSON summary. The CLI exits with:
 - `0`: all runs completed or skipped.
 - `1`: at least one run failed.
 - `2`: config validation failed.
+
+## Static Demo Report
+
+Small local artifact directories can be rendered into a static HTML discussion
+panel:
+
+```bash
+opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennego-real-market-demo.html
+```
+
+The report is dependency-free and reads the same `manifest.json`,
+`scenario.json`, `trace.jsonl`, and `metrics.json` files used by the benchmark
+contract. It is meant for small demos and design reviews, not as the final public
+leaderboard frontend.

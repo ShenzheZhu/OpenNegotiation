@@ -46,6 +46,17 @@ pytest
 The no-key smoke benchmark is fully fixture-backed. It does not call live market
 search, browser tools, payment systems, logistics APIs, or model providers.
 
+For a small visual demo panel:
+
+```bash
+opennego run --config configs/real_market_demo.yaml --output-dir /tmp/opennego-real-market-demo
+opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennego-real-market-demo.html
+```
+
+The generated HTML report introduces OpenNego, shows the agentic negotiation
+mechanism, previews a scorecard-style leaderboard, and replays the trace for the
+highest-scoring fixture run.
+
 Install the optional LiteLLM adapter when running LLM-backed agents:
 
 ```bash
@@ -71,6 +82,8 @@ for curated sample artifacts.
 ## Core Abstractions
 
 - `Scenario`: product, buyer budget, seller reservation price, and run limits.
+- `MarketReference`: optional sold-comparable reference statistics for
+  market-grounded scenarios.
 - `AgentAction`: one step in the agent loop. Actions can be `tool_call`,
   `offer`, `accept`, `reject`, `message`, or `transaction`.
 - `NegotiationEnvironment`: runs the buyer and seller loop, keeps private tool
@@ -81,7 +94,8 @@ for curated sample artifacts.
 - `LiteLLMGateway`: optional adapter that routes `LLMPort` calls through
   LiteLLM-supported providers.
 - `Metrics`: deal rate, buyer savings, seller profit, normalized deal price,
-  tool-call counts, transaction cost, seller net revenue, and risk exposure.
+  market-reference gap, tool-call counts, transaction cost, seller net revenue,
+  and risk exposure.
 - `Benchmark artifacts`: versioned scenario, manifest, trace JSONL, and metric
   report files for reproducible external evaluation.
 
@@ -132,7 +146,9 @@ structured action contract used by LLM-backed agents. See
 fixture-backed settlement model and [docs/troubleshooting.md](docs/troubleshooting.md)
 for common setup and parser issues. See
 [docs/release_checklist.md](docs/release_checklist.md) for the no-key handoff
-gate.
+gate. See
+[docs/real_market_benchmark_design.md](docs/real_market_benchmark_design.md) for
+the market-grounded dataset and leaderboard design.
 
 ## Status
 

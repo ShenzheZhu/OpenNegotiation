@@ -12,10 +12,15 @@ artifact directory per run.
 
 ## Scenario
 
-The first scenario schema is product-centric:
+The first scenario schema is product-centric and remains compatible with
+A2A-NT-style records:
 
 - product id, name, description, condition
-- list price and wholesale price
+- list or asking price
+- legacy wholesale price, or a synthetic reservation-derived substitute for
+  market-style fixtures
+- optional market reference: reference price, robust spread, sample size,
+  source, collection window, currency, and sale mechanism
 - buyer budget
 - seller reservation price
 - max public turns
@@ -23,6 +28,11 @@ The first scenario schema is product-centric:
 
 A2A-NT-style product records can be loaded, but product resale is one domain,
 not the whole framework.
+
+For real-market C2C scenarios, OpenNego treats the observed sold-price
+distribution as the external reference. Seller reservation remains a private
+simulation constraint, not an observed human cost label. See
+[Real-Market Benchmark Design](real_market_benchmark_design.md).
 
 ## Agents
 
@@ -85,6 +95,14 @@ Each run directory contains:
 The trace is the authoritative audit trail. Metrics are derived from the
 scenario, outcome, trace, tool events, and transaction events.
 
+Market-grounded runs additionally report:
+
+- `market_reference_price`
+- `market_price_gap`
+- `normalized_market_gap`
+- `buyer_savings_vs_market_reference`
+- `seller_revenue_vs_market_reference`
+
 ## No-Key Smoke Benchmark
 
 Run:
@@ -103,3 +121,15 @@ The default smoke config runs one product scenario across five regimes:
 
 All evidence is fixture-backed. No live marketplace, browser, payment, or
 provider calls are made.
+
+## Real-Market Demo Report
+
+Run the tiny market-grounded demo and generate a static dashboard:
+
+```bash
+opennego run --config configs/real_market_demo.yaml --output-dir /tmp/opennego-real-market-demo
+opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennego-real-market-demo.html
+```
+
+This demo uses one product cluster, three tool regimes, one seed, and no live
+marketplace or model-provider calls.

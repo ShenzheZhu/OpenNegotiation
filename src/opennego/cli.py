@@ -10,6 +10,7 @@ from pathlib import Path
 from opennego.artifacts import to_jsonable, write_run_artifacts
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.environment import NegotiationEnvironment
+from opennego.report import write_demo_report
 from opennego.runner import ConfigValidationError, run_experiment_config
 from opennego.schema import Product, Scenario
 from opennego.tools import MarketPriceTool
@@ -26,6 +27,8 @@ def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv and argv[0] == "run":
         return _run_config_main(argv[1:])
+    if argv and argv[0] == "report":
+        return _report_main(argv[1:])
 
     parser = argparse.ArgumentParser(description="Run a deterministic OpenNego smoke demo.")
     parser.add_argument("--products-file", default="examples/data/products.json")
@@ -116,6 +119,30 @@ def _run_config_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps(to_jsonable(summary), indent=2))
     return 1 if summary.failed else 0
+
+
+def _report_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Generate an OpenNego demo HTML report.")
+    parser.add_argument(
+        "--input-dir",
+        required=True,
+        help="Directory containing one run artifact or multiple run artifact subdirectories.",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to the HTML report to write.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        output_path = write_demo_report(args.input_dir, args.output)
+    except ValueError as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps({"report": str(output_path)}, indent=2))
+    return 0
 
 
 if __name__ == "__main__":
