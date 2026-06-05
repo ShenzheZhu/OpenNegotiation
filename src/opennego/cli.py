@@ -43,6 +43,7 @@ from opennego.model_demo import (
 )
 from opennego.mvp_demo import run_mvp_demo, validate_mvp_demo_bundle
 from opennego.report import write_demo_report
+from opennego.role_swap import run_role_swap_benchmark
 from opennego.runner import (
     ConfigValidationError,
     LLM_AGENT_KINDS,
@@ -81,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
         return _compare_main(argv[1:])
     if argv and argv[0] == "leaderboard":
         return _leaderboard_main(argv[1:])
+    if argv and argv[0] == "role-swap":
+        return _role_swap_main(argv[1:])
     if argv and argv[0] == "marketplace-export":
         return _marketplace_export_main(argv[1:])
     if argv and argv[0] == "validate-marketplace":
@@ -421,6 +424,41 @@ def _leaderboard_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps(to_jsonable(summary), indent=2))
     return 0
+
+
+def _role_swap_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Run a small no-key role-swapped benchmark track."
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="runs/role_swap",
+        help="Directory for role-specific runs and combined leaderboard artifacts.",
+    )
+    parser.add_argument(
+        "--config",
+        default="configs/real_market_demo.yaml",
+        help="Base experiment config whose scenario and transaction settings are reused.",
+    )
+    parser.add_argument(
+        "--participant-id",
+        default="baseline_strategy",
+        help="Stable strategy identity evaluated as both buyer and seller.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        summary = run_role_swap_benchmark(
+            output_dir=args.output_dir,
+            config_path=args.config,
+            participant_id=args.participant_id,
+        )
+    except (OSError, ValueError, ConfigValidationError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(summary), indent=2))
+    return 0 if summary.status == "completed" else 1
 
 
 def _marketplace_export_main(argv: list[str] | None = None) -> int:

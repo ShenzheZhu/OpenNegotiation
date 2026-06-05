@@ -39,6 +39,7 @@ class ConfigValidationError(ValueError):
 AgentFactory = Callable[[Role, Mapping[str, Any]], AgentPort]
 LLMFactory = Callable[[], LLMPort]
 LLM_AGENT_KINDS = frozenset({"llm_buyer", "llm_seller"})
+RESERVED_AGENT_PARAMS = frozenset({"participant_id"})
 
 
 @dataclass(frozen=True)
@@ -348,8 +349,8 @@ def _execute_prepared_run(
         scenario_id=prepared_run.scenario_id,
         seed=prepared_run.seed,
         agents={
-            "buyer": {"name": buyer.name, "kind": config.agents.buyer_kind},
-            "seller": {"name": seller.name, "kind": config.agents.seller_kind},
+            "buyer": _agent_manifest(buyer, config.agents.buyer),
+            "seller": _agent_manifest(seller, config.agents.seller),
         },
         models=_model_metadata(config.agents),
         tool_regime=_tool_regime_metadata(prepared_run.tool_regime),
@@ -360,6 +361,14 @@ def _execute_prepared_run(
         },
     )
     return result
+
+
+def _agent_manifest(agent: AgentPort, spec: AgentSpecConfig) -> dict[str, object]:
+    payload: dict[str, object] = {"name": agent.name, "kind": spec.kind}
+    participant_id = spec.params.get("participant_id")
+    if isinstance(participant_id, str) and participant_id:
+        payload["participant_id"] = participant_id
+    return payload
 
 
 def _build_agents(
@@ -489,7 +498,11 @@ def _make_llm_agent_factory(
 
 def _agent_kwargs(kind: str, params: Mapping[str, Any]) -> dict[str, Any]:
     try:
-        return dict(params)
+        return {
+            key: value
+            for key, value in dict(params).items()
+            if key not in RESERVED_AGENT_PARAMS
+        }
     except (TypeError, ValueError) as exc:
         raise ConfigValidationError(f"{kind}.params: expected object") from exc
 

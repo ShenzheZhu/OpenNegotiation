@@ -81,6 +81,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   sparring, strategy extraction, candidate rerun, and before/after comparison.
 - Added `opennego validate-marketplace` for local strategy registry and shared
   marketplace profile release checks.
+- Added `opennego role-swap` for a small no-key role-swapped benchmark track
+  with combined leaderboard role coverage.
 
 ### Current Live-Run State
 
@@ -103,13 +105,14 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 124 passed after adding marketplace validation.
+- `pytest -q`: 126 passed after adding the no-key role-swapped track.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
 - `opennego train` no-key training loop: passing.
 - `opennego validate-marketplace`: passing for the curated registry and an
   exported shared strategy profile.
+- `opennego role-swap`: passing with buyer/seller role coverage 1.0.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next
