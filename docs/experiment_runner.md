@@ -314,3 +314,18 @@ usage counters collected before failure. The static HTML report only includes
 completed benchmark runs in the leaderboard because it requires `manifest.json`,
 `scenario.json`, `trace.jsonl`, and `metrics.json`, but it renders a separate
 attempt-status table when `summary.json` is present.
+
+## Role-Swapped Track
+
+For a no-key role-coverage check:
+
+```bash
+opennego role-swap --output-dir /tmp/opennego-role-swap --participant-id baseline_strategy
+```
+
+The command reuses a base fixture config, runs the selected participant id as
+buyer and seller against fixed counterparties, copies completed runs into
+`combined_runs/`, and writes a combined `leaderboard_summary.json`. The
+`role_swap_summary.json` artifact uses schema `opennego.role_swap_benchmark.v1`
+and records the participant roles and role coverage. This track is intentionally
+small and deterministic; it is not an Elo or Bradley-Terry arena.

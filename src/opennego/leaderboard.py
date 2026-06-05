@@ -149,6 +149,9 @@ def _participant_id(manifest, role: str) -> str:
     agents = manifest.agents
     agent = agents.get(role) if isinstance(agents, Mapping) else None
     if isinstance(agent, Mapping):
+        participant_id = agent.get("participant_id")
+        if isinstance(participant_id, str) and participant_id:
+            return participant_id
         kind = str(agent.get("kind", "agent"))
         name = str(agent.get("name", kind))
         return f"{kind}:{name}"

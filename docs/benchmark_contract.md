@@ -155,12 +155,29 @@ aggregates completed run artifact directories into
 - seller role-track aggregates
 
 Participant ids prefer manifest model ids when available, falling back to
-`agent_kind:agent_name` for scripted or custom agents. The first scorecard score
-uses existing deterministic metrics: deal rate, transaction completion,
-normalized market gap, and tool failure rate. Participant coverage is a contract
-check, not a new negotiation metric: it makes one-role NPC/profile results
-visibly different from balanced buyer/seller evaluations. Elo or Bradley-Terry
-fitting is a future arena layer, not part of this deterministic summary.
+explicit manifest `participant_id` values and then `agent_kind:agent_name` for
+scripted or custom agents. The first scorecard score uses existing
+deterministic metrics: deal rate, transaction completion, normalized market
+gap, and tool failure rate. Participant coverage is a contract check, not a new
+negotiation metric: it makes one-role NPC/profile results visibly different
+from balanced buyer/seller evaluations. Elo or Bradley-Terry fitting is a
+future arena layer, not part of this deterministic summary.
+
+## Role-Swapped Benchmark Track
+
+`opennego role-swap --output-dir <dir> --participant-id <id>` runs a small
+fixture-backed track that evaluates one strategy identity as both buyer and
+seller. It writes:
+
+- buyer-role run artifacts
+- seller-role run artifacts
+- `combined_runs/` with completed run artifact directories
+- `leaderboard_summary.json` over the combined runs
+- `role_swap_summary.json` with schema `opennego.role_swap_benchmark.v1`
+
+The combined leaderboard should show the selected participant with buyer and
+seller roles and `role_coverage: 1.0`. This is a small no-key methodology
+track for external handoff, not a pairwise arena or large-batch leaderboard.
 
 ## MVP Demo Bundle
 
