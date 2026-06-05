@@ -104,6 +104,8 @@
     .diagram-small { fill: var(--muted); font-size: 12px; letter-spacing: 0; }
     .diagram-arrow { stroke: var(--accent-dark); stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
     .diagram-arrow-soft { stroke: #9ab4ad; stroke-width: 1.7; fill: none; marker-end: url(#arrowheadSoft); }
+    .diagram-exchange { stroke: var(--accent-dark); stroke-width: 1.6; fill: none; marker-end: url(#arrowheadSmall); stroke-linecap: round; stroke-linejoin: round; }
+    .diagram-arrow-soft-small { stroke: #9ab4ad; stroke-width: 1.5; fill: none; marker-end: url(#arrowheadSoftSmall); stroke-linecap: round; stroke-linejoin: round; }
     .diagram-loop { stroke: var(--blue); stroke-width: 2; fill: none; stroke-dasharray: 7 7; marker-end: url(#arrowheadBlue); }
     .diagram-node-green { fill: #e7f5f0; stroke: var(--accent); stroke-width: 1.4; }
     .diagram-node-blue { fill: #edf4ff; stroke: var(--blue); stroke-width: 1.4; }
@@ -202,6 +204,12 @@
             <marker id="arrowheadBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
               <path d="M0,0 L10,4 L0,8 Z" fill="#2f6fed" />
             </marker>
+            <marker id="arrowheadSmall" markerWidth="7" markerHeight="6" refX="6.4" refY="3" orient="auto">
+              <path d="M0,0 L7,3 L0,6 Z" fill="#124e45" />
+            </marker>
+            <marker id="arrowheadSoftSmall" markerWidth="7" markerHeight="6" refX="6.4" refY="3" orient="auto">
+              <path d="M0,0 L7,3 L0,6 Z" fill="#9ab4ad" />
+            </marker>
           </defs>
 
           <rect class="diagram-bg" x="0" y="0" width="1280" height="700" rx="18" />
@@ -240,8 +248,8 @@
             <text class="diagram-heading" x="414" y="282">NPC Counterparty</text>
             <text class="diagram-text" x="414" y="306">marketplace profile</text>
           </g>
-          <path class="diagram-arrow" d="M454 238 L454 250" />
-          <path class="diagram-arrow" d="M506 250 L506 238" />
+          <path class="diagram-exchange" d="M588 202 C604 202 604 288 588 288" />
+          <path class="diagram-exchange" d="M372 288 C356 288 356 202 372 202" />
           <g data-box="environment-core">
             <rect class="diagram-node-dark" x="374" y="354" width="212" height="74" rx="12" />
             <text class="diagram-heading" x="418" y="382">Environment Core</text>
@@ -257,8 +265,7 @@
             <text class="diagram-heading" x="514" y="488">Tx Layer</text>
             <text class="diagram-small" x="510" y="508">fees + risk</text>
           </g>
-          <path class="diagram-arrow-soft" d="M444 326 L444 350" />
-          <path class="diagram-arrow-soft" d="M516 326 L516 350" />
+          <path class="diagram-arrow-soft-small" d="M480 330 L480 350" />
           <path class="diagram-arrow-soft" d="M444 428 L424 460" />
           <path class="diagram-arrow-soft" d="M516 428 L536 460" />
 
