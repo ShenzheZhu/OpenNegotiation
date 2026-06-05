@@ -69,6 +69,8 @@ Example output:
   LiteLLM-supported providers.
 - `Metrics`: deal rate, buyer savings, seller profit, normalized deal price,
   and tool-call counts.
+- `Benchmark artifacts`: versioned scenario, manifest, trace JSONL, and metric
+  report files for reproducible external evaluation.
 
 ## Project Layout
 
@@ -76,6 +78,7 @@ Example output:
 src/opennego/
   agents/        scripted baseline agents
   adapters/      concrete provider bindings such as LiteLLM
+  artifacts.py   versioned benchmark artifact contracts and JSON I/O
   ports/         provider-neutral LLM, agent, and tool contracts
   tools/         tool interfaces and built-in market-price search
   cli.py         runnable smoke demo
@@ -91,7 +94,7 @@ docs/            research agenda and design notes
 
 OpenNego should support a ladder of increasingly realistic agentic settings:
 
-1. No-tool baseline, matching the static-prompt A2A-NT style.
+1. No-tool baseline with a clean OpenNego prompt/action contract.
 2. Retrieval-only agents that can inspect market comparables.
 3. Web/search agents that can gather live evidence with provenance.
 4. Transaction agents that can invoke checkout, escrow, logistics, or payment
@@ -99,7 +102,9 @@ OpenNego should support a ladder of increasingly realistic agentic settings:
 5. Adversarial or strategic agents that can selectively disclose, bluff, or
    misuse tools.
 
-See [docs/research_agenda.md](docs/research_agenda.md) for the initial roadmap.
+See [docs/research_agenda.md](docs/research_agenda.md) for the initial roadmap
+and [docs/benchmark_contract.md](docs/benchmark_contract.md) for the current
+artifact contract.
 
 ## Status
 

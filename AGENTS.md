@@ -8,6 +8,8 @@ OpenNego uses a `src/` Python package layout.
   helpers.
 - `src/opennego/environment.py`: core buyer-seller loop and private tool trace
   handling.
+- `src/opennego/artifacts.py`: versioned scenario, manifest, trace, and metrics
+  artifact contracts.
 - `src/opennego/ports/`: provider-neutral contracts for agents, LLM gateways,
   tools, and future transaction systems.
 - `src/opennego/adapters/`: concrete provider integrations. LiteLLM belongs
