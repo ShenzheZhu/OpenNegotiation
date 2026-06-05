@@ -19,6 +19,8 @@ class FixtureTransactionSimulator(TransactionPort):
     return_risk: float = 0.0
     reputation_risk: float = 0.0
     payment_success: bool = True
+    max_buyer_total_cost: float | None = None
+    min_seller_net_revenue: float | None = None
     failure_reason: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
@@ -36,22 +38,57 @@ class FixtureTransactionSimulator(TransactionPort):
             2,
         )
         risk_exposure = round(self.return_risk + self.reputation_risk, 4)
-        if not self.payment_success:
-            return TransactionOutcome(
-                status="failed",
+        validation_metadata = self._validation_metadata(
+            buyer_total_cost=buyer_total_cost,
+            seller_net_revenue=seller_net_revenue,
+        )
+        if (
+            self.max_buyer_total_cost is not None
+            and buyer_total_cost > self.max_buyer_total_cost
+        ):
+            return self._failed_outcome(
                 negotiated_price=negotiated_price,
-                buyer_total_cost=0.0,
-                seller_net_revenue=0.0,
                 shipping_cost=self.shipping_cost,
                 tax=tax,
                 escrow_fee=self.escrow_fee,
                 payment_fee=payment_fee,
                 seller_fee=seller_fee,
-                return_risk=self.return_risk,
-                reputation_risk=self.reputation_risk,
+                risk_exposure=risk_exposure,
+                failure_reason="buyer_total_cost_exceeded",
+                metadata={
+                    **validation_metadata,
+                    "violated_guard": "max_buyer_total_cost",
+                },
+            )
+        if (
+            self.min_seller_net_revenue is not None
+            and seller_net_revenue < self.min_seller_net_revenue
+        ):
+            return self._failed_outcome(
+                negotiated_price=negotiated_price,
+                shipping_cost=self.shipping_cost,
+                tax=tax,
+                escrow_fee=self.escrow_fee,
+                payment_fee=payment_fee,
+                seller_fee=seller_fee,
+                risk_exposure=risk_exposure,
+                failure_reason="seller_net_revenue_below_floor",
+                metadata={
+                    **validation_metadata,
+                    "violated_guard": "min_seller_net_revenue",
+                },
+            )
+        if not self.payment_success:
+            return self._failed_outcome(
+                negotiated_price=negotiated_price,
+                shipping_cost=self.shipping_cost,
+                tax=tax,
+                escrow_fee=self.escrow_fee,
+                payment_fee=payment_fee,
+                seller_fee=seller_fee,
                 risk_exposure=risk_exposure,
                 failure_reason=self.failure_reason or "payment_failed",
-                metadata=dict(self.metadata),
+                metadata=validation_metadata,
             )
         return TransactionOutcome(
             status="completed",
@@ -67,4 +104,51 @@ class FixtureTransactionSimulator(TransactionPort):
             reputation_risk=self.reputation_risk,
             risk_exposure=risk_exposure,
             metadata=dict(self.metadata),
+        )
+
+    def _validation_metadata(
+        self,
+        *,
+        buyer_total_cost: float,
+        seller_net_revenue: float,
+    ) -> Mapping[str, Any]:
+        metadata = {
+            **dict(self.metadata),
+            "computed_buyer_total_cost": buyer_total_cost,
+            "computed_seller_net_revenue": seller_net_revenue,
+        }
+        if self.max_buyer_total_cost is not None:
+            metadata["max_buyer_total_cost"] = self.max_buyer_total_cost
+        if self.min_seller_net_revenue is not None:
+            metadata["min_seller_net_revenue"] = self.min_seller_net_revenue
+        return metadata
+
+    def _failed_outcome(
+        self,
+        *,
+        negotiated_price: float,
+        shipping_cost: float,
+        tax: float,
+        escrow_fee: float,
+        payment_fee: float,
+        seller_fee: float,
+        risk_exposure: float,
+        failure_reason: str,
+        metadata: Mapping[str, Any],
+    ) -> TransactionOutcome:
+        return TransactionOutcome(
+            status="failed",
+            negotiated_price=negotiated_price,
+            buyer_total_cost=0.0,
+            seller_net_revenue=0.0,
+            shipping_cost=shipping_cost,
+            tax=tax,
+            escrow_fee=escrow_fee,
+            payment_fee=payment_fee,
+            seller_fee=seller_fee,
+            return_risk=self.return_risk,
+            reputation_risk=self.reputation_risk,
+            risk_exposure=risk_exposure,
+            failure_reason=failure_reason,
+            metadata=metadata,
         )

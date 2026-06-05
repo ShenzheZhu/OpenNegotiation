@@ -125,6 +125,8 @@ class TransactionConfig:
     return_risk: float = 0.0
     reputation_risk: float = 0.0
     payment_success: bool = True
+    max_buyer_total_cost: float | None = None
+    min_seller_net_revenue: float | None = None
     failure_reason: str | None = None
     metadata: Mapping[str, Any] | None = None
 
@@ -716,6 +718,8 @@ def _parse_transaction_config(data: Any) -> TransactionConfig | None:
         return_risk=_optional_float(data, "return_risk") or 0.0,
         reputation_risk=_optional_float(data, "reputation_risk") or 0.0,
         payment_success=_optional_bool(data, "payment_success", True),
+        max_buyer_total_cost=_optional_float(data, "max_buyer_total_cost"),
+        min_seller_net_revenue=_optional_float(data, "min_seller_net_revenue"),
         failure_reason=_optional_str(data, "failure_reason"),
         metadata=_optional_mapping(data, "metadata"),
     )
@@ -735,6 +739,8 @@ def _build_transaction_simulator(
         return_risk=config.return_risk,
         reputation_risk=config.reputation_risk,
         payment_success=config.payment_success,
+        max_buyer_total_cost=config.max_buyer_total_cost,
+        min_seller_net_revenue=config.min_seller_net_revenue,
         failure_reason=config.failure_reason,
         metadata=dict(config.metadata or {}),
     )
@@ -754,6 +760,8 @@ def _transaction_metadata(config: TransactionConfig | None) -> Mapping[str, Any]
         "return_risk": config.return_risk,
         "reputation_risk": config.reputation_risk,
         "payment_success": config.payment_success,
+        "max_buyer_total_cost": config.max_buyer_total_cost,
+        "min_seller_net_revenue": config.min_seller_net_revenue,
         "failure_reason": config.failure_reason,
         "metadata": dict(config.metadata or {}),
     }
