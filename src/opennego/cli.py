@@ -31,7 +31,11 @@ from opennego.learning import (
 from opennego.leaderboard import build_leaderboard, write_leaderboard
 from opennego.market_ingestion import MarketIngestionError, ingest_market_data
 from opennego.market_validation import validate_market_dataset
-from opennego.marketplace import MarketplaceError, write_marketplace_profile
+from opennego.marketplace import (
+    MarketplaceError,
+    validate_marketplace_configs,
+    write_marketplace_profile,
+)
 from opennego.model_demo import (
     DEFAULT_MODEL_DEMO_MODELS,
     make_litellm_gateway,
@@ -79,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
         return _leaderboard_main(argv[1:])
     if argv and argv[0] == "marketplace-export":
         return _marketplace_export_main(argv[1:])
+    if argv and argv[0] == "validate-marketplace":
+        return _validate_marketplace_main(argv[1:])
     if argv and argv[0] == "ingest-market":
         return _ingest_market_main(argv[1:])
     if argv and argv[0] == "validate-market":
@@ -480,6 +486,34 @@ def _marketplace_export_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps(to_jsonable(result), indent=2))
     return 0
+
+
+def _validate_marketplace_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate local OpenNego strategy marketplace configs."
+    )
+    parser.add_argument(
+        "--registry",
+        default=str(DEFAULT_NPC_REGISTRY_PATH),
+        help="Strategy registry JSON file to validate.",
+    )
+    parser.add_argument(
+        "--profile",
+        action="append",
+        default=[],
+        help=(
+            "Standalone opennego.strategy_marketplace_profile.v1 JSON file "
+            "to validate. Can be provided multiple times."
+        ),
+    )
+    args = parser.parse_args(argv)
+
+    result = validate_marketplace_configs(
+        registry_path=args.registry,
+        profile_paths=tuple(args.profile),
+    )
+    print(json.dumps(to_jsonable(result), indent=2))
+    return 0 if result.status == "passed" else 1
 
 
 def _ingest_market_main(argv: list[str] | None = None) -> int:

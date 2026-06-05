@@ -19,7 +19,21 @@
       "tags": ["seller", "anchor", "concession", "baseline"],
       "metadata": {
         "base_prompt_fixed": true,
-        "strategy_prompt_editable": true
+        "strategy_prompt_editable": true,
+        "strategy_config_version": "opennego.strategy_config.v1",
+        "source_type": "curated_npc",
+        "prompt_layers": {
+          "base_prompt": {
+            "field": "base_prompt",
+            "editable": false,
+            "scope": "sandbox_protocol"
+          },
+          "strategy_prompt": {
+            "field": "strategy_prompt",
+            "editable": true,
+            "scope": "strategy_policy"
+          }
+        }
       }
     },
     {
@@ -40,7 +54,21 @@
       "tags": ["seller", "market-evidence", "stale", "tool-aware"],
       "metadata": {
         "base_prompt_fixed": true,
-        "strategy_prompt_editable": true
+        "strategy_prompt_editable": true,
+        "strategy_config_version": "opennego.strategy_config.v1",
+        "source_type": "curated_npc",
+        "prompt_layers": {
+          "base_prompt": {
+            "field": "base_prompt",
+            "editable": false,
+            "scope": "sandbox_protocol"
+          },
+          "strategy_prompt": {
+            "field": "strategy_prompt",
+            "editable": true,
+            "scope": "strategy_policy"
+          }
+        }
       }
     },
     {
@@ -61,7 +89,21 @@
       "tags": ["seller", "transaction", "fees", "risk"],
       "metadata": {
         "base_prompt_fixed": true,
-        "strategy_prompt_editable": true
+        "strategy_prompt_editable": true,
+        "strategy_config_version": "opennego.strategy_config.v1",
+        "source_type": "curated_npc",
+        "prompt_layers": {
+          "base_prompt": {
+            "field": "base_prompt",
+            "editable": false,
+            "scope": "sandbox_protocol"
+          },
+          "strategy_prompt": {
+            "field": "strategy_prompt",
+            "editable": true,
+            "scope": "strategy_policy"
+          }
+        }
       }
     },
     {
@@ -82,7 +124,21 @@
       "tags": ["buyer", "probe", "reservation", "baseline"],
       "metadata": {
         "base_prompt_fixed": true,
-        "strategy_prompt_editable": true
+        "strategy_prompt_editable": true,
+        "strategy_config_version": "opennego.strategy_config.v1",
+        "source_type": "curated_npc",
+        "prompt_layers": {
+          "base_prompt": {
+            "field": "base_prompt",
+            "editable": false,
+            "scope": "sandbox_protocol"
+          },
+          "strategy_prompt": {
+            "field": "strategy_prompt",
+            "editable": true,
+            "scope": "strategy_policy"
+          }
+        }
       }
     },
     {
@@ -103,7 +159,21 @@
       "tags": ["buyer", "tool-use", "timeout", "training"],
       "metadata": {
         "base_prompt_fixed": true,
-        "strategy_prompt_editable": true
+        "strategy_prompt_editable": true,
+        "strategy_config_version": "opennego.strategy_config.v1",
+        "source_type": "curated_npc",
+        "prompt_layers": {
+          "base_prompt": {
+            "field": "base_prompt",
+            "editable": false,
+            "scope": "sandbox_protocol"
+          },
+          "strategy_prompt": {
+            "field": "strategy_prompt",
+            "editable": true,
+            "scope": "strategy_policy"
+          }
+        }
       }
     }
   ]
