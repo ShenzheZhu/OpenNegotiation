@@ -66,8 +66,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added artifact-backed leaderboard rendering to `opennego report` when
   `leaderboard_summary.json` is present.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
-  battle reports, strategy candidates, sparring reruns, comparison artifacts,
-  and local marketplace export.
+  leaderboard summaries, artifact-backed reports, battle reports, strategy
+  candidates, sparring reruns, comparison artifacts, and local marketplace
+  export.
 - Added CLI LiteLLM profile NPC sparring with explicit opponent-profile
   selection and no-key fake-gateway tests.
 
@@ -92,8 +93,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 113 passed after adding artifact-backed report leaderboard
-  rendering.
+- `pytest -q`: 113 passed after hardening the workflow contract around
+  leaderboard-backed report rendering.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
