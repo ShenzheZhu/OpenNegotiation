@@ -102,6 +102,8 @@
     .diagram-heading { fill: var(--ink); font-size: 16px; font-weight: 800; letter-spacing: 0; }
     .diagram-text { fill: var(--muted); font-size: 12px; letter-spacing: 0; }
     .diagram-small { fill: var(--muted); font-size: 12px; letter-spacing: 0; }
+    .architecture-svg g[data-box] .diagram-text,
+    .architecture-svg g[data-box] .diagram-small { text-anchor: middle; }
     .diagram-arrow { stroke: var(--accent-dark); stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
     .diagram-arrow-soft { stroke: #9ab4ad; stroke-width: 1.7; fill: none; marker-end: url(#arrowheadSoft); }
     .diagram-exchange { stroke: var(--accent-dark); stroke-width: 1.6; fill: none; marker-end: url(#arrowheadSmall); stroke-linecap: round; stroke-linejoin: round; }
@@ -221,19 +223,19 @@
           <g data-box="user-strategy-config">
             <rect class="diagram-node-blue" x="64" y="164" width="212" height="72" rx="12" />
             <text class="diagram-heading" x="94" y="192">User Strategy Config</text>
-            <text class="diagram-text" x="96" y="216">model, prompt, policy</text>
+            <text class="diagram-text" x="170" y="216">model, prompt, policy</text>
           </g>
           <g data-box="role-selector">
             <rect class="diagram-node-green" x="64" y="268" width="212" height="82" rx="12" />
             <text class="diagram-heading" x="110" y="298">Role Selector</text>
-            <text class="diagram-text" x="96" y="322">play buyer or seller</text>
-            <text class="diagram-text" x="96" y="342">private goals + limits</text>
+            <text class="diagram-text" x="170" y="322">play buyer or seller</text>
+            <text class="diagram-text" x="170" y="342">private goals + limits</text>
           </g>
           <g data-box="market-scenario">
             <rect class="diagram-node-green" x="64" y="382" width="212" height="92" rx="12" />
             <text class="diagram-heading" x="102" y="412">Market Scenario</text>
-            <text class="diagram-text" x="96" y="438">sold comps, fees</text>
-            <text class="diagram-text" x="96" y="458">condition + reference</text>
+            <text class="diagram-text" x="170" y="438">sold comps, fees</text>
+            <text class="diagram-text" x="170" y="458">condition + reference</text>
           </g>
 
           <rect class="diagram-panel" x="350" y="108" width="260" height="456" rx="16" />
@@ -241,29 +243,29 @@
           <g data-box="user-agent">
             <rect class="diagram-node-blue" x="374" y="164" width="212" height="72" rx="12" />
             <text class="diagram-heading" x="428" y="192">User Agent</text>
-            <text class="diagram-text" x="416" y="216">active role strategy</text>
+            <text class="diagram-text" x="480" y="216">active role strategy</text>
           </g>
           <g data-box="npc-counterparty">
             <rect class="diagram-node-amber" x="374" y="254" width="212" height="72" rx="12" />
             <text class="diagram-heading" x="414" y="282">NPC Counterparty</text>
-            <text class="diagram-text" x="414" y="306">marketplace profile</text>
+            <text class="diagram-text" x="480" y="306">marketplace profile</text>
           </g>
           <path class="diagram-exchange" d="M588 202 C604 202 604 288 588 288" />
           <path class="diagram-exchange" d="M372 288 C356 288 356 202 372 202" />
           <g data-box="environment-core">
             <rect class="diagram-node-dark" x="374" y="354" width="212" height="74" rx="12" />
             <text class="diagram-heading" x="418" y="382">Environment Core</text>
-            <text class="diagram-text" x="404" y="406">turn loop + action schema</text>
+            <text class="diagram-text" x="480" y="406">turn loop + action schema</text>
           </g>
           <g data-box="tool-gateway">
             <rect class="diagram-node-blue" x="374" y="464" width="96" height="56" rx="10" />
             <text class="diagram-heading" x="397" y="488">Tools</text>
-            <text class="diagram-small" x="392" y="508">market data</text>
+            <text class="diagram-small" x="422" y="508">market data</text>
           </g>
           <g data-box="transaction-layer">
             <rect class="diagram-node-amber" x="490" y="464" width="96" height="56" rx="10" />
             <text class="diagram-heading" x="514" y="488">Tx Layer</text>
-            <text class="diagram-small" x="510" y="508">fees + risk</text>
+            <text class="diagram-small" x="538" y="508">fees + risk</text>
           </g>
           <path class="diagram-arrow-soft-small" d="M480 330 L480 350" />
           <path class="diagram-arrow-soft" d="M444 428 L424 460" />
@@ -274,18 +276,18 @@
           <g data-box="versioned-artifacts">
             <rect class="diagram-node-dark" x="684" y="164" width="212" height="72" rx="12" />
             <text class="diagram-heading" x="728" y="192">Versioned Artifacts</text>
-            <text class="diagram-text" x="720" y="216">scenario, trace, metrics</text>
+            <text class="diagram-text" x="790" y="216">scenario, trace, metrics</text>
           </g>
           <g data-box="reports-coaching">
             <rect class="diagram-node-green" x="684" y="270" width="212" height="82" rx="12" />
             <text class="diagram-heading" x="724" y="300">Reports + Coaching</text>
-            <text class="diagram-text" x="716" y="324">leaderboard report</text>
-            <text class="diagram-text" x="716" y="344">battle lessons</text>
+            <text class="diagram-text" x="790" y="324">leaderboard report</text>
+            <text class="diagram-text" x="790" y="344">battle lessons</text>
           </g>
           <g data-box="training-summary">
             <rect class="diagram-node-blue" x="684" y="386" width="212" height="82" rx="12" />
             <text class="diagram-heading" x="730" y="416">Training Summary</text>
-            <text class="diagram-text" x="716" y="440">failures, traps, evidence</text>
+            <text class="diagram-text" x="790" y="440">failures, traps, evidence</text>
           </g>
           <path class="diagram-arrow-soft" d="M790 236 L790 266" />
           <path class="diagram-arrow-soft" d="M790 352 L790 382" />
@@ -295,18 +297,18 @@
           <g data-box="agent-evolution-plan">
             <rect class="diagram-node-amber" x="994" y="164" width="212" height="82" rx="12" />
             <text class="diagram-heading" x="1032" y="194">Agent Evolution Plan</text>
-            <text class="diagram-text" x="1028" y="218">strategy patch</text>
-            <text class="diagram-text" x="1028" y="238">next NPC curriculum</text>
+            <text class="diagram-text" x="1100" y="218">strategy patch</text>
+            <text class="diagram-text" x="1100" y="238">next NPC curriculum</text>
           </g>
           <g data-box="updated-strategy-config">
             <rect class="diagram-node-blue" x="994" y="292" width="212" height="82" rx="12" />
             <text class="diagram-heading" x="1038" y="322">Updated Strategy</text>
-            <text class="diagram-text" x="1048" y="346">config for next run</text>
+            <text class="diagram-text" x="1100" y="346">config for next run</text>
           </g>
           <g data-box="strategy-marketplace">
             <rect class="diagram-node-green" x="994" y="420" width="212" height="82" rx="12" />
             <text class="diagram-heading" x="1036" y="450">Strategy Marketplace</text>
-            <text class="diagram-text" x="1026" y="474">NPCs + shared configs</text>
+            <text class="diagram-text" x="1100" y="474">NPCs + shared configs</text>
           </g>
           <path class="diagram-arrow-soft" d="M1100 246 L1100 288" />
           <path class="diagram-arrow-soft" d="M1100 374 L1100 416" />
