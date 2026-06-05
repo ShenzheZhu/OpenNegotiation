@@ -28,6 +28,7 @@ Top-level fields:
 - `agents`: buyer and seller agent kinds.
 - `scenarios`: product/scenario inputs.
 - `tool_regimes`: tool availability matrix.
+- `transaction`: optional fixture transaction simulator config.
 - `metadata`: optional object copied into run manifests.
 
 Supported agent kinds in the first runner slice:
@@ -58,6 +59,19 @@ Supported visibility shorthands:
 Tool specs may also provide explicit `roles`, for example
 `"roles": ["buyer", "seller"]`.
 
+Supported transaction config in the first runner slice:
+
+- `kind`: `fixture`.
+- `enabled`: whether accepted deals should be settled.
+- `shipping_cost`: fixed buyer shipping cost.
+- `tax_rate`: tax applied to negotiated price.
+- `escrow_fee`: fixed fee included in buyer cost and deducted from seller
+  revenue.
+- `payment_fee_rate`: buyer-side payment fee rate.
+- `seller_fee_rate`: seller-side platform fee rate.
+- `return_risk` and `reputation_risk`: deterministic risk placeholders.
+- `payment_success`: when false, records a failed transaction outcome.
+
 ## Minimal Example
 
 ```json
@@ -67,6 +81,17 @@ Tool specs may also provide explicit `roles`, for example
   "output_dir": "runs/no_key_smoke",
   "resume": true,
   "fail_fast": true,
+  "transaction": {
+    "kind": "fixture",
+    "enabled": true,
+    "shipping_cost": 18.0,
+    "tax_rate": 0.08,
+    "escrow_fee": 4.0,
+    "payment_fee_rate": 0.02,
+    "seller_fee_rate": 0.05,
+    "return_risk": 0.03,
+    "reputation_risk": 0.02
+  },
   "seeds": [7],
   "agents": {
     "buyer": {"kind": "tool_aware_buyer"},

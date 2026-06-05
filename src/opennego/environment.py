@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Mapping
 
 from .metrics import compute_metrics
-from .ports import AgentPort, ToolPort
+from .ports import AgentPort, ToolPort, TransactionPort, TransactionRequest
 from .schema import (
     ActionType,
     AgentAction,
@@ -14,6 +14,7 @@ from .schema import (
     Role,
     RunResult,
     Scenario,
+    TransactionOutcome,
     TranscriptEvent,
 )
 
@@ -46,6 +47,7 @@ class NegotiationEnvironment:
         seller: AgentPort,
         tools: tuple[ToolPort, ...] = (),
         tool_configs: tuple[ToolRuntimeConfig, ...] | None = None,
+        transaction_simulator: TransactionPort | None = None,
     ) -> None:
         if buyer.role != Role.BUYER:
             raise ValueError("buyer agent must have role=Role.BUYER")
@@ -56,6 +58,7 @@ class NegotiationEnvironment:
         self.seller = seller
         self.tools = {tool.name: tool for tool in tools}
         self.tool_configs = self._normalize_tool_configs(tool_configs)
+        self.transaction_simulator = transaction_simulator
         self.events: list[TranscriptEvent] = []
         self._latest_offer_role: Role | None = None
         self._latest_offer_price: float | None = None
@@ -85,7 +88,12 @@ class NegotiationEnvironment:
 
             if action.type == ActionType.ACCEPT:
                 outcome, deal_price = self._accept_outcome(actor.role)
-                return self._result(outcome, deal_price, public_turns)
+                transaction = self._settle_transaction(
+                    accepting_role=actor.role,
+                    deal_price=deal_price,
+                    next_turn=total_steps + 1,
+                )
+                return self._result(outcome, deal_price, public_turns, transaction)
 
             if action.type == ActionType.REJECT:
                 return self._result("rejected", None, public_turns)
@@ -155,7 +163,13 @@ class NegotiationEnvironment:
     def _next_actor(self, actor: AgentPort) -> AgentPort:
         return self.seller if actor.role == Role.BUYER else self.buyer
 
-    def _result(self, outcome: str, deal_price: float | None, completed_turns: int) -> RunResult:
+    def _result(
+        self,
+        outcome: str,
+        deal_price: float | None,
+        completed_turns: int,
+        transaction: TransactionOutcome | None = None,
+    ) -> RunResult:
         metrics = compute_metrics(self.scenario, outcome, deal_price, self.events)
         return RunResult(
             scenario=self.scenario,
@@ -164,6 +178,7 @@ class NegotiationEnvironment:
             deal_price=deal_price,
             completed_turns=completed_turns,
             metrics=metrics,
+            transaction=transaction,
         )
 
     def _normalize_tool_configs(
@@ -289,3 +304,32 @@ class NegotiationEnvironment:
             "cost_usd": None,
             "error": error,
         }
+
+    def _settle_transaction(
+        self,
+        *,
+        accepting_role: Role,
+        deal_price: float | None,
+        next_turn: int,
+    ) -> TransactionOutcome | None:
+        if self.transaction_simulator is None or deal_price is None:
+            return None
+        transaction = self.transaction_simulator.settle(
+            TransactionRequest(
+                scenario=self.scenario,
+                negotiated_price=deal_price,
+                accepting_role=accepting_role.value,
+            )
+        )
+        self.events.append(
+            TranscriptEvent(
+                turn=next_turn,
+                role=Role.SYSTEM,
+                actor="transaction_simulator",
+                action_type=ActionType.TRANSACTION,
+                content=transaction.status,
+                transaction=transaction,
+                private=False,
+            )
+        )
+        return transaction
