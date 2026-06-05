@@ -1,60 +1,58 @@
-<svg width="1600" height="360" viewBox="0 0 1600 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="1500" height="560" viewBox="0 0 1500 560" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">OpenNegotiation</title>
-  <desc id="desc">Real-market negotiation gym for AI agents, showing buyer and seller agents exchanging offers through a traceable market workflow.</desc>
+  <desc id="desc">Real-market negotiation gym banner showing buyer and seller agents exchanging value with bidirectional negotiation arrows.</desc>
 
   <defs>
-    <linearGradient id="accent" x1="410" y1="267" x2="1120" y2="267" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6f91a8"/>
-      <stop offset="0.48" stop-color="#9da98f"/>
-      <stop offset="1" stop-color="#c49a72"/>
+    <linearGradient id="accent" x1="532" y1="342" x2="1184" y2="342" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8fa4b3"/>
+      <stop offset="0.5" stop-color="#a7af9b"/>
+      <stop offset="1" stop-color="#c2a58d"/>
     </linearGradient>
-    <filter id="shadow" x="16" y="28" width="1568" height="304" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0b1117" flood-opacity="0.22"/>
+    <filter id="cardShadow" x="22" y="24" width="1456" height="500" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0b1117" flood-opacity="0.24"/>
     </filter>
   </defs>
 
-  <rect width="1600" height="360" rx="0" fill="#111820"/>
+  <rect width="1500" height="560" fill="#101821"/>
 
-  <g filter="url(#shadow)">
-    <rect x="34" y="42" width="1532" height="268" rx="36" fill="#f5f3f0"/>
-    <rect x="35.5" y="43.5" width="1529" height="265" rx="34.5" stroke="#d7d4ce" stroke-width="3"/>
+  <g filter="url(#cardShadow)">
+    <rect x="54" y="58" width="1392" height="444" rx="48" fill="#f7f5f1"/>
+    <rect x="56.5" y="60.5" width="1387" height="439" rx="45.5" stroke="#d8d4cd" stroke-width="5"/>
   </g>
 
-  <g transform="translate(112 83)">
-    <rect x="0" y="0" width="216" height="194" rx="30" fill="#ebe7df"/>
-    <path d="M43 61C43 42.8 57.8 28 76 28H104C122.2 28 137 42.8 137 61V82C137 100.2 122.2 115 104 115H91L67 139V115H76C57.8 115 43 100.2 43 82V61Z" fill="#8aa1b3"/>
-    <path d="M87 69H121" stroke="#f7f5ef" stroke-width="10" stroke-linecap="round"/>
-    <path d="M104 52V86" stroke="#f7f5ef" stroke-width="10" stroke-linecap="round"/>
+  <g transform="translate(118 110)">
+    <rect x="0" y="0" width="344" height="340" rx="36" fill="#ece8df"/>
+    <rect x="18" y="18" width="308" height="304" rx="28" stroke="#d9d1c5" stroke-width="3"/>
 
-    <path d="M92 151C92 132.8 106.8 118 125 118H158C176.2 118 191 132.8 191 151V162C191 180.2 176.2 195 158 195H125C106.8 195 92 180.2 92 162V151Z" fill="#c6a68d"/>
-    <circle cx="126" cy="154" r="6" fill="#f7f5ef"/>
-    <circle cx="145" cy="154" r="6" fill="#f7f5ef"/>
-    <circle cx="164" cy="154" r="6" fill="#f7f5ef"/>
+    <rect x="36" y="76" width="118" height="158" rx="24" fill="#eef2f4" stroke="#8199aa" stroke-width="5"/>
+    <circle cx="95" cy="126" r="24" fill="#8199aa"/>
+    <path d="M58 187C67 166 80 156 95 156C110 156 123 166 132 187V202H58V187Z" fill="#8199aa"/>
+    <text x="95" y="266" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="24" font-weight="850" fill="#536879">Buyer</text>
 
-    <rect x="126" y="47" width="70" height="94" rx="18" fill="#f9f1df" stroke="#b9976d" stroke-width="4"/>
-    <text x="161" y="86" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#253143">$</text>
-    <path d="M148 112H174" stroke="#9da98f" stroke-width="7" stroke-linecap="round"/>
+    <rect x="190" y="76" width="118" height="158" rx="24" fill="#f4e9de" stroke="#b89475" stroke-width="5"/>
+    <circle cx="249" cy="126" r="24" fill="#b89475"/>
+    <path d="M212 187C221 166 234 156 249 156C264 156 277 166 286 187V202H212V187Z" fill="#b89475"/>
+    <text x="249" y="266" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="24" font-weight="850" fill="#755d49">Seller</text>
 
-    <path d="M56 145C38 133 28 115 28 94C28 77 35 61 47 49" stroke="#6f91a8" stroke-width="8" stroke-linecap="round"/>
-    <path d="M47 49L49 72L68 59" stroke="#6f91a8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M179 52C199 67 209 86 209 107C209 124 202 140 190 153" stroke="#c49a72" stroke-width="8" stroke-linecap="round"/>
-    <path d="M190 153L188 130L169 143" stroke="#c49a72" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="172" cy="154" r="36" fill="#fff8ec" stroke="#aa9677" stroke-width="5"/>
+    <text x="172" y="168" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="40" font-weight="850" fill="#253143">$</text>
 
-    <path d="M20 181C50 167 75 169 103 179C134 190 164 190 197 174" stroke="#8d9885" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="103" cy="179" r="6" fill="#8d9885"/>
-    <circle cx="197" cy="174" r="6" fill="#8d9885"/>
+    <path d="M118 104H202" stroke="#72899a" stroke-width="8" stroke-linecap="round"/>
+    <path d="M198 90L220 104L198 118Z" fill="#72899a"/>
+    <path d="M226 204H142" stroke="#a68468" stroke-width="8" stroke-linecap="round"/>
+    <path d="M146 190L124 204L146 218Z" fill="#a68468"/>
   </g>
 
-  <text x="406" y="142" textLength="690" lengthAdjust="spacingAndGlyphs" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="58" font-weight="850" fill="#253143">OpenNegotiation</text>
-  <text x="410" y="194" textLength="590" lengthAdjust="spacingAndGlyphs" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25" font-weight="650" fill="#647386">Real-market negotiation gym for AI agents</text>
+  <text x="532" y="202" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="76" font-weight="850" fill="#253143">OpenNegotiation</text>
+  <text x="536" y="268" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="30" font-weight="650" fill="#687687">Real-market negotiation gym for AI agents</text>
 
-  <rect x="410" y="250" width="710" height="10" rx="5" fill="url(#accent)"/>
+  <rect x="536" y="338" width="650" height="12" rx="6" fill="url(#accent)"/>
 
-  <text x="410" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" font-weight="700" fill="#767881">benchmark</text>
-  <circle cx="536" cy="296" r="4" fill="#a7a19b"/>
-  <text x="555" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" font-weight="700" fill="#767881">sparring</text>
-  <circle cx="662" cy="296" r="4" fill="#a7a19b"/>
-  <text x="681" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" font-weight="700" fill="#767881">strategy evolution</text>
-  <circle cx="903" cy="296" r="4" fill="#a7a19b"/>
-  <text x="922" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" font-weight="700" fill="#767881">transaction traces</text>
+  <text x="536" y="405" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25" font-weight="750" fill="#777a82">benchmark</text>
+  <circle cx="668" cy="397" r="5" fill="#aaa49d"/>
+  <text x="692" y="405" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25" font-weight="750" fill="#777a82">sparring</text>
+  <circle cx="817" cy="397" r="5" fill="#aaa49d"/>
+  <text x="841" y="405" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25" font-weight="750" fill="#777a82">strategy evolution</text>
+  <circle cx="1095" cy="397" r="5" fill="#aaa49d"/>
+  <text x="1119" y="405" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25" font-weight="750" fill="#777a82">transaction traces</text>
 </svg>

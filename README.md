@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="OpenNegotiation - real-market negotiation gym for AI agents" src="./docs/assets/opennegotiation-logo.svg" width="920">
+  <img alt="OpenNegotiation - real-market negotiation gym for AI agents" src="./docs/assets/opennegotiation-logo.svg" width="900">
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
 <p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-3776ab?style=flat-square">
   <img alt="No-key demo" src="https://img.shields.io/badge/no--key-demo-2d7d46?style=flat-square">
-  <img alt="LiteLLM" src="https://img.shields.io/badge/LiteLLM-optional-6f42c1?style=flat-square">
+  <img alt="LLM gateway" src="https://img.shields.io/badge/LLM%20gateway-LiteLLM%20adapter-8f7f6b?style=flat-square">
   <img alt="Status" src="https://img.shields.io/badge/status-MVP-0d3b66?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-TBD-lightgrey?style=flat-square">
 </p>
