@@ -2,7 +2,7 @@
 
 OpenNegotiation separates negotiated price from transaction outcome. A deal can be
 accepted at a product price and then settled through a deterministic simulator
-that adds costs, fees, and risk placeholders.
+that adds costs, fees, lifecycle terms, policy checks, and risk placeholders.
 
 The first simulator is fixture-backed and intentionally local. It does not call
 real payment, escrow, shipping, tax, or marketplace APIs.
@@ -33,6 +33,21 @@ real payment, escrow, shipping, tax, or marketplace APIs.
 - `return_window_days`: return-window policy attached to the fixture
   transaction.
 - `min_return_window_days`: optional minimum acceptable return-window policy.
+- `payment_method`, `payment_processor`, and `escrow_release_policy`: fixture
+  payment terms preserved in transaction metadata.
+- `shipping_carrier`, `shipping_service`, `tracking_required`,
+  `delivery_days`, and `max_delivery_days`: fixture logistics terms. Settlement
+  fails with `delivery_sla_exceeded` when `delivery_days` exceeds
+  `max_delivery_days`.
+- `return_shipping_payer` and `inspection_period_days`: return/inspection terms
+  preserved for audit.
+- `warranty_days`, `min_warranty_days`, and `warranty_provider`: warranty terms.
+  Settlement fails with `warranty_below_minimum` when the warranty window is too
+  short.
+- `compliance_checks` and `compliance_passed`: deterministic compliance terms.
+  Settlement fails with `compliance_check_failed` when checks do not pass.
+- `dispute_window_days` and `dispute_resolution_policy`: platform-style dispute
+  terms preserved in transaction metadata.
 
 For a completed transaction:
 
@@ -53,6 +68,9 @@ Settlement guard failures use deterministic reasons:
 - `shipping_failed`
 - `item_mismatch_dispute`
 - `return_window_below_minimum`
+- `delivery_sla_exceeded`
+- `warranty_below_minimum`
+- `compliance_check_failed`
 - `dispute_risk_exceeded`
 
 The failed transaction metadata records:
@@ -63,8 +81,15 @@ The failed transaction metadata records:
 - the configured guard values
 - lifecycle inputs such as `shipping_success`, `item_matches_listing`,
   `return_window_days`, and `dispute_risk`
+- structured `transaction_terms` grouped under payment, logistics, returns,
+  warranty, compliance, and dispute sections
 - `violated_guard`
 - `lifecycle_stage`
+
+The `transaction_terms` metadata object uses schema
+`opennego.transaction_terms.v1` and is intentionally provider-neutral. It is a
+fixture contract for benchmark and training comparability, not a live payment or
+logistics adapter.
 
 ## Trace Contract
 
@@ -101,4 +126,6 @@ The metrics report keeps negotiation and transaction quantities separate:
 
 This simulator is suitable for deterministic benchmark comparisons. It is not a
 claim about real payment success, legal compliance, tax calculation, logistics,
-returns, disputes, warranties, or platform policy.
+returns, disputes, warranties, or platform policy. Live providers should be
+implemented behind future transaction adapters rather than inside the fixture
+simulator or core environment.

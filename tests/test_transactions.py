@@ -108,6 +108,54 @@ def test_fixture_transaction_simulator_includes_dispute_risk():
     assert outcome.metadata["lifecycle_stage"] == "completed"
 
 
+def test_fixture_transaction_simulator_records_structured_lifecycle_terms():
+    simulator = FixtureTransactionSimulator(
+        shipping_cost=18.0,
+        escrow_fee=4.0,
+        payment_method="card",
+        payment_processor="fixture_gateway",
+        escrow_release_policy="release_on_delivery",
+        shipping_carrier="fixture_carrier",
+        shipping_service="ground",
+        tracking_required=True,
+        delivery_days=4,
+        max_delivery_days=7,
+        return_window_days=14,
+        min_return_window_days=7,
+        return_shipping_payer="buyer",
+        inspection_period_days=2,
+        warranty_days=30,
+        min_warranty_days=14,
+        warranty_provider="seller",
+        compliance_checks=("serial_verified", "not_recalled"),
+        compliance_passed=True,
+        dispute_window_days=30,
+        dispute_resolution_policy="platform_mediation",
+        dispute_risk=0.04,
+    )
+
+    outcome = simulator.settle(
+        TransactionRequest(
+            scenario=make_scenario(),
+            negotiated_price=760.0,
+            accepting_role="seller",
+        )
+    )
+
+    terms = outcome.metadata["transaction_terms"]
+    assert outcome.status == "completed"
+    assert terms["schema_version"] == "opennego.transaction_terms.v1"
+    assert terms["payment"]["method"] == "card"
+    assert terms["payment"]["escrow_release_policy"] == "release_on_delivery"
+    assert terms["logistics"]["carrier"] == "fixture_carrier"
+    assert terms["logistics"]["tracking_required"] is True
+    assert terms["returns"]["return_shipping_payer"] == "buyer"
+    assert terms["warranty"]["warranty_days"] == 30
+    assert terms["compliance"]["checks"] == ["serial_verified", "not_recalled"]
+    assert terms["compliance"]["passed"] is True
+    assert terms["dispute"]["resolution_policy"] == "platform_mediation"
+
+
 @pytest.mark.parametrize(
     ("kwargs", "reason", "guard", "stage"),
     [
@@ -135,6 +183,24 @@ def test_fixture_transaction_simulator_includes_dispute_risk():
             "max_dispute_risk",
             "dispute",
         ),
+        (
+            {"delivery_days": 9, "max_delivery_days": 5},
+            "delivery_sla_exceeded",
+            "max_delivery_days",
+            "logistics",
+        ),
+        (
+            {"warranty_days": 7, "min_warranty_days": 30},
+            "warranty_below_minimum",
+            "min_warranty_days",
+            "warranty",
+        ),
+        (
+            {"compliance_checks": ("serial_verified",), "compliance_passed": False},
+            "compliance_check_failed",
+            "compliance_passed",
+            "compliance",
+        ),
     ],
 )
 def test_fixture_transaction_simulator_lifecycle_failures(
@@ -159,6 +225,9 @@ def test_fixture_transaction_simulator_lifecycle_failures(
     assert outcome.metadata["lifecycle_stage"] == stage
     assert outcome.metadata["computed_buyer_total_cost"] == 760.0
     assert outcome.metadata["computed_seller_net_revenue"] == 760.0
+    assert outcome.metadata["transaction_terms"]["schema_version"] == (
+        "opennego.transaction_terms.v1"
+    )
 
 
 def test_fixture_transaction_simulator_fails_buyer_total_cap():
@@ -437,3 +506,97 @@ def test_runner_transaction_lifecycle_config_records_dispute_failure(tmp_path):
     assert trace[-1].transaction.metadata["violated_guard"] == "max_dispute_risk"
     assert metrics.metrics["failed_transaction_rate"] == 1.0
     assert metrics.metrics["transaction_dispute_risk"] == 0.12
+
+
+def test_runner_transaction_terms_config_records_completed_lifecycle(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = tmp_path / "transaction_terms.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "opennego.experiment.v1",
+                "name": "transaction_terms",
+                "output_dir": str(output_dir),
+                "resume": False,
+                "fail_fast": True,
+                "seeds": [5],
+                "agents": {
+                    "buyer": {"kind": "tool_aware_buyer"},
+                    "seller": {"kind": "scripted_seller"},
+                },
+                "transaction": {
+                    "kind": "fixture",
+                    "enabled": True,
+                    "shipping_cost": 18.0,
+                    "tax_rate": 0.08,
+                    "escrow_fee": 4.0,
+                    "payment_fee_rate": 0.02,
+                    "seller_fee_rate": 0.05,
+                    "payment_method": "card",
+                    "payment_processor": "fixture_gateway",
+                    "escrow_release_policy": "release_on_delivery",
+                    "shipping_carrier": "fixture_carrier",
+                    "shipping_service": "insured_ground",
+                    "tracking_required": True,
+                    "delivery_days": 4,
+                    "max_delivery_days": 7,
+                    "return_window_days": 14,
+                    "min_return_window_days": 7,
+                    "return_shipping_payer": "buyer",
+                    "inspection_period_days": 2,
+                    "warranty_days": 30,
+                    "min_warranty_days": 14,
+                    "warranty_provider": "seller",
+                    "compliance_checks": ["serial_verified", "not_recalled"],
+                    "compliance_passed": True,
+                    "dispute_window_days": 30,
+                    "dispute_resolution_policy": "platform_mediation",
+                },
+                "scenarios": [
+                    {
+                        "id": "camera_001",
+                        "products_file": "examples/data/products.json",
+                        "product_index": 0,
+                        "max_turns": 8,
+                    }
+                ],
+                "tool_regimes": [
+                    {
+                        "id": "buyer_private_market_search",
+                        "tools": [
+                            {
+                                "name": "market_price_search",
+                                "kind": "market_price",
+                                "source": "examples/data/market_comps.json",
+                                "visibility": "buyer_private",
+                            }
+                        ],
+                    }
+                ],
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+
+    summary = run_experiment_config(config_path)
+    run_dir = output_dir / (
+        "transaction_terms-camera_001-buyer_private_market_search-seed-5"
+    )
+    manifest = load_manifest(run_dir / "manifest.json")
+    trace = load_trace(run_dir / "trace.jsonl")
+
+    assert summary.completed == 1
+    assert manifest.metadata["transaction"]["payment_method"] == "card"
+    assert manifest.metadata["transaction"]["shipping_service"] == "insured_ground"
+    assert manifest.metadata["transaction"]["compliance_checks"] == [
+        "serial_verified",
+        "not_recalled",
+    ]
+    assert trace[-1].transaction is not None
+    assert trace[-1].transaction.status == "completed"
+    terms = trace[-1].transaction.metadata["transaction_terms"]
+    assert terms["payment"]["processor"] == "fixture_gateway"
+    assert terms["logistics"]["max_delivery_days"] == 7
+    assert terms["warranty"]["provider"] == "seller"
+    assert terms["dispute"]["window_days"] == 30

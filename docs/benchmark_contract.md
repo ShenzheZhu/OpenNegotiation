@@ -102,6 +102,9 @@ Transaction events use `action_type: "transaction"` and preserve a
 - optional `failure_reason`
 - optional metadata with computed buyer/seller settlement values and violated
   guard fields when deterministic settlement validation fails
+- optional metadata `transaction_terms` grouped by payment, logistics, returns,
+  warranty, compliance, and dispute policy terms using
+  `opennego.transaction_terms.v1`
 
 ## Metrics
 

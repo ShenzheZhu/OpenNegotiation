@@ -174,6 +174,22 @@ Supported transaction config in the first runner slice:
 - `max_dispute_risk`: optional deterministic dispute-risk cap.
 - `return_window_days`: return-window policy in days.
 - `min_return_window_days`: optional minimum acceptable return-window policy.
+- `payment_method`, `payment_processor`, `escrow_release_policy`: fixture
+  payment lifecycle terms preserved in transaction metadata.
+- `shipping_carrier`, `shipping_service`, `tracking_required`,
+  `delivery_days`, `max_delivery_days`: fixture logistics terms. Settlement
+  fails with `delivery_sla_exceeded` when configured delivery days exceed the
+  max delivery guard.
+- `return_shipping_payer`, `inspection_period_days`: fixture return and
+  inspection policy terms.
+- `warranty_days`, `min_warranty_days`, `warranty_provider`: fixture warranty
+  policy terms. Settlement fails with `warranty_below_minimum` when the warranty
+  guard is violated.
+- `compliance_checks`, `compliance_passed`: deterministic compliance policy
+  terms. Settlement fails with `compliance_check_failed` when checks do not
+  pass.
+- `dispute_window_days`, `dispute_resolution_policy`: fixture dispute policy
+  terms preserved in transaction metadata.
 
 ## Minimal Example
 
@@ -199,7 +215,24 @@ Supported transaction config in the first runner slice:
     "min_seller_net_revenue": 700.0,
     "max_dispute_risk": 0.08,
     "return_window_days": 14,
-    "min_return_window_days": 7
+    "min_return_window_days": 7,
+    "payment_method": "card",
+    "payment_processor": "fixture_gateway",
+    "escrow_release_policy": "release_on_delivery",
+    "shipping_carrier": "fixture_carrier",
+    "shipping_service": "insured_ground",
+    "tracking_required": true,
+    "delivery_days": 4,
+    "max_delivery_days": 7,
+    "return_shipping_payer": "buyer",
+    "inspection_period_days": 2,
+    "warranty_days": 30,
+    "min_warranty_days": 14,
+    "warranty_provider": "seller",
+    "compliance_checks": ["serial_verified", "not_recalled"],
+    "compliance_passed": true,
+    "dispute_window_days": 30,
+    "dispute_resolution_policy": "platform_mediation"
   },
   "seeds": [7],
   "agents": {

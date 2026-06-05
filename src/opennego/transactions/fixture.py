@@ -27,6 +27,23 @@ class FixtureTransactionSimulator(TransactionPort):
     max_dispute_risk: float | None = None
     return_window_days: int | None = None
     min_return_window_days: int | None = None
+    payment_method: str | None = None
+    payment_processor: str | None = None
+    escrow_release_policy: str | None = None
+    shipping_carrier: str | None = None
+    shipping_service: str | None = None
+    tracking_required: bool = False
+    delivery_days: int | None = None
+    max_delivery_days: int | None = None
+    return_shipping_payer: str | None = None
+    inspection_period_days: int | None = None
+    warranty_days: int | None = None
+    min_warranty_days: int | None = None
+    warranty_provider: str | None = None
+    compliance_checks: tuple[str, ...] = ()
+    compliance_passed: bool = True
+    dispute_window_days: int | None = None
+    dispute_resolution_policy: str | None = None
     failure_reason: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
@@ -120,6 +137,26 @@ class FixtureTransactionSimulator(TransactionPort):
                     "lifecycle_stage": "shipping",
                 },
             )
+        if (
+            self.max_delivery_days is not None
+            and self.delivery_days is not None
+            and self.delivery_days > self.max_delivery_days
+        ):
+            return self._failed_outcome(
+                negotiated_price=negotiated_price,
+                shipping_cost=self.shipping_cost,
+                tax=tax,
+                escrow_fee=self.escrow_fee,
+                payment_fee=payment_fee,
+                seller_fee=seller_fee,
+                risk_exposure=risk_exposure,
+                failure_reason="delivery_sla_exceeded",
+                metadata={
+                    **validation_metadata,
+                    "violated_guard": "max_delivery_days",
+                    "lifecycle_stage": "logistics",
+                },
+            )
         if not self.item_matches_listing:
             return self._failed_outcome(
                 negotiated_price=negotiated_price,
@@ -153,6 +190,41 @@ class FixtureTransactionSimulator(TransactionPort):
                     **validation_metadata,
                     "violated_guard": "min_return_window_days",
                     "lifecycle_stage": "returns",
+                },
+            )
+        if (
+            self.min_warranty_days is not None
+            and (self.warranty_days or 0) < self.min_warranty_days
+        ):
+            return self._failed_outcome(
+                negotiated_price=negotiated_price,
+                shipping_cost=self.shipping_cost,
+                tax=tax,
+                escrow_fee=self.escrow_fee,
+                payment_fee=payment_fee,
+                seller_fee=seller_fee,
+                risk_exposure=risk_exposure,
+                failure_reason="warranty_below_minimum",
+                metadata={
+                    **validation_metadata,
+                    "violated_guard": "min_warranty_days",
+                    "lifecycle_stage": "warranty",
+                },
+            )
+        if not self.compliance_passed:
+            return self._failed_outcome(
+                negotiated_price=negotiated_price,
+                shipping_cost=self.shipping_cost,
+                tax=tax,
+                escrow_fee=self.escrow_fee,
+                payment_fee=payment_fee,
+                seller_fee=seller_fee,
+                risk_exposure=risk_exposure,
+                failure_reason="compliance_check_failed",
+                metadata={
+                    **validation_metadata,
+                    "violated_guard": "compliance_passed",
+                    "lifecycle_stage": "compliance",
                 },
             )
         if (
@@ -209,6 +281,7 @@ class FixtureTransactionSimulator(TransactionPort):
             "dispute_risk": self.dispute_risk,
             "shipping_success": self.shipping_success,
             "item_matches_listing": self.item_matches_listing,
+            "transaction_terms": self._transaction_terms(),
         }
         if self.max_buyer_total_cost is not None:
             metadata["max_buyer_total_cost"] = self.max_buyer_total_cost
@@ -220,7 +293,71 @@ class FixtureTransactionSimulator(TransactionPort):
             metadata["return_window_days"] = self.return_window_days
         if self.min_return_window_days is not None:
             metadata["min_return_window_days"] = self.min_return_window_days
+        if self.delivery_days is not None:
+            metadata["delivery_days"] = self.delivery_days
+        if self.max_delivery_days is not None:
+            metadata["max_delivery_days"] = self.max_delivery_days
+        if self.warranty_days is not None:
+            metadata["warranty_days"] = self.warranty_days
+        if self.min_warranty_days is not None:
+            metadata["min_warranty_days"] = self.min_warranty_days
+        metadata["compliance_passed"] = self.compliance_passed
         return metadata
+
+    def _transaction_terms(self) -> Mapping[str, Any]:
+        return {
+            "schema_version": "opennego.transaction_terms.v1",
+            "payment": _compact(
+                {
+                    "method": self.payment_method,
+                    "processor": self.payment_processor,
+                    "escrow_fee": self.escrow_fee,
+                    "escrow_release_policy": self.escrow_release_policy,
+                    "success": self.payment_success,
+                }
+            ),
+            "logistics": _compact(
+                {
+                    "shipping_cost": self.shipping_cost,
+                    "carrier": self.shipping_carrier,
+                    "service": self.shipping_service,
+                    "tracking_required": self.tracking_required,
+                    "shipping_success": self.shipping_success,
+                    "delivery_days": self.delivery_days,
+                    "max_delivery_days": self.max_delivery_days,
+                }
+            ),
+            "returns": _compact(
+                {
+                    "return_window_days": self.return_window_days,
+                    "min_return_window_days": self.min_return_window_days,
+                    "return_shipping_payer": self.return_shipping_payer,
+                    "inspection_period_days": self.inspection_period_days,
+                }
+            ),
+            "warranty": _compact(
+                {
+                    "warranty_days": self.warranty_days,
+                    "min_warranty_days": self.min_warranty_days,
+                    "provider": self.warranty_provider,
+                }
+            ),
+            "compliance": _compact(
+                {
+                    "checks": list(self.compliance_checks),
+                    "passed": self.compliance_passed,
+                }
+            ),
+            "dispute": _compact(
+                {
+                    "risk": self.dispute_risk,
+                    "max_dispute_risk": self.max_dispute_risk,
+                    "window_days": self.dispute_window_days,
+                    "resolution_policy": self.dispute_resolution_policy,
+                    "item_matches_listing": self.item_matches_listing,
+                }
+            ),
+        }
 
     def _failed_outcome(
         self,
@@ -252,3 +389,7 @@ class FixtureTransactionSimulator(TransactionPort):
             failure_reason=failure_reason,
             metadata=metadata,
         )
+
+
+def _compact(data: Mapping[str, Any]) -> Mapping[str, Any]:
+    return {key: value for key, value in data.items() if value is not None}

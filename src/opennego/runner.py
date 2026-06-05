@@ -141,6 +141,23 @@ class TransactionConfig:
     max_dispute_risk: float | None = None
     return_window_days: int | None = None
     min_return_window_days: int | None = None
+    payment_method: str | None = None
+    payment_processor: str | None = None
+    escrow_release_policy: str | None = None
+    shipping_carrier: str | None = None
+    shipping_service: str | None = None
+    tracking_required: bool = False
+    delivery_days: int | None = None
+    max_delivery_days: int | None = None
+    return_shipping_payer: str | None = None
+    inspection_period_days: int | None = None
+    warranty_days: int | None = None
+    min_warranty_days: int | None = None
+    warranty_provider: str | None = None
+    compliance_checks: tuple[str, ...] = ()
+    compliance_passed: bool = True
+    dispute_window_days: int | None = None
+    dispute_resolution_policy: str | None = None
     failure_reason: str | None = None
     metadata: Mapping[str, Any] | None = None
 
@@ -859,6 +876,23 @@ def _parse_transaction_config(data: Any) -> TransactionConfig | None:
         max_dispute_risk=_optional_float(data, "max_dispute_risk"),
         return_window_days=_optional_nullable_int(data, "return_window_days"),
         min_return_window_days=_optional_nullable_int(data, "min_return_window_days"),
+        payment_method=_optional_str(data, "payment_method"),
+        payment_processor=_optional_str(data, "payment_processor"),
+        escrow_release_policy=_optional_str(data, "escrow_release_policy"),
+        shipping_carrier=_optional_str(data, "shipping_carrier"),
+        shipping_service=_optional_str(data, "shipping_service"),
+        tracking_required=_optional_bool(data, "tracking_required", False),
+        delivery_days=_optional_nullable_int(data, "delivery_days"),
+        max_delivery_days=_optional_nullable_int(data, "max_delivery_days"),
+        return_shipping_payer=_optional_str(data, "return_shipping_payer"),
+        inspection_period_days=_optional_nullable_int(data, "inspection_period_days"),
+        warranty_days=_optional_nullable_int(data, "warranty_days"),
+        min_warranty_days=_optional_nullable_int(data, "min_warranty_days"),
+        warranty_provider=_optional_str(data, "warranty_provider"),
+        compliance_checks=_optional_string_tuple(data, "compliance_checks"),
+        compliance_passed=_optional_bool(data, "compliance_passed", True),
+        dispute_window_days=_optional_nullable_int(data, "dispute_window_days"),
+        dispute_resolution_policy=_optional_str(data, "dispute_resolution_policy"),
         failure_reason=_optional_str(data, "failure_reason"),
         metadata=_optional_mapping(data, "metadata"),
     )
@@ -886,6 +920,23 @@ def _build_transaction_simulator(
         max_dispute_risk=config.max_dispute_risk,
         return_window_days=config.return_window_days,
         min_return_window_days=config.min_return_window_days,
+        payment_method=config.payment_method,
+        payment_processor=config.payment_processor,
+        escrow_release_policy=config.escrow_release_policy,
+        shipping_carrier=config.shipping_carrier,
+        shipping_service=config.shipping_service,
+        tracking_required=config.tracking_required,
+        delivery_days=config.delivery_days,
+        max_delivery_days=config.max_delivery_days,
+        return_shipping_payer=config.return_shipping_payer,
+        inspection_period_days=config.inspection_period_days,
+        warranty_days=config.warranty_days,
+        min_warranty_days=config.min_warranty_days,
+        warranty_provider=config.warranty_provider,
+        compliance_checks=config.compliance_checks,
+        compliance_passed=config.compliance_passed,
+        dispute_window_days=config.dispute_window_days,
+        dispute_resolution_policy=config.dispute_resolution_policy,
         failure_reason=config.failure_reason,
         metadata=dict(config.metadata or {}),
     )
@@ -913,6 +964,23 @@ def _transaction_metadata(config: TransactionConfig | None) -> Mapping[str, Any]
         "max_dispute_risk": config.max_dispute_risk,
         "return_window_days": config.return_window_days,
         "min_return_window_days": config.min_return_window_days,
+        "payment_method": config.payment_method,
+        "payment_processor": config.payment_processor,
+        "escrow_release_policy": config.escrow_release_policy,
+        "shipping_carrier": config.shipping_carrier,
+        "shipping_service": config.shipping_service,
+        "tracking_required": config.tracking_required,
+        "delivery_days": config.delivery_days,
+        "max_delivery_days": config.max_delivery_days,
+        "return_shipping_payer": config.return_shipping_payer,
+        "inspection_period_days": config.inspection_period_days,
+        "warranty_days": config.warranty_days,
+        "min_warranty_days": config.min_warranty_days,
+        "warranty_provider": config.warranty_provider,
+        "compliance_checks": list(config.compliance_checks),
+        "compliance_passed": config.compliance_passed,
+        "dispute_window_days": config.dispute_window_days,
+        "dispute_resolution_policy": config.dispute_resolution_policy,
         "failure_reason": config.failure_reason,
         "metadata": dict(config.metadata or {}),
     }
@@ -1018,6 +1086,22 @@ def _optional_roles(data: Mapping[str, Any], key: str) -> tuple[Role, ...] | Non
         except ValueError as exc:
             raise ConfigValidationError(f"{key}[{index}]: unsupported role {role!r}") from exc
     return tuple(roles)
+
+
+def _optional_string_tuple(data: Mapping[str, Any], key: str) -> tuple[str, ...]:
+    value = data.get(key)
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise ConfigValidationError(f"{key}: expected list")
+    items: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            raise ConfigValidationError(
+                f"{key}[{index}]: expected non-empty string"
+            )
+        items.append(item.strip())
+    return tuple(items)
 
 
 def _roles_for_tool(spec: ToolSpec) -> tuple[Role, ...]:
