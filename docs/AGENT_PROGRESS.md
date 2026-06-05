@@ -59,6 +59,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   and market-comparable fixture files.
 - Added optional aggregate market dataset manifests for offline sold-comps
   ingestion, including input fingerprints and quality summaries.
+- Added `opennego validate-market` for no-key product, comparable, and dataset
+  manifest consistency checks.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   battle reports, strategy candidates, sparring reruns, comparison artifacts,
   and local marketplace export.
@@ -85,7 +87,7 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 102 passed after adding offline market dataset manifests.
+- `pytest -q`: 106 passed after adding market fixture validation CLI.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
