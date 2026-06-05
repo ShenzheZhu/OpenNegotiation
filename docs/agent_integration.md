@@ -141,3 +141,31 @@ The CLI intentionally does not import arbitrary Python modules. Use the Python
 API registration path above for custom local agents. Provider-backed LLM agents
 should still stay behind `LLMPort` and adapter modules rather than importing
 provider SDKs into the environment layer.
+
+## Sparring Against NPC Profiles
+
+Custom user agents can also spar against curated marketplace NPC profiles
+through the Python API:
+
+```python
+from opennego.sparring import run_sparring_suite
+
+
+def user_agent_factory(role):
+    return MyBuyerAgent(name="team_a_buyer")
+
+
+summary = run_sparring_suite(
+    output_dir="/tmp/team-a-sparring",
+    user_role="buyer",
+    opponent_profile_ids=("seller_hardline_anchor_v1",),
+    user_agent_factory=user_agent_factory,
+    user_agent_kind="team_a_buyer",
+)
+```
+
+The suite instantiates a fresh user agent for each profile-backed run and
+validates that the returned role matches `user_role`. Generated manifests record
+the custom `user_agent_kind` and runtime agent name. This path cannot be
+combined with `user_strategy_path`; use either a concrete custom agent or a
+versioned strategy-candidate user agent in one run.

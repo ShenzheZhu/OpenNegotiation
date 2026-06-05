@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Sequence
+from typing import Callable, Sequence
 
 from opennego.agents import make_profile_agent_pair
 from opennego.artifacts import write_json, write_run_artifacts
@@ -28,10 +28,12 @@ from opennego.runner import (
     load_experiment_config,
     prepare_runs,
 )
+from opennego.ports import AgentPort
 from opennego.schema import Role
 
 SPARRING_SUITE_SCHEMA_VERSION = "opennego.sparring_suite.v1"
 SPARRING_EXECUTION_MODE = "profile_backed_fixture_sparring"
+UserAgentFactory = Callable[[Role], AgentPort]
 
 
 @dataclass(frozen=True)
@@ -45,6 +47,7 @@ class SparringOpponentResult:
     benchmark_completed: int
     benchmark_failed: int
     user_strategy_candidate_id: str | None = None
+    user_agent_kind: str | None = None
     learning_input_dir: str | None = None
     battle_report: str | None = None
     outcome: str | None = None
@@ -67,6 +70,7 @@ class SparringSuiteSummary:
     opponent_role: Role
     user_strategy_candidate_id: str | None
     user_strategy_path: str | None
+    user_agent_kind: str | None
     total_profiles: int
     completed: int
     failed: int
@@ -82,6 +86,8 @@ def run_sparring_suite(
     user_role: Role | str = Role.BUYER,
     opponent_profile_ids: Sequence[str] | None = None,
     user_strategy_path: str | Path | None = None,
+    user_agent_factory: UserAgentFactory | None = None,
+    user_agent_kind: str | None = None,
     learning_tool_regime: str = "no_tools",
     fail_fast: bool = True,
 ) -> SparringSuiteSummary:
@@ -90,6 +96,19 @@ def run_sparring_suite(
     output = Path(output_dir)
     registry = load_strategy_registry(registry_path)
     normalized_user_role = Role(user_role)
+    if user_strategy_path is not None and user_agent_factory is not None:
+        raise ValueError(
+            "user_strategy_path and user_agent_factory cannot both be provided"
+        )
+    normalized_user_agent_kind = None
+    if user_agent_factory is not None:
+        normalized_user_agent_kind = user_agent_kind or "custom_user_agent"
+    if user_agent_factory is not None:
+        _create_user_agent(
+            user_agent_factory,
+            role=normalized_user_role,
+            kind=normalized_user_agent_kind,
+        )
     user_strategy = (
         load_strategy_candidate(user_strategy_path)
         if user_strategy_path is not None
@@ -118,6 +137,8 @@ def run_sparring_suite(
                     registry_path=registry_path,
                     user_role=normalized_user_role,
                     user_strategy=user_strategy,
+                    user_agent_factory=user_agent_factory,
+                    user_agent_kind=normalized_user_agent_kind,
                     learning_tool_regime=learning_tool_regime,
                 )
             )
@@ -134,6 +155,7 @@ def run_sparring_suite(
                 user_strategy_candidate_id=(
                     user_strategy.candidate_id if user_strategy else None
                 ),
+                user_agent_kind=normalized_user_agent_kind,
                 error=str(exc),
             )
             results.append(result)
@@ -152,6 +174,7 @@ def run_sparring_suite(
         opponent_role=opponent_role,
         user_strategy_candidate_id=user_strategy.candidate_id if user_strategy else None,
         user_strategy_path=str(user_strategy_path) if user_strategy_path else None,
+        user_agent_kind=normalized_user_agent_kind,
         total_profiles=len(profiles),
         completed=sum(1 for result in results if result.status == "completed"),
         failed=sum(1 for result in results if result.status == "failed"),
@@ -170,6 +193,8 @@ def _run_profile_sparring(
     registry_path: str | Path,
     user_role: Role,
     user_strategy: StrategyCandidate | None,
+    user_agent_factory: UserAgentFactory | None,
+    user_agent_kind: str | None,
     learning_tool_regime: str,
 ) -> SparringOpponentResult:
     benchmark = _run_profile_benchmark(
@@ -178,6 +203,8 @@ def _run_profile_sparring(
         config_path=config_path,
         user_role=user_role,
         user_strategy=user_strategy,
+        user_agent_factory=user_agent_factory,
+        user_agent_kind=user_agent_kind,
     )
     learning_run = _select_completed_run(benchmark.runs, learning_tool_regime)
     report = generate_battle_report(
@@ -195,6 +222,7 @@ def _run_profile_sparring(
         report=report,
         battle_report_path=battle_report_path,
         user_strategy=user_strategy,
+        user_agent_kind=user_agent_kind,
     )
 
 
@@ -206,6 +234,7 @@ def _opponent_result(
     report: BattleReport,
     battle_report_path: Path,
     user_strategy: StrategyCandidate | None,
+    user_agent_kind: str | None,
 ) -> SparringOpponentResult:
     return SparringOpponentResult(
         profile_id=profile.id,
@@ -219,6 +248,7 @@ def _opponent_result(
         user_strategy_candidate_id=(
             user_strategy.candidate_id if user_strategy else None
         ),
+        user_agent_kind=user_agent_kind,
         learning_input_dir=learning_run.output_dir,
         battle_report=str(battle_report_path),
         outcome=report.outcome,
@@ -277,6 +307,8 @@ def _run_profile_benchmark(
     config_path: str | Path,
     user_role: Role,
     user_strategy: StrategyCandidate | None,
+    user_agent_factory: UserAgentFactory | None,
+    user_agent_kind: str | None,
 ) -> ExperimentSummary:
     config = replace(
         load_experiment_config(config_path),
@@ -293,6 +325,8 @@ def _run_profile_benchmark(
                 profile=profile,
                 user_role=user_role,
                 user_strategy=user_strategy,
+                user_agent_factory=user_agent_factory,
+                user_agent_kind=user_agent_kind,
             )
         except Exception as exc:  # pragma: no cover - CLI failure path
             records.append(
@@ -336,11 +370,15 @@ def _execute_profile_prepared_run(
     profile: StrategyProfile,
     user_role: Role,
     user_strategy: StrategyCandidate | None,
+    user_agent_factory: UserAgentFactory | None,
+    user_agent_kind: str | None,
 ):
     buyer, seller = _profile_agent_pair(
         profile=profile,
         user_role=user_role,
         user_strategy=user_strategy,
+        user_agent_factory=user_agent_factory,
+        user_agent_kind=user_agent_kind,
     )
     env = NegotiationEnvironment(
         scenario=prepared_run.scenario,
@@ -358,8 +396,18 @@ def _execute_profile_prepared_run(
         scenario_id=prepared_run.scenario_id,
         seed=prepared_run.seed,
         agents={
-            "buyer": _agent_manifest(buyer, profile=profile),
-            "seller": _agent_manifest(seller, profile=profile),
+            "buyer": _agent_manifest(
+                buyer,
+                profile=profile,
+                user_role=user_role,
+                user_agent_kind=user_agent_kind,
+            ),
+            "seller": _agent_manifest(
+                seller,
+                profile=profile,
+                user_role=user_role,
+                user_agent_kind=user_agent_kind,
+            ),
         },
         tool_regime=_tool_regime_manifest(prepared_run.tool_regime),
         metadata={
@@ -381,15 +429,33 @@ def _profile_agent_pair(
     profile: StrategyProfile,
     user_role: Role,
     user_strategy: StrategyCandidate | None,
+    user_agent_factory: UserAgentFactory | None,
+    user_agent_kind: str | None,
 ):
+    user_agent = (
+        _create_user_agent(
+            user_agent_factory,
+            role=user_role,
+            kind=user_agent_kind or "custom_user_agent",
+        )
+        if user_agent_factory is not None
+        else None
+    )
     return make_profile_agent_pair(
         profile=profile,
         user_role=user_role,
         user_strategy=user_strategy,
+        user_agent=user_agent,
     )
 
 
-def _agent_manifest(agent, *, profile: StrategyProfile) -> dict[str, object]:
+def _agent_manifest(
+    agent,
+    *,
+    profile: StrategyProfile,
+    user_role: Role,
+    user_agent_kind: str | None,
+) -> dict[str, object]:
     payload: dict[str, object] = {
         "name": agent.name,
         "role": agent.role.value,
@@ -413,9 +479,35 @@ def _agent_manifest(agent, *, profile: StrategyProfile) -> dict[str, object]:
                 "applied_lesson_ids": list(agent.applied_lesson_ids),
             }
         )
+    elif agent.role == user_role and user_agent_kind is not None:
+        payload["kind"] = user_agent_kind
     else:
         payload["kind"] = f"user_{agent.role.value}"
     return payload
+
+
+def _create_user_agent(
+    factory: UserAgentFactory,
+    *,
+    role: Role,
+    kind: str,
+) -> AgentPort:
+    try:
+        agent = factory(role)
+    except Exception as exc:
+        raise ValueError(f"user_agent_factory {kind!r} failed: {exc}") from exc
+    if agent.role != role:
+        raise ValueError(
+            f"user_agent_factory {kind!r} returned role "
+            f"{agent.role.value!r}, expected {role.value!r}"
+        )
+    if not isinstance(agent.name, str) or not agent.name:
+        raise ValueError(f"user_agent_factory {kind!r} returned agent without name")
+    if not callable(getattr(agent, "act", None)):
+        raise ValueError(
+            f"user_agent_factory {kind!r} returned agent without act(context)"
+        )
+    return agent
 
 
 def _strategy_metadata(candidate: StrategyCandidate | None) -> dict[str, object]:
