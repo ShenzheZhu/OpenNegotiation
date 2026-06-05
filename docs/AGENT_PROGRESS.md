@@ -57,6 +57,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   sparring user agents.
 - Added offline sold-comps CSV/JSON ingestion into normalized product clusters
   and market-comparable fixture files.
+- Added a shared no-key workflow contract smoke for benchmark artifacts,
+  battle reports, strategy candidates, sparring reruns, comparison artifacts,
+  and local marketplace export.
 
 ### Current Live-Run State
 
@@ -73,12 +76,12 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Public hosted website work is tracked in GitHub issue `#28` and currently
   depends on resolving GitHub Pages support for the private repository.
 - The earlier stacked MVP PR train has been superseded by merged mainline
-  slices through PR `#48`.
+  slices through PR `#54`.
 - No active PR is required for the current local no-key MVP state.
 
 ### Verification
 
-- `pytest -q`: 88 passed after CLI local agent factory loading.
+- `pytest -q`: 99 passed after adding the shared workflow contract smoke.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.

@@ -12,6 +12,9 @@ on `main`: benchmark runs, policy-learning battle reports, strategy candidate
 reruns, local marketplace export, strategy sparring, transaction settlement
 guards, config-level LLM agents, provider-neutral profile LLM NPCs, and CLI
 loading for local user-agent factories, plus offline sold-comps ingestion.
+The no-key test suite also includes a shared workflow contract smoke for the
+benchmark -> policy learning -> strategy candidate -> sparring rerun ->
+comparison -> marketplace export loop.
 
 A small live five-model OpenRouter smoke was verified earlier on 2026-06-05.
 It was not rerun for this docs refresh; live provider execution remains an
@@ -67,6 +70,9 @@ Implemented:
   and dispute-risk caps.
 - Offline CSV/JSON sold-comps ingestion into `products.json` and
   `market_comps.json` fixtures.
+- Shared no-key workflow contract smoke covering benchmark artifacts, learning
+  reports, strategy candidates, sparring reruns, comparison artifacts, and local
+  marketplace export.
 - Static HTML report generators for benchmark/MVP and sparring surfaces.
 - Architecture overview in `docs/architecture.md`.
 - Python runtime declaration aligned to current syntax: Python 3.10+.
@@ -106,7 +112,7 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 88 passed.
+- `pytest -q`: 99 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Secret-pattern scan: no matches.
@@ -131,7 +137,7 @@ Live run summary:
 
 Current state:
 
-- Current `main` includes the backend workflow slices through PR `#48`.
+- Current `main` includes the backend workflow slices through PR `#54`.
 - Open issue `#29` tracks remaining backend/product loop scale-up work.
 - Open issue `#28` tracks public GitHub Pages hosting and remains blocked by
   repository/private-plan support for Pages.
