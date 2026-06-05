@@ -82,62 +82,34 @@
       border-radius: 8px;
     }
     .card strong { color: var(--accent-dark); }
-    .workflow-diagram {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 18px;
+    .diagram-scroll {
+      width: 100%;
       margin-top: 18px;
+      overflow-x: auto;
+      padding-bottom: 4px;
     }
-    .workflow-stage {
-      position: relative;
-      min-height: 220px;
-      padding: 16px;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-    }
-    .workflow-stage:nth-child(1) { border-top: 4px solid var(--accent); }
-    .workflow-stage:nth-child(2) { border-top: 4px solid var(--blue); }
-    .workflow-stage:nth-child(3) { border-top: 4px solid var(--amber); }
-    .workflow-stage:nth-child(4) { border-top: 4px solid var(--accent-dark); }
-    .workflow-stage:not(:last-child)::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      right: -18px;
-      width: 18px;
-      border-top: 2px solid var(--line);
-    }
-    .workflow-stage:not(:last-child)::before {
-      content: "";
-      position: absolute;
-      top: calc(50% - 4px);
-      right: -21px;
-      width: 8px;
-      height: 8px;
-      border-top: 2px solid var(--line);
-      border-right: 2px solid var(--line);
-      transform: rotate(45deg);
-      background: #f7fbfa;
-    }
-    .stage-kicker {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 750;
-      text-transform: uppercase;
-    }
-    .stage-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 12px;
-      color: var(--muted);
-    }
-    .stage-list span {
+    .architecture-svg {
       display: block;
-      padding-left: 10px;
-      border-left: 3px solid #e7eef4;
+      width: 100%;
+      min-width: 960px;
+      height: auto;
     }
-    .workflow-loop {
+    .diagram-bg { fill: #f7fbfa; }
+    .diagram-panel { fill: #fff; stroke: var(--line); stroke-width: 1.2; }
+    .diagram-panel-soft { fill: var(--soft); stroke: var(--line); stroke-width: 1.2; }
+    .diagram-title { fill: var(--ink); font-size: 22px; font-weight: 800; letter-spacing: 0; }
+    .diagram-label { fill: var(--accent-dark); font-size: 13px; font-weight: 800; letter-spacing: 0; text-transform: uppercase; }
+    .diagram-heading { fill: var(--ink); font-size: 18px; font-weight: 800; letter-spacing: 0; }
+    .diagram-text { fill: var(--muted); font-size: 13px; letter-spacing: 0; }
+    .diagram-small { fill: var(--muted); font-size: 12px; letter-spacing: 0; }
+    .diagram-arrow { stroke: var(--accent-dark); stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
+    .diagram-arrow-soft { stroke: #9ab4ad; stroke-width: 1.7; fill: none; marker-end: url(#arrowheadSoft); }
+    .diagram-loop { stroke: var(--blue); stroke-width: 2; fill: none; stroke-dasharray: 7 7; marker-end: url(#arrowheadBlue); }
+    .diagram-node-green { fill: #e7f5f0; stroke: var(--accent); stroke-width: 1.4; }
+    .diagram-node-blue { fill: #edf4ff; stroke: var(--blue); stroke-width: 1.4; }
+    .diagram-node-amber { fill: #fff7e8; stroke: var(--amber); stroke-width: 1.4; }
+    .diagram-node-dark { fill: #e9f2ef; stroke: var(--accent-dark); stroke-width: 1.4; }
+    .diagram-caption {
       margin-top: 14px;
       padding: 13px 15px;
       border: 1px dashed var(--line);
@@ -161,10 +133,7 @@
     .pill.strong { color: var(--accent-dark); font-weight: 750; }
     footer { margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }
     @media (max-width: 920px) {
-      .grid-3, .workflow-diagram { grid-template-columns: 1fr; }
-      .workflow-stage { min-height: auto; }
-      .workflow-stage:not(:last-child)::before,
-      .workflow-stage:not(:last-child)::after { display: none; }
+      .grid-3 { grid-template-columns: 1fr; }
     }
     @media (max-width: 620px) {
       .nav { align-items: flex-start; flex-direction: column; }
@@ -229,45 +198,93 @@
           <p class="section-copy">OpenNegotiation evaluates the full path from market setup to negotiated settlement, then turns the resulting artifacts into benchmark scores and training feedback.</p>
         </div>
       </div>
-      <div class="workflow-diagram" aria-label="OpenNegotiation workflow diagram">
-        <div class="workflow-stage">
-          <div class="stage-kicker">Input</div>
-          <h3>Market Scenario</h3>
-          <div class="stage-list">
-            <span>Product cluster and condition</span>
-            <span>Comparable-sale reference</span>
-            <span>Private buyer and seller constraints</span>
-          </div>
-        </div>
-        <div class="workflow-stage">
-          <div class="stage-kicker">Agent loop</div>
-          <h3>Evidence and Offers</h3>
-          <div class="stage-list">
-            <span>Tool calls for market evidence</span>
-            <span>Structured messages and offers</span>
-            <span>Accept, reject, or counteroffer decisions</span>
-          </div>
-        </div>
-        <div class="workflow-stage">
-          <div class="stage-kicker">Transaction</div>
-          <h3>Settlement Check</h3>
-          <div class="stage-list">
-            <span>Shipping, tax, and platform fees</span>
-            <span>Payment and escrow assumptions</span>
-            <span>All-in price and validity checks</span>
-          </div>
-        </div>
-        <div class="workflow-stage">
-          <div class="stage-kicker">Output</div>
-          <h3>Scores and Learning</h3>
-          <div class="stage-list">
-            <span>Deal quality and market gap</span>
-            <span>Tool-use and constraint metrics</span>
-            <span>Replay trace and strategy feedback</span>
-          </div>
-        </div>
+      <div class="diagram-scroll" aria-label="OpenNegotiation system architecture workflow diagram">
+        <svg class="architecture-svg" viewBox="0 0 1080 610" role="img" aria-labelledby="architecture-title architecture-desc" xmlns="http://www.w3.org/2000/svg">
+          <title id="architecture-title">OpenNegotiation system architecture workflow</title>
+          <desc id="architecture-desc">Market data and scenario constraints feed an agent arena with buyer and seller agents, model gateway, tool gateway, transaction checks, and versioned trace outputs for leaderboard, training, and marketplace feedback.</desc>
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+              <path d="M0,0 L10,4 L0,8 Z" fill="#124e45" />
+            </marker>
+            <marker id="arrowheadSoft" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+              <path d="M0,0 L10,4 L0,8 Z" fill="#9ab4ad" />
+            </marker>
+            <marker id="arrowheadBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+              <path d="M0,0 L10,4 L0,8 Z" fill="#2f6fed" />
+            </marker>
+          </defs>
+
+          <rect class="diagram-bg" x="0" y="0" width="1080" height="610" rx="18" />
+          <text class="diagram-title" x="36" y="42">System Workflow</text>
+          <text class="diagram-small" x="36" y="65">From real-market evidence to negotiated transactions, auditable traces, and policy improvement.</text>
+
+          <rect class="diagram-panel" x="36" y="96" width="230" height="392" rx="14" />
+          <text class="diagram-label" x="58" y="128">Market Setup</text>
+          <rect class="diagram-node-green" x="58" y="150" width="186" height="72" rx="10" />
+          <text class="diagram-heading" x="76" y="178">C2C Market Data</text>
+          <text class="diagram-text" x="76" y="201">sold comps, condition, fees</text>
+          <rect class="diagram-node-green" x="58" y="244" width="186" height="72" rx="10" />
+          <text class="diagram-heading" x="76" y="272">Scenario Builder</text>
+          <text class="diagram-text" x="76" y="295">product cluster + reference</text>
+          <rect class="diagram-node-green" x="58" y="338" width="186" height="90" rx="10" />
+          <text class="diagram-heading" x="76" y="366">Private Constraints</text>
+          <text class="diagram-text" x="76" y="389">buyer budget</text>
+          <text class="diagram-text" x="76" y="411">seller target and floor</text>
+
+          <rect class="diagram-panel" x="322" y="96" width="438" height="392" rx="14" />
+          <text class="diagram-label" x="344" y="128">Negotiation Arena</text>
+          <rect class="diagram-node-blue" x="346" y="154" width="148" height="86" rx="12" />
+          <text class="diagram-heading" x="372" y="185">Buyer Agent</text>
+          <text class="diagram-text" x="372" y="209">strategy + tools</text>
+          <rect class="diagram-node-amber" x="588" y="154" width="148" height="86" rx="12" />
+          <text class="diagram-heading" x="613" y="185">Seller Agent</text>
+          <text class="diagram-text" x="613" y="209">strategy + tools</text>
+          <path class="diagram-arrow" d="M500 188 C522 165, 560 165, 582 188" />
+          <path class="diagram-arrow" d="M582 217 C558 242, 520 242, 500 217" />
+
+          <rect class="diagram-node-dark" x="420" y="282" width="244" height="92" rx="12" />
+          <text class="diagram-heading" x="463" y="314">Environment Core</text>
+          <text class="diagram-text" x="454" y="338">action schema, turn loop, state</text>
+          <text class="diagram-text" x="454" y="360">private and shared trace policy</text>
+          <path class="diagram-arrow-soft" d="M420 242 L490 282" />
+          <path class="diagram-arrow-soft" d="M662 242 L594 282" />
+
+          <rect class="diagram-node-blue" x="346" y="402" width="176" height="56" rx="10" />
+          <text class="diagram-heading" x="383" y="426">Tool Gateway</text>
+          <text class="diagram-small" x="373" y="447">search, evidence, provenance</text>
+          <rect class="diagram-node-amber" x="560" y="402" width="176" height="56" rx="10" />
+          <text class="diagram-heading" x="591" y="426">Transaction Layer</text>
+          <text class="diagram-small" x="585" y="447">shipping, fees, payment risk</text>
+          <path class="diagram-arrow-soft" d="M493 374 L448 400" />
+          <path class="diagram-arrow-soft" d="M594 374 L632 400" />
+
+          <rect class="diagram-panel" x="816" y="96" width="228" height="392" rx="14" />
+          <text class="diagram-label" x="838" y="128">Artifacts and Feedback</text>
+          <rect class="diagram-node-dark" x="838" y="150" width="184" height="72" rx="10" />
+          <text class="diagram-heading" x="874" y="178">Run Trace</text>
+          <text class="diagram-text" x="864" y="201">messages, offers, tool calls</text>
+          <rect class="diagram-node-green" x="838" y="244" width="184" height="72" rx="10" />
+          <text class="diagram-heading" x="870" y="272">Leaderboard</text>
+          <text class="diagram-text" x="862" y="295">deal, utility, market gap</text>
+          <rect class="diagram-node-blue" x="838" y="338" width="184" height="72" rx="10" />
+          <text class="diagram-heading" x="865" y="366">Training Report</text>
+          <text class="diagram-text" x="860" y="389">failures and policy patches</text>
+          <rect class="diagram-node-amber" x="838" y="432" width="184" height="36" rx="10" />
+          <text class="diagram-heading" x="863" y="456">Strategy Marketplace</text>
+
+          <path class="diagram-arrow" d="M266 196 L340 196" />
+          <path class="diagram-arrow-soft" d="M266 280 L414 316" />
+          <path class="diagram-arrow-soft" d="M266 382 L414 342" />
+          <path class="diagram-arrow" d="M664 328 L812 184" />
+          <path class="diagram-arrow-soft" d="M930 222 L930 240" />
+          <path class="diagram-arrow-soft" d="M930 316 L930 334" />
+          <path class="diagram-arrow-soft" d="M930 410 L930 428" />
+
+          <path class="diagram-loop" d="M846 390 C760 538, 415 536, 386 462" />
+          <text class="diagram-small" x="548" y="538">training feedback improves the next agent strategy run</text>
+        </svg>
       </div>
-      <p class="workflow-loop">The same run artifacts support leaderboard evaluation, NPC sparring reports, and targeted policy improvement without changing the underlying market scenario.</p>
+      <p class="diagram-caption">The diagram shows the full system boundary: real-market scenario construction, an agent negotiation arena with tool and transaction layers, and artifact outputs used for evaluation and policy improvement.</p>
     </section>
 
   </main>
