@@ -33,6 +33,8 @@ The first scaffold focuses on:
 
 ## Quickstart
 
+OpenNego currently requires Python 3.10 or newer.
+
 ```bash
 git clone https://github.com/Kordi-AI/OpenNego.git
 cd OpenNego
@@ -208,7 +210,10 @@ gate. See
 [docs/real_market_benchmark_design.md](docs/real_market_benchmark_design.md) for
 the market-grounded dataset and leaderboard design. See
 [docs/policy_learning.md](docs/policy_learning.md) for the prompt-optimization
-training loop and NPC strategy marketplace MVP.
+training loop and NPC strategy marketplace MVP. See
+[docs/architecture.md](docs/architecture.md) for the current module boundaries
+and [docs/mvp_readiness.md](docs/mvp_readiness.md) for the website,
+architecture, and test readiness audit.
 
 ## Status
 

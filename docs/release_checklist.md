@@ -4,6 +4,8 @@ Use this checklist before handing OpenNego to an external model team.
 
 ## Local No-Key Gate
 
+Use Python 3.10 or newer.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
