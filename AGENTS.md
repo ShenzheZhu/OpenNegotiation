@@ -44,7 +44,7 @@ python -m pip install -e ".[dev,llm]"
 
 ## Coding Style
 
-Use Python 3.9+ and keep the core package provider-neutral. Prefer explicit
+Use Python 3.10+ and keep the core package provider-neutral. Prefer explicit
 dataclasses, small pure functions, and deterministic tests. Do not bind the
 environment layer directly to a specific LLM provider or web API.
 

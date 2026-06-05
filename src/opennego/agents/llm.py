@@ -22,6 +22,7 @@ LLM_ACTION_RESPONSE_FORMAT: Mapping[str, Any] = {
     "type": "json_schema",
     "json_schema": {
         "name": "opennego_agent_action",
+        "strict": True,
         "schema": {
             "type": "object",
             "additionalProperties": False,
@@ -30,20 +31,29 @@ LLM_ACTION_RESPONSE_FORMAT: Mapping[str, Any] = {
                     "type": "string",
                     "enum": ["tool_call", "offer", "accept", "reject", "message"],
                 },
-                "content": {"type": "string"},
-                "price": {"type": "number"},
-                "note": {"type": "string"},
+                "content": {"type": ["string", "null"]},
+                "price": {"type": ["number", "null"]},
+                "note": {"type": ["string", "null"]},
                 "tool": {
-                    "type": "object",
+                    "type": ["object", "null"],
                     "additionalProperties": False,
                     "properties": {
-                        "name": {"type": "string"},
-                        "arguments": {"type": "object"},
+                        "name": {"type": ["string", "null"]},
+                        "arguments": {
+                            "type": ["object", "null"],
+                            "additionalProperties": False,
+                            "properties": {
+                                "query": {"type": ["string", "null"]},
+                                "condition": {"type": ["string", "null"]},
+                                "limit": {"type": ["integer", "null"]},
+                            },
+                            "required": ["query", "condition", "limit"],
+                        },
                     },
-                    "required": ["name"],
+                    "required": ["name", "arguments"],
                 },
             },
-            "required": ["type"],
+            "required": ["type", "content", "price", "note", "tool"],
         },
     },
 }
@@ -213,10 +223,13 @@ def _parse_tool_action(
         arguments = {}
     if not isinstance(arguments, Mapping):
         raise LLMActionParseError("tool.arguments must be an object")
+    clean_arguments = {
+        key: value for key, value in arguments.items() if value is not None
+    }
     return AgentAction(
         type=ActionType.TOOL_CALL,
         content=_content(data),
-        tool_call=ToolCall(name=tool_name, arguments=dict(arguments)),
+        tool_call=ToolCall(name=tool_name, arguments=clean_arguments),
     )
 
 
@@ -292,4 +305,4 @@ def _note(data: Mapping[str, Any]) -> str:
 
 
 def _content(data: Mapping[str, Any]) -> str:
-    return str(data.get("content", ""))
+    return str(data.get("content", "") or "")
