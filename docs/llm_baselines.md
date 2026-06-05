@@ -8,6 +8,8 @@ provider SDK directly. Provider-specific behavior belongs in adapters such as
 
 - `make_llm_buyer(...)`: creates a buyer-side LLM baseline.
 - `make_llm_seller(...)`: creates a seller-side LLM baseline.
+- `make_profile_llm_agent(...)`: creates a buyer or seller NPC from a
+  marketplace strategy profile.
 - `LLMNegotiationAgent`: generic role-configurable baseline.
 
 Important fields:
@@ -21,6 +23,28 @@ Important fields:
 `tool_policy="none"` prevents tool calls even when the environment has tools.
 `tool_policy="available"` permits only tools listed in the current
 `AgentContext.available_tools`.
+
+## Profile-Backed NPC Agents
+
+Marketplace profiles can be turned into LLM-backed counterparties while staying
+behind `LLMPort`:
+
+```python
+from opennego.agents import make_profile_llm_agent
+from opennego.adapters import LiteLLMGateway
+from opennego.learning import load_strategy_registry
+
+profile = load_strategy_registry().by_id("seller_hardline_anchor_v1")
+agent = make_profile_llm_agent(
+    profile=profile,
+    llm=LiteLLMGateway(),
+    model="openrouter/openai/gpt-4o-mini",
+)
+```
+
+The factory injects the profile id, summary, base prompt, strategy prompt,
+expected traps, and declared tools into the LLM system prompt. It does not
+import LiteLLM or provider SDKs; live providers remain adapter concerns.
 
 ## Structured Action Contract
 

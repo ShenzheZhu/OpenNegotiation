@@ -94,8 +94,9 @@ the base sandbox protocol.
 
 - Python API users can register custom runner and sparring user-agent
   factories, but the CLI does not load arbitrary Python modules.
-- Strategy sparring instantiates selected profiles as deterministic fixture
-  counterparties, not live provider-backed model opponents.
+- Strategy sparring defaults to deterministic fixture counterparties. Python API
+  callers can supply profile-backed provider agents behind `LLMPort`, but the
+  CLI does not load arbitrary live NPC modules.
 - Local marketplace profile export is supported, but hosted marketplace,
   account-backed sharing, live marketplace collection, and provider-backed
   coaching are out of scope for the no-key MVP.

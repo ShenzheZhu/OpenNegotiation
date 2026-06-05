@@ -18,6 +18,7 @@ def make_profile_agent_pair(
     user_role: Role,
     user_strategy: StrategyCandidate | None = None,
     user_agent: AgentPort | None = None,
+    profile_agent: AgentPort | None = None,
 ):
     """Create a deterministic user-vs-profile agent pair for sparring."""
 
@@ -35,6 +36,11 @@ def make_profile_agent_pair(
             f"user agent role {user_agent.role.value!r} does not "
             f"match user_role {user_role.value!r}"
         )
+    if profile_agent is not None and profile_agent.role != profile.role:
+        raise ValueError(
+            f"profile agent role {profile_agent.role.value!r} does not "
+            f"match profile role {profile.role.value!r}"
+        )
     resolved_user_agent = user_agent or (
         make_strategy_candidate_user_agent(candidate=user_strategy)
         if user_strategy is not None
@@ -43,10 +49,10 @@ def make_profile_agent_pair(
     if profile.role == Role.SELLER:
         return (
             resolved_user_agent or ToolAwareBuyer(name="user_buyer"),
-            ProfileBackedSeller(profile=profile),
+            profile_agent or ProfileBackedSeller(profile=profile),
         )
     return (
-        ProfileBackedBuyer(profile=profile),
+        profile_agent or ProfileBackedBuyer(profile=profile),
         resolved_user_agent or ScriptedSeller(name="user_seller"),
     )
 

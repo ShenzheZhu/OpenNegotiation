@@ -4,8 +4,9 @@ import json
 import pytest
 
 import opennego.agents.llm as llm_agents
-from opennego.agents import ScriptedSeller, make_llm_buyer
+from opennego.agents import ScriptedSeller, make_llm_buyer, make_profile_llm_agent
 from opennego.environment import NegotiationEnvironment
+from opennego.learning import load_strategy_registry
 from opennego.ports import LLMRequest, LLMResponse
 from opennego.schema import ActionType, AgentContext, Product, Role, Scenario
 from opennego.tools import MarketComparable, MarketPriceTool
@@ -236,6 +237,37 @@ def test_tool_aware_llm_agent_can_call_market_tool_then_negotiate():
     assert result.events[0].private is True
     assert result.events[0].tool_result["median_price"] == 800.0
     assert len(fake_llm.requests) == 2
+
+
+def test_profile_llm_agent_injects_strategy_profile_prompt():
+    profile = load_strategy_registry().by_id("seller_hardline_anchor_v1")
+    fake_llm = FakeLLM(
+        ['{"type": "offer", "price": 625, "note": "Profile-backed offer."}']
+    )
+    agent = make_profile_llm_agent(
+        profile=profile,
+        llm=fake_llm,
+        model="fake/profile-seller",
+        max_tokens=128,
+    )
+    context = AgentContext(
+        scenario=make_scenario(),
+        role=Role.SELLER,
+        transcript=(),
+        available_tools=(),
+        private_state={"reservation_price": 620.0},
+    )
+
+    action = agent.act(context)
+    system_prompt = fake_llm.requests[0].messages[0]["content"]
+
+    assert action.type == ActionType.OFFER
+    assert agent.role == Role.SELLER
+    assert agent.name == "llm_profile_seller:seller_hardline_anchor_v1"
+    assert "Marketplace strategy profile" in system_prompt
+    assert "seller_hardline_anchor_v1" in system_prompt
+    assert profile.strategy_prompt in system_prompt
+    assert fake_llm.requests[0].metadata["agent_role"] == "seller"
 
 
 def test_llm_agent_module_does_not_import_litellm():
