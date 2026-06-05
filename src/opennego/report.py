@@ -83,16 +83,21 @@ def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
     strategy_profiles = load_strategy_profiles()
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    html_text = render_demo_report(
+        runs,
+        attempts=attempts,
+        battle_reports=battle_reports,
+        strategy_profiles=strategy_profiles,
+    )
     output_path.write_text(
-        render_demo_report(
-            runs,
-            attempts=attempts,
-            battle_reports=battle_reports,
-            strategy_profiles=strategy_profiles,
-        ),
+        _strip_trailing_whitespace(html_text),
         encoding="utf-8",
     )
     return output_path
+
+
+def _strip_trailing_whitespace(text: str) -> str:
+    return "\n".join(line.rstrip() for line in text.splitlines()) + "\n"
 
 
 def load_demo_runs(input_dir: str | Path) -> tuple[DemoRun, ...]:

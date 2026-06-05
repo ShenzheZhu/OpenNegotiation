@@ -73,24 +73,25 @@ checks, not as a full benchmark sweep. The command writes a top-level
 `summary.json`; if a provider call fails, the failed model directory gets a
 redacted `failure.json` instead of silently disappearing from the run record.
 
-For the no-key policy-learning loop, list NPC strategy profiles and generate a
-trace-grounded battle report from one completed benchmark run:
+For the full no-key MVP panel covering benchmark, training / prompt
+optimization, and the local strategy marketplace:
+
+```bash
+opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp-demo.html
+```
+
+This runs the real-market fixture benchmark, generates a trace-grounded battle
+report for a buyer agent against a curated seller NPC, and renders a static
+HTML report. The battle report produces strategy-layer lessons and prompt
+optimization suggestions while keeping OpenNego's base sandbox protocol fixed.
+A curated no-key MVP page is available at
+`examples/reports/opennego_mvp_demo.html`.
+
+You can also inspect the local NPC strategy marketplace directly:
 
 ```bash
 opennego strategies --role seller
-opennego learn \
-  --input-dir /tmp/opennego-real-market-demo/real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13 \
-  --output /tmp/opennego-real-market-demo/battle_report.json \
-  --user-role buyer \
-  --opponent-profile seller_hardline_anchor_v1
-opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennego-mvp-demo.html
 ```
-
-This produces strategy-layer lessons and prompt optimization suggestions while
-keeping OpenNego's base sandbox protocol fixed. The static report automatically
-renders the battle report and local NPC strategy marketplace when those
-artifacts are present. A curated no-key MVP page is available at
-`examples/reports/opennego_mvp_demo.html`.
 
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
 

@@ -31,6 +31,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added `examples/reports/opennego_mvp_demo.html` as the curated no-key MVP
   page covering benchmark, training/prompt optimization, and strategy
   marketplace.
+- Added `opennego mvp-demo` as the one-command no-key flow for generating the
+  benchmark artifacts, battle report, and MVP HTML page.
 
 ### Current Live-Run State
 

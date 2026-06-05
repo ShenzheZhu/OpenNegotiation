@@ -18,6 +18,7 @@ from opennego.learning import (
     write_battle_report,
 )
 from opennego.model_demo import DEFAULT_MODEL_DEMO_MODELS, run_model_demo
+from opennego.mvp_demo import run_mvp_demo
 from opennego.report import write_demo_report
 from opennego.runner import ConfigValidationError, run_experiment_config
 from opennego.schema import Product, Scenario
@@ -43,6 +44,8 @@ def main(argv: list[str] | None = None) -> int:
         return _strategies_main(argv[1:])
     if argv and argv[0] == "learn":
         return _learn_main(argv[1:])
+    if argv and argv[0] == "mvp-demo":
+        return _mvp_demo_main(argv[1:])
 
     parser = argparse.ArgumentParser(description="Run a deterministic OpenNego smoke demo.")
     parser.add_argument("--products-file", default="examples/data/products.json")
@@ -227,6 +230,59 @@ def _learn_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps({"battle_report": str(output_path)}, indent=2))
     return 0
+
+
+def _mvp_demo_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Generate the no-key OpenNego MVP demo end to end."
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="runs/mvp_demo",
+        help="Directory for benchmark artifacts and battle_report.json.",
+    )
+    parser.add_argument(
+        "--report",
+        help="Optional HTML report path. Defaults to <output-dir>/opennego_mvp_demo.html.",
+    )
+    parser.add_argument(
+        "--config",
+        default="configs/real_market_demo.yaml",
+        help="Experiment config used for the benchmark slice.",
+    )
+    parser.add_argument(
+        "--learning-tool-regime",
+        default="no_tools",
+        help="Completed run tool regime to diagnose for policy learning.",
+    )
+    parser.add_argument(
+        "--user-role",
+        default="buyer",
+        choices=("buyer", "seller"),
+        help="Role of the user-owned agent to optimize.",
+    )
+    parser.add_argument(
+        "--opponent-profile",
+        default="seller_hardline_anchor_v1",
+        help="NPC strategy profile id for the counterparty.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        summary = run_mvp_demo(
+            output_dir=args.output_dir,
+            report_path=args.report,
+            config_path=args.config,
+            learning_tool_regime=args.learning_tool_regime,
+            user_role=args.user_role,
+            opponent_profile_id=args.opponent_profile,
+        )
+    except (OSError, ValueError, KeyError, ConfigValidationError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(summary), indent=2))
+    return 0 if summary.benchmark_failed == 0 else 1
 
 
 def _run_models_main(argv: list[str] | None = None) -> int:

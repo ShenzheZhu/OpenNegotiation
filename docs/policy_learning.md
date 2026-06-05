@@ -10,8 +10,9 @@ OpenNego has three connected product layers:
    users can spar against and learn from.
 
 The first policy-learning slice is intentionally deterministic and no-key. It
-reads existing benchmark artifacts and produces a battle report that can guide
-strategy prompt edits without calling a live model provider.
+can be run as a one-command MVP demo, or pointed at existing benchmark
+artifacts to produce a battle report that can guide strategy prompt edits
+without calling a live model provider.
 
 ## Base Versus Strategy
 
@@ -68,6 +69,17 @@ This is a local curated marketplace in the MVP. A hosted marketplace or
 contributed strategy backend is intentionally out of scope for the first slice.
 
 ## Battle Report Schema
+
+The quickest end-to-end path is:
+
+```bash
+opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp-demo.html
+```
+
+This runs the small real-market benchmark, writes
+`/tmp/opennego-mvp-demo/battle_report.json`, and renders an HTML page with the
+leaderboard preview, Training / Prompt Optimization section, and Strategy
+Marketplace section.
 
 `opennego learn` reads one completed benchmark run directory:
 
@@ -163,7 +175,8 @@ In scope:
 - no-key battle report generation from artifacts
 - trace-grounded policy lessons
 - strategy prompt patch suggestions
-- CLI commands for listing profiles and writing reports
+- CLI commands for listing profiles, writing battle reports, and rendering the
+  one-command MVP demo
 
 Out of scope:
 

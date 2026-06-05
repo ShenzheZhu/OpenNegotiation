@@ -23,6 +23,7 @@ def test_write_demo_report_from_real_market_demo_config(tmp_path):
     assert "Strategy Marketplace" in html
     assert "Hardline Anchor Seller" in html
     assert 'href="#attempts"' not in html
+    assert not any(line.rstrip() != line for line in html.splitlines())
 
 
 def test_write_demo_report_includes_policy_learning_when_report_exists(tmp_path):
