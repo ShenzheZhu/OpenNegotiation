@@ -189,13 +189,13 @@
       <div class="section-head">
         <div>
           <h2>Mechanism</h2>
-          <p class="section-copy">OpenNegotiation is centered on a user agent. The user agent can play buyer or seller, spar against configurable NPC counterparties, receive benchmark or training feedback, and optionally share its strategy config back into the marketplace.</p>
+          <p class="section-copy">OpenNegotiation has two modes on one shared gym core: benchmark mode for standardized agent comparison, and evolution mode for user-agent sparring, failure analysis, and strategy improvement.</p>
         </div>
       </div>
       <div class="diagram-scroll" aria-label="OpenNegotiation system architecture workflow diagram">
         <svg class="architecture-svg" viewBox="0 0 1280 700" role="img" aria-labelledby="architecture-title architecture-desc" xmlns="http://www.w3.org/2000/svg">
           <title id="architecture-title">OpenNegotiation system architecture workflow</title>
-          <desc id="architecture-desc">A user agent chooses a buyer or seller role, spars with an NPC counterparty from the strategy marketplace, runs through the negotiation environment with tools and transaction checks, then receives reports, training lessons, and an agent evolution plan. Strategy configs can be shared back to the marketplace.</desc>
+          <desc id="architecture-desc">Benchmark mode and evolution mode share the same scenario setup, agent adapters, negotiation environment, tool gateway, transaction layer, trace artifacts, and metrics. Benchmark mode produces leaderboard reports. Evolution mode produces failure analysis, strategy patches, and optional marketplace sharing.</desc>
           <defs>
             <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
               <path d="M0,0 L10,4 L0,8 Z" fill="#124e45" />
@@ -215,52 +215,52 @@
           </defs>
 
           <rect class="diagram-bg" x="0" y="0" width="1280" height="700" rx="18" />
-          <text class="diagram-title" x="38" y="44">User-Centered Workflow</text>
-          <text class="diagram-small" x="38" y="68">Run a user agent as buyer or seller, spar against NPCs, improve the strategy config, and optionally share it.</text>
+          <text class="diagram-title" x="38" y="44">Dual-Mode Shared Workflow</text>
+          <text class="diagram-small" x="38" y="68">Benchmark evaluation and sparring evolution run through the same core environment and artifact contracts.</text>
 
           <rect class="diagram-panel" x="40" y="108" width="260" height="456" rx="16" />
-          <text class="diagram-label" x="64" y="140">1. User Setup</text>
+          <text class="diagram-label" x="64" y="140">1. Mode + Setup</text>
           <g data-box="user-strategy-config">
             <rect class="diagram-node-blue" x="64" y="164" width="212" height="72" rx="12" />
             <text class="diagram-heading" x="94" y="192">User Strategy Config</text>
             <text class="diagram-text" x="170" y="216">model, prompt, policy</text>
           </g>
-          <g data-box="role-selector">
+          <g data-box="run-mode">
             <rect class="diagram-node-green" x="64" y="268" width="212" height="82" rx="12" />
-            <text class="diagram-heading" x="110" y="298">Role Selector</text>
-            <text class="diagram-text" x="170" y="322">play buyer or seller</text>
-            <text class="diagram-text" x="170" y="342">private goals + limits</text>
+            <text class="diagram-heading" x="122" y="298">Run Mode</text>
+            <text class="diagram-text" x="170" y="322">benchmark evaluation</text>
+            <text class="diagram-text" x="170" y="342">sparring evolution</text>
           </g>
-          <g data-box="market-scenario">
+          <g data-box="scenario-role">
             <rect class="diagram-node-green" x="64" y="382" width="212" height="92" rx="12" />
-            <text class="diagram-heading" x="102" y="412">Market Scenario</text>
-            <text class="diagram-text" x="170" y="438">sold comps, fees</text>
-            <text class="diagram-text" x="170" y="458">condition + reference</text>
+            <text class="diagram-heading" x="103" y="412">Scenario + Role</text>
+            <text class="diagram-text" x="170" y="438">buyer / seller role</text>
+            <text class="diagram-text" x="170" y="458">market goals + limits</text>
           </g>
 
           <rect class="diagram-panel" x="350" y="108" width="260" height="456" rx="16" />
-          <text class="diagram-label" x="374" y="140">2. Sparring Run</text>
+          <text class="diagram-label" x="374" y="140">2. Shared Run Core</text>
           <g data-box="user-agent">
             <rect class="diagram-node-blue" x="374" y="164" width="212" height="72" rx="12" />
             <text class="diagram-heading" x="428" y="192">User Agent</text>
-            <text class="diagram-text" x="480" y="216">active role strategy</text>
+            <text class="diagram-text" x="480" y="216">active strategy config</text>
           </g>
-          <g data-box="npc-counterparty">
+          <g data-box="counterparty-agent">
             <rect class="diagram-node-amber" x="374" y="254" width="212" height="72" rx="12" />
-            <text class="diagram-heading" x="414" y="282">NPC Counterparty</text>
-            <text class="diagram-text" x="480" y="306">marketplace profile</text>
+            <text class="diagram-heading" x="407" y="282">Counterparty Agent</text>
+            <text class="diagram-text" x="480" y="306">NPC or benchmark model</text>
           </g>
           <path class="diagram-exchange" d="M588 202 C604 202 604 288 588 288" />
           <path class="diagram-exchange" d="M372 288 C356 288 356 202 372 202" />
           <g data-box="environment-core">
             <rect class="diagram-node-dark" x="374" y="354" width="212" height="74" rx="12" />
             <text class="diagram-heading" x="418" y="382">Environment Core</text>
-            <text class="diagram-text" x="480" y="406">turn loop + action schema</text>
+            <text class="diagram-text" x="480" y="406">shared turn loop</text>
           </g>
           <g data-box="tool-gateway">
             <rect class="diagram-node-blue" x="374" y="464" width="96" height="56" rx="10" />
             <text class="diagram-heading" x="397" y="488">Tools</text>
-            <text class="diagram-small" x="422" y="508">market data</text>
+            <text class="diagram-small" x="422" y="508">evidence</text>
           </g>
           <g data-box="transaction-layer">
             <rect class="diagram-node-amber" x="490" y="464" width="96" height="56" rx="10" />
@@ -272,52 +272,53 @@
           <path class="diagram-arrow-soft" d="M516 428 L536 460" />
 
           <rect class="diagram-panel" x="660" y="108" width="260" height="456" rx="16" />
-          <text class="diagram-label" x="684" y="140">3. Post-Run Feedback</text>
+          <text class="diagram-label" x="684" y="140">3. Shared Artifacts</text>
           <g data-box="versioned-artifacts">
             <rect class="diagram-node-dark" x="684" y="164" width="212" height="72" rx="12" />
-            <text class="diagram-heading" x="728" y="192">Versioned Artifacts</text>
-            <text class="diagram-text" x="790" y="216">scenario, trace, metrics</text>
+            <text class="diagram-heading" x="734" y="192">Versioned Trace</text>
+            <text class="diagram-text" x="790" y="216">messages, offers, tools</text>
           </g>
-          <g data-box="reports-coaching">
+          <g data-box="metrics-judges">
             <rect class="diagram-node-green" x="684" y="270" width="212" height="82" rx="12" />
-            <text class="diagram-heading" x="724" y="300">Reports + Coaching</text>
-            <text class="diagram-text" x="790" y="324">leaderboard report</text>
-            <text class="diagram-text" x="790" y="344">battle lessons</text>
+            <text class="diagram-heading" x="734" y="300">Metrics + Judges</text>
+            <text class="diagram-text" x="790" y="324">deal, utility, market gap</text>
+            <text class="diagram-text" x="790" y="344">transaction validity</text>
           </g>
-          <g data-box="training-summary">
+          <g data-box="run-package">
             <rect class="diagram-node-blue" x="684" y="386" width="212" height="82" rx="12" />
-            <text class="diagram-heading" x="730" y="416">Training Summary</text>
-            <text class="diagram-text" x="790" y="440">failures, traps, evidence</text>
+            <text class="diagram-heading" x="740" y="416">Run Package</text>
+            <text class="diagram-text" x="790" y="440">manifest, seed, roles</text>
           </g>
           <path class="diagram-arrow-soft" d="M790 236 L790 266" />
           <path class="diagram-arrow-soft" d="M790 352 L790 382" />
 
           <rect class="diagram-panel" x="970" y="108" width="260" height="456" rx="16" />
-          <text class="diagram-label" x="994" y="140">4. Evolve + Share</text>
-          <g data-box="agent-evolution-plan">
+          <text class="diagram-label" x="994" y="140">4. Mode Outputs</text>
+          <g data-box="benchmark-report">
             <rect class="diagram-node-amber" x="994" y="164" width="212" height="82" rx="12" />
-            <text class="diagram-heading" x="1032" y="194">Agent Evolution Plan</text>
-            <text class="diagram-text" x="1100" y="218">strategy patch</text>
-            <text class="diagram-text" x="1100" y="238">next NPC curriculum</text>
+            <text class="diagram-heading" x="1036" y="194">Benchmark Report</text>
+            <text class="diagram-text" x="1100" y="218">leaderboard + report</text>
+            <text class="diagram-text" x="1100" y="238">role-swap comparison</text>
           </g>
-          <g data-box="updated-strategy-config">
+          <g data-box="evolution-report">
             <rect class="diagram-node-blue" x="994" y="292" width="212" height="82" rx="12" />
-            <text class="diagram-heading" x="1038" y="322">Updated Strategy</text>
-            <text class="diagram-text" x="1100" y="346">config for next run</text>
+            <text class="diagram-heading" x="1038" y="322">Evolution Report</text>
+            <text class="diagram-text" x="1100" y="346">failure lessons</text>
+            <text class="diagram-text" x="1100" y="366">strategy patch</text>
           </g>
           <g data-box="strategy-marketplace">
             <rect class="diagram-node-green" x="994" y="420" width="212" height="82" rx="12" />
             <text class="diagram-heading" x="1036" y="450">Strategy Marketplace</text>
-            <text class="diagram-text" x="1100" y="474">NPCs + shared configs</text>
+            <text class="diagram-text" x="1100" y="474">optional shared configs</text>
           </g>
-          <path class="diagram-arrow-soft" d="M1100 246 L1100 288" />
           <path class="diagram-arrow-soft" d="M1100 374 L1100 416" />
 
           <path class="diagram-arrow" d="M300 334 L344 334" />
           <path class="diagram-arrow" d="M610 392 L654 392" />
-          <path class="diagram-arrow" d="M920 427 L944 427 L944 205 L990 205" />
+          <path class="diagram-arrow" d="M920 236 L944 236 L944 205 L990 205" />
+          <path class="diagram-arrow" d="M920 427 L944 427 L944 333 L990 333" />
           <path class="diagram-loop" d="M1208 333 L1248 333 L1248 88 L170 88 L170 164" />
-          <text class="diagram-small" x="560" y="86">apply improved config on next run</text>
+          <text class="diagram-small" x="520" y="86">evolution mode applies patch on next run</text>
         </svg>
       </div>
     </section>
