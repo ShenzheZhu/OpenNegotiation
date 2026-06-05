@@ -13,10 +13,29 @@ def compute_metrics(
     deal_price: float | None,
     events: Sequence[TranscriptEvent],
 ) -> dict[str, float]:
-    tool_call_count = sum(1 for event in events if event.action_type == ActionType.TOOL_CALL)
+    tool_events = [event for event in events if event.action_type == ActionType.TOOL_CALL]
+    tool_call_count = len(tool_events)
+    tool_failure_count = sum(
+        1
+        for event in tool_events
+        if event.tool_result and event.tool_result.get("ok") is False
+    )
+    tool_success_count = tool_call_count - tool_failure_count
+    public_tool_call_count = sum(1 for event in tool_events if not event.private)
+    private_tool_call_count = tool_call_count - public_tool_call_count
+    tool_evidence_event_count = sum(
+        1
+        for event in tool_events
+        if event.tool_result and bool(event.tool_result.get("results"))
+    )
     metrics = {
         "deal_rate": 1.0 if outcome == "deal" else 0.0,
         "tool_call_count": float(tool_call_count),
+        "tool_success_count": float(tool_success_count),
+        "tool_failure_count": float(tool_failure_count),
+        "private_tool_call_count": float(private_tool_call_count),
+        "public_tool_call_count": float(public_tool_call_count),
+        "tool_evidence_event_count": float(tool_evidence_event_count),
     }
 
     if deal_price is None:

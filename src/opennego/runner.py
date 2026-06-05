@@ -18,8 +18,9 @@ from opennego.artifacts import (
     write_run_artifacts,
 )
 from opennego.environment import NegotiationEnvironment
+from opennego.environment import ToolRuntimeConfig
 from opennego.ports import AgentPort, ToolPort
-from opennego.schema import Product, Scenario
+from opennego.schema import Product, Role, Scenario
 from opennego.tools import MarketPriceTool
 
 EXPERIMENT_CONFIG_VERSION = "opennego.experiment.v1"
@@ -52,7 +53,10 @@ class ToolSpec:
     name: str
     kind: str
     source: Path | None = None
-    visibility: str = "buyer_private"
+    visibility: str = "private"
+    roles: tuple[Role, ...] | None = None
+    mode: str = "clean"
+    fail_fast: bool = False
     enabled: bool = True
     metadata: Mapping[str, Any] | None = None
 
@@ -85,6 +89,7 @@ class PreparedRun:
     scenario: Scenario
     tool_regime: ToolRegimeConfig
     tools: tuple[ToolPort, ...]
+    tool_configs: tuple[ToolRuntimeConfig, ...]
     seed: int | None
 
 
@@ -240,7 +245,7 @@ def prepare_runs(config: ExperimentConfig) -> tuple[PreparedRun, ...]:
         scenario = _build_scenario(scenario_config)
         scenario_id = scenario_config.id or scenario.product.id
         for tool_regime in config.tool_regimes:
-            tools = _build_tools(tool_regime)
+            tools, tool_configs = _build_tools(tool_regime)
             for seed in config.seeds:
                 run_id = _run_id(config.name, scenario_id, tool_regime.id, seed)
                 prepared_runs.append(
@@ -251,6 +256,7 @@ def prepare_runs(config: ExperimentConfig) -> tuple[PreparedRun, ...]:
                         scenario=scenario,
                         tool_regime=tool_regime,
                         tools=tools,
+                        tool_configs=tool_configs,
                         seed=seed,
                     )
                 )
@@ -265,6 +271,7 @@ def _execute_prepared_run(prepared_run: PreparedRun, config: ExperimentConfig):
         buyer=buyer,
         seller=seller,
         tools=prepared_run.tools,
+        tool_configs=prepared_run.tool_configs,
     )
     result = env.run()
     write_run_artifacts(
@@ -356,8 +363,11 @@ def _load_products(path: Path) -> list[Product]:
         raise ConfigValidationError(f"{path}: invalid product record: {exc}") from exc
 
 
-def _build_tools(tool_regime: ToolRegimeConfig) -> tuple[ToolPort, ...]:
+def _build_tools(
+    tool_regime: ToolRegimeConfig,
+) -> tuple[tuple[ToolPort, ...], tuple[ToolRuntimeConfig, ...]]:
     tools: list[ToolPort] = []
+    configs: list[ToolRuntimeConfig] = []
     for spec in tool_regime.tools:
         if not spec.enabled:
             continue
@@ -375,8 +385,28 @@ def _build_tools(tool_regime: ToolRegimeConfig) -> tuple[ToolPort, ...]:
             raise ConfigValidationError(f"tool {spec.name}: source is required")
         if not spec.source.exists():
             raise ConfigValidationError(f"{spec.source}: tool source does not exist")
-        tools.append(MarketPriceTool.from_json(spec.source))
-    return tuple(tools)
+        tools.append(
+            MarketPriceTool.from_json(
+                spec.source,
+                mode=spec.mode,
+                noise_fraction=_metadata_float(spec.metadata, "noise_fraction", 0.1),
+                adversarial_multiplier=_metadata_float(
+                    spec.metadata,
+                    "adversarial_multiplier",
+                    1.25,
+                ),
+                stale_as_of=_metadata_str(spec.metadata, "stale_as_of"),
+            )
+        )
+        configs.append(
+            ToolRuntimeConfig(
+                name=spec.name,
+                roles=_roles_for_tool(spec),
+                visibility=_visibility_for_tool(spec.visibility),
+                fail_fast=spec.fail_fast,
+            )
+        )
+    return tuple(tools), tuple(configs)
 
 
 def _tool_regime_metadata(tool_regime: ToolRegimeConfig) -> Mapping[str, Any]:
@@ -388,6 +418,9 @@ def _tool_regime_metadata(tool_regime: ToolRegimeConfig) -> Mapping[str, Any]:
                 "kind": spec.kind,
                 "source": str(spec.source) if spec.source else None,
                 "visibility": spec.visibility,
+                "roles": [role.value for role in _roles_for_tool(spec)],
+                "mode": spec.mode,
+                "fail_fast": spec.fail_fast,
                 "enabled": spec.enabled,
                 "metadata": dict(spec.metadata or {}),
             }
@@ -502,11 +535,22 @@ def _parse_tool_spec(data: Any, regime_index: int, tool_index: int) -> ToolSpec:
             f"tool_regimes[{regime_index}].tools[{tool_index}]: expected object"
         )
     source = _optional_str(data, "source")
+    visibility = _optional_str(data, "visibility") or "private"
+    mode = _optional_str(data, "mode") or "clean"
+    if mode not in {"clean", "noisy", "stale", "adversarial", "failure"}:
+        raise ConfigValidationError(
+            f"tool_regimes[{regime_index}].tools[{tool_index}].mode: "
+            f"unsupported mode {mode!r}"
+        )
+    roles = _optional_roles(data, "roles")
     return ToolSpec(
         name=_required_str(data, "name"),
         kind=_required_str(data, "kind"),
         source=Path(source) if source else None,
-        visibility=_optional_str(data, "visibility") or "buyer_private",
+        visibility=visibility,
+        roles=roles,
+        mode=mode,
+        fail_fast=_optional_bool(data, "fail_fast", False),
         enabled=_optional_bool(data, "enabled", True),
         metadata=_optional_mapping(data, "metadata"),
     )
@@ -595,3 +639,74 @@ def _optional_float(data: Mapping[str, Any], key: str) -> float | None:
     if not isinstance(value, (int, float)):
         raise ConfigValidationError(f"{key}: expected number")
     return float(value)
+
+
+def _optional_roles(data: Mapping[str, Any], key: str) -> tuple[Role, ...] | None:
+    value = data.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, list) or not value:
+        raise ConfigValidationError(f"{key}: expected non-empty list")
+    roles: list[Role] = []
+    for index, role in enumerate(value):
+        if not isinstance(role, str):
+            raise ConfigValidationError(f"{key}[{index}]: expected string")
+        try:
+            roles.append(Role(role))
+        except ValueError as exc:
+            raise ConfigValidationError(f"{key}[{index}]: unsupported role {role!r}") from exc
+    return tuple(roles)
+
+
+def _roles_for_tool(spec: ToolSpec) -> tuple[Role, ...]:
+    if spec.roles is not None:
+        return spec.roles
+    visibility = spec.visibility
+    if visibility == "buyer_private":
+        return (Role.BUYER,)
+    if visibility == "seller_private":
+        return (Role.SELLER,)
+    if visibility in {
+        "private",
+        "public",
+        "symmetric_private",
+        "symmetric_public",
+        "shared_private",
+        "shared_public",
+    }:
+        return (Role.BUYER, Role.SELLER)
+    raise ConfigValidationError(f"visibility: unsupported value {visibility!r}")
+
+
+def _visibility_for_tool(value: str) -> str:
+    if value in {"public", "symmetric_public", "shared_public"}:
+        return "public"
+    if value in {
+        "private",
+        "buyer_private",
+        "seller_private",
+        "symmetric_private",
+        "shared_private",
+    }:
+        return "private"
+    raise ConfigValidationError(f"visibility: unsupported value {value!r}")
+
+
+def _metadata_float(
+    metadata: Mapping[str, Any] | None,
+    key: str,
+    default: float,
+) -> float:
+    value = (metadata or {}).get(key, default)
+    if not isinstance(value, (int, float)):
+        raise ConfigValidationError(f"metadata.{key}: expected number")
+    return float(value)
+
+
+def _metadata_str(metadata: Mapping[str, Any] | None, key: str) -> str | None:
+    value = (metadata or {}).get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ConfigValidationError(f"metadata.{key}: expected string")
+    return value

@@ -33,7 +33,44 @@
           "name": "market_price_search",
           "kind": "market_price",
           "source": "examples/data/market_comps.json",
-          "visibility": "buyer_private"
+          "visibility": "buyer_private",
+          "mode": "clean"
+        }
+      ]
+    },
+    {
+      "id": "seller_private_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/market_comps.json",
+          "visibility": "seller_private",
+          "mode": "clean"
+        }
+      ]
+    },
+    {
+      "id": "symmetric_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/market_comps.json",
+          "visibility": "symmetric_private",
+          "mode": "clean"
+        }
+      ]
+    },
+    {
+      "id": "buyer_private_failure_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/market_comps.json",
+          "visibility": "buyer_private",
+          "mode": "failure"
         }
       ]
     }
