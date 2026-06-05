@@ -30,10 +30,13 @@ def test_build_leaderboard_aggregates_real_market_role_tracks(tmp_path):
     summary = build_leaderboard(output_dir)
     buyer_track = _track(summary, "buyer", "tool_aware_buyer:tool_aware_buyer")
     seller_track = _track(summary, "seller", "scripted_seller:scripted_seller")
+    buyer_summary = _participant(summary, "tool_aware_buyer:tool_aware_buyer")
+    seller_summary = _participant(summary, "scripted_seller:scripted_seller")
 
     assert summary.schema_version == LEADERBOARD_SCHEMA_VERSION
     assert summary.run_count == 3
     assert len(summary.runs) == 3
+    assert len(summary.participant_summaries) == 2
     assert [row.rank for row in summary.runs] == [1, 2, 3]
     assert all(row.score > 0 for row in summary.runs)
     assert buyer_track.rank == 1
@@ -43,6 +46,15 @@ def test_build_leaderboard_aggregates_real_market_role_tracks(tmp_path):
     assert buyer_track.average_role_value_vs_market_reference == pytest.approx(
         -seller_track.average_role_value_vs_market_reference
     )
+    assert buyer_summary.roles == ("buyer",)
+    assert buyer_summary.role_coverage == 0.5
+    assert buyer_summary.unique_run_count == 3
+    assert buyer_summary.role_appearance_count == 3
+    assert buyer_summary.buyer_average_score == buyer_track.average_score
+    assert buyer_summary.seller_average_score is None
+    assert buyer_summary.balanced_average_score is None
+    assert seller_summary.roles == ("seller",)
+    assert seller_summary.role_coverage == 0.5
 
 
 def test_leaderboard_prefers_model_metadata_for_participant_ids(tmp_path):
@@ -65,6 +77,38 @@ def test_leaderboard_prefers_model_metadata_for_participant_ids(tmp_path):
     assert summary.runs[0].seller_participant_id == "fake/seller-model"
     assert _track(summary, "buyer", "fake/buyer-model").run_count == 1
     assert _track(summary, "seller", "fake/seller-model").run_count == 1
+    assert _participant(summary, "fake/buyer-model").roles == ("buyer",)
+    assert _participant(summary, "fake/seller-model").roles == ("seller",)
+
+
+def test_leaderboard_reports_balanced_role_coverage_for_shared_participant(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = _write_llm_config(
+        tmp_path,
+        output_dir,
+        buyer_model="fake/shared-model",
+        seller_model="fake/shared-model",
+    )
+
+    run_experiment_config(
+        config_path,
+        llm_factory=RoleAwareFakeLLM,
+    )
+    summary = build_leaderboard(output_dir)
+    participant = _participant(summary, "fake/shared-model")
+    buyer_track = _track(summary, "buyer", "fake/shared-model")
+    seller_track = _track(summary, "seller", "fake/shared-model")
+
+    assert len(summary.participant_summaries) == 1
+    assert participant.rank == 1
+    assert participant.roles == ("buyer", "seller")
+    assert participant.role_coverage == 1.0
+    assert participant.unique_run_count == 1
+    assert participant.role_appearance_count == 2
+    assert participant.buyer_average_score == buyer_track.average_score
+    assert participant.seller_average_score == seller_track.average_score
+    assert participant.balanced_average_score == participant.average_score
+    assert participant.coverage_adjusted_score == participant.average_score
 
 
 def test_leaderboard_cli_prints_and_writes_summary(tmp_path, capsys):
@@ -87,7 +131,10 @@ def test_leaderboard_cli_prints_and_writes_summary(tmp_path, capsys):
     assert exit_code == 0
     assert stdout_payload["schema_version"] == LEADERBOARD_SCHEMA_VERSION
     assert stdout_payload["run_count"] == 3
+    assert "participant_summaries" in stdout_payload
+    assert stdout_payload["participant_summaries"][0]["role_coverage"] == 0.5
     assert file_payload["schema_version"] == LEADERBOARD_SCHEMA_VERSION
+    assert "participant_summaries" in file_payload
     assert file_payload["role_tracks"][0]["role"] == "buyer"
 
 
@@ -106,7 +153,20 @@ def _track(summary, role, participant_id):
     raise AssertionError(f"missing {role} track for {participant_id}")
 
 
-def _write_llm_config(tmp_path, output_dir):
+def _participant(summary, participant_id):
+    for entry in summary.participant_summaries:
+        if entry.participant_id == participant_id:
+            return entry
+    raise AssertionError(f"missing participant summary for {participant_id}")
+
+
+def _write_llm_config(
+    tmp_path,
+    output_dir,
+    *,
+    buyer_model="fake/buyer-model",
+    seller_model="fake/seller-model",
+):
     products_path = tmp_path / "products.json"
     products_path.write_text(
         json.dumps(
@@ -141,14 +201,14 @@ def _write_llm_config(tmp_path, output_dir):
             "buyer": {
                 "kind": "llm_buyer",
                 "params": {
-                    "model": "fake/buyer-model",
+                    "model": buyer_model,
                     "name": "llm_buyer:fake",
                 },
             },
             "seller": {
                 "kind": "llm_seller",
                 "params": {
-                    "model": "fake/seller-model",
+                    "model": seller_model,
                     "name": "llm_seller:fake",
                 },
             },

@@ -112,7 +112,9 @@ opennego leaderboard --input-dir runs/real_market_demo --output runs/leaderboard
 
 The generated `opennego.leaderboard.v1` artifact is the machine-readable
 scorecard layer for local demos and external dashboards. It includes run-level
-rankings plus separate buyer and seller role-track aggregates. This scorecard
+rankings, participant role-coverage summaries, and separate buyer/seller
+role-track aggregates. Coverage-adjusted participant summaries make it explicit
+whether a model or NPC was evaluated as buyer, seller, or both. This scorecard
 track is deterministic and no-key; pairwise Elo-style arena tracks can be added
 later once benchmark schedules include enough reciprocal matchups.
 

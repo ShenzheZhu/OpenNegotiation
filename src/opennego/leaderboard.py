@@ -45,10 +45,26 @@ class RoleTrackEntry:
 
 
 @dataclass(frozen=True)
+class ParticipantSummary:
+    rank: int
+    participant_id: str
+    roles: tuple[str, ...]
+    role_coverage: float
+    unique_run_count: int
+    role_appearance_count: int
+    average_score: float
+    coverage_adjusted_score: float
+    buyer_average_score: float | None
+    seller_average_score: float | None
+    balanced_average_score: float | None
+
+
+@dataclass(frozen=True)
 class LeaderboardSummary:
     schema_version: str
     input_dir: str
     run_count: int
+    participant_summaries: tuple[ParticipantSummary, ...]
     role_tracks: tuple[RoleTrackEntry, ...]
     runs: tuple[LeaderboardRunRow, ...]
 
@@ -78,11 +94,13 @@ def build_leaderboard(input_dir: str | Path) -> LeaderboardSummary:
             start=1,
         )
     )
+    role_tracks = _role_tracks(run_rows)
     return LeaderboardSummary(
         schema_version=LEADERBOARD_SCHEMA_VERSION,
         input_dir=str(base),
         run_count=len(run_rows),
-        role_tracks=_role_tracks(run_rows),
+        participant_summaries=_participant_summaries(role_tracks, run_rows),
+        role_tracks=role_tracks,
         runs=run_rows,
     )
 
@@ -205,6 +223,89 @@ def _role_tracks(rows: Sequence[LeaderboardRunRow]) -> tuple[RoleTrackEntry, ...
                 )
             )
     return tuple(ranked)
+
+
+def _participant_summaries(
+    role_tracks: Sequence[RoleTrackEntry],
+    rows: Sequence[LeaderboardRunRow],
+) -> tuple[ParticipantSummary, ...]:
+    by_participant: dict[str, dict[str, RoleTrackEntry]] = {}
+    for entry in role_tracks:
+        by_participant.setdefault(entry.participant_id, {})[entry.role] = entry
+
+    run_ids_by_participant: dict[str, set[str]] = {}
+    for row in rows:
+        run_ids_by_participant.setdefault(row.buyer_participant_id, set()).add(row.run_id)
+        run_ids_by_participant.setdefault(row.seller_participant_id, set()).add(row.run_id)
+
+    summaries = [
+        _participant_summary(
+            participant_id=participant_id,
+            role_entries=role_entries,
+            unique_run_count=len(run_ids_by_participant.get(participant_id, set())),
+        )
+        for participant_id, role_entries in by_participant.items()
+    ]
+    ranked = sorted(
+        summaries,
+        key=lambda item: (
+            -item.coverage_adjusted_score,
+            -item.role_coverage,
+            -item.average_score,
+            item.participant_id,
+        ),
+    )
+    return tuple(
+        ParticipantSummary(
+            rank=rank,
+            participant_id=entry.participant_id,
+            roles=entry.roles,
+            role_coverage=entry.role_coverage,
+            unique_run_count=entry.unique_run_count,
+            role_appearance_count=entry.role_appearance_count,
+            average_score=entry.average_score,
+            coverage_adjusted_score=entry.coverage_adjusted_score,
+            buyer_average_score=entry.buyer_average_score,
+            seller_average_score=entry.seller_average_score,
+            balanced_average_score=entry.balanced_average_score,
+        )
+        for rank, entry in enumerate(ranked, start=1)
+    )
+
+
+def _participant_summary(
+    *,
+    participant_id: str,
+    role_entries: Mapping[str, RoleTrackEntry],
+    unique_run_count: int,
+) -> ParticipantSummary:
+    roles = tuple(role for role in ("buyer", "seller") if role in role_entries)
+    role_scores = [role_entries[role].average_score for role in roles]
+    average_score = _average(role_scores)
+    role_coverage = round(len(roles) / 2, 4)
+    return ParticipantSummary(
+        rank=0,
+        participant_id=participant_id,
+        roles=roles,
+        role_coverage=role_coverage,
+        unique_run_count=unique_run_count,
+        role_appearance_count=sum(role_entries[role].run_count for role in roles),
+        average_score=average_score,
+        coverage_adjusted_score=round(average_score * role_coverage, 4),
+        buyer_average_score=_role_average(role_entries, "buyer"),
+        seller_average_score=_role_average(role_entries, "seller"),
+        balanced_average_score=average_score if len(roles) == 2 else None,
+    )
+
+
+def _role_average(
+    role_entries: Mapping[str, RoleTrackEntry],
+    role: str,
+) -> float | None:
+    entry = role_entries.get(role)
+    if entry is None:
+        return None
+    return entry.average_score
 
 
 def _role_track_entry(

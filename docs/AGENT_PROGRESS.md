@@ -61,8 +61,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   ingestion, including input fingerprints and quality summaries.
 - Added `opennego validate-market` for no-key product, comparable, and dataset
   manifest consistency checks.
-- Added `opennego leaderboard` for machine-readable run rankings and buyer/seller
-  role-track scorecard aggregation.
+- Added `opennego leaderboard` for machine-readable run rankings, participant
+  role-coverage summaries, and buyer/seller role-track scorecard aggregation.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   battle reports, strategy candidates, sparring reruns, comparison artifacts,
   and local marketplace export.
@@ -84,12 +84,13 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Public hosted website work is tracked in GitHub issue `#28` and currently
   depends on resolving GitHub Pages support for the private repository.
 - The earlier stacked MVP PR train has been superseded by merged mainline
-  slices through PR `#56`.
-- No active PR is required for the current local no-key MVP state.
+  slices.
+- No long-lived integration PR is required for the current local no-key MVP
+  state.
 
 ### Verification
 
-- `pytest -q`: 110 passed after adding leaderboard aggregation.
+- `pytest -q`: 111 passed after adding participant role coverage summaries.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.

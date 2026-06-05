@@ -67,8 +67,9 @@ opennego leaderboard \
   --output /tmp/opennego-leaderboard.json
 ```
 
-The leaderboard artifact includes ranked run rows and buyer/seller role-track
-aggregates, using model ids when they are recorded in run manifests.
+The leaderboard artifact includes ranked run rows, participant role-coverage
+summaries, and buyer/seller role-track aggregates, using model ids when they
+are recorded in run manifests.
 
 For a tiny live-model demo, install the optional LiteLLM dependency and keep
 provider credentials in environment variables:
