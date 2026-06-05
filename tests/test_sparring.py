@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from opennego.evolution import (
 )
 from opennego.learning import write_battle_report
 from opennego.runner import run_experiment_config
+from opennego.schema import AgentAction, AgentContext, Role
 from opennego.sparring import (
     SPARRING_EXECUTION_MODE,
     SPARRING_SUITE_SCHEMA_VERSION,
@@ -117,6 +119,54 @@ def test_sparring_suite_applies_user_strategy_candidate_to_buyer_policy(tmp_path
     assert manifest["agents"]["buyer"]["candidate_id"] == "buyer_baseline-iter-1"
     assert manifest["metadata"]["user_strategy"]["enabled"] is True
     assert "user_buyer:buyer_baseline-iter-1" in trace
+
+
+def test_sparring_suite_accepts_custom_user_agent_factory(tmp_path):
+    output_dir = tmp_path / "custom_sparring"
+
+    summary = run_sparring_suite(
+        output_dir=output_dir,
+        opponent_profile_ids=("seller_hardline_anchor_v1",),
+        user_agent_factory=custom_buyer_factory,
+        user_agent_kind="external_fixed_buyer",
+    )
+    result = summary.results[0]
+    assert result.learning_input_dir is not None
+    manifest = json.loads(
+        (Path(result.learning_input_dir) / "manifest.json").read_text()
+    )
+    trace = (Path(result.learning_input_dir) / "trace.jsonl").read_text()
+
+    assert summary.user_agent_kind == "external_fixed_buyer"
+    assert result.user_agent_kind == "external_fixed_buyer"
+    assert summary.completed == 1
+    assert summary.failed == 0
+    assert manifest["agents"]["buyer"]["kind"] == "external_fixed_buyer"
+    assert manifest["agents"]["buyer"]["name"] == "external_spar_buyer"
+    assert "external_spar_buyer" in trace
+
+
+def test_sparring_suite_rejects_wrong_role_custom_user_agent(tmp_path):
+    output_dir = tmp_path / "bad_custom_sparring"
+
+    with pytest.raises(ValueError, match="expected 'buyer'"):
+        run_sparring_suite(
+            output_dir=output_dir,
+            opponent_profile_ids=("seller_hardline_anchor_v1",),
+            user_agent_factory=wrong_role_user_factory,
+        )
+
+    assert not output_dir.exists()
+
+
+def test_sparring_suite_rejects_user_strategy_and_custom_agent_combo(tmp_path):
+    with pytest.raises(ValueError, match="cannot both be provided"):
+        run_sparring_suite(
+            output_dir=tmp_path / "combo_sparring",
+            opponent_profile_ids=("seller_hardline_anchor_v1",),
+            user_strategy_path=tmp_path / "strategy_candidate.json",
+            user_agent_factory=custom_buyer_factory,
+        )
 
 
 def test_sparring_suite_rejects_wrong_role_user_strategy(tmp_path):
@@ -237,3 +287,33 @@ def _write_buyer_strategy_candidate(tmp_path):
         parent_strategy_id="buyer_baseline",
     )
     return candidate_path
+
+
+@dataclass
+class CustomFixedBuyer:
+    name: str = "external_spar_buyer"
+    role: Role = Role.BUYER
+    offer_price: float = 604.0
+
+    def act(self, context: AgentContext) -> AgentAction:
+        return AgentAction.offer_price(
+            self.offer_price,
+            f"My offer is ${self.offer_price:.2f}.",
+        )
+
+
+@dataclass
+class WrongRoleUser:
+    name: str = "wrong_role_user"
+    role: Role = Role.SELLER
+
+    def act(self, context: AgentContext) -> AgentAction:
+        return AgentAction.reject("Wrong role.")
+
+
+def custom_buyer_factory(role):
+    return CustomFixedBuyer()
+
+
+def wrong_role_user_factory(role):
+    return WrongRoleUser()

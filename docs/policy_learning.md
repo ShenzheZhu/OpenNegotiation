@@ -96,6 +96,25 @@ If no `--opponent-profile` is provided, the command selects every registry
 profile with the opposite role from `--user-role`. A buyer-owned user agent
 therefore spars against seller profiles by default.
 
+Python API users can spar a custom `AgentPort` implementation against the same
+NPC profiles:
+
+```python
+from opennego.sparring import run_sparring_suite
+
+summary = run_sparring_suite(
+    output_dir="/tmp/my-agent-sparring",
+    user_role="buyer",
+    opponent_profile_ids=("seller_hardline_anchor_v1",),
+    user_agent_factory=my_buyer_factory,
+    user_agent_kind="my_buyer",
+)
+```
+
+The custom factory path and `--user-strategy` path are mutually exclusive in one
+run. Both use the same environment loop, traces, metrics, battle reports, and
+sparring summary contracts.
+
 ## Battle Report Schema
 
 The quickest end-to-end path is:
