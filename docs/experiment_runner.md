@@ -289,8 +289,10 @@ opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/openneg
 
 The report is dependency-free and reads the same `manifest.json`,
 `scenario.json`, `trace.jsonl`, and `metrics.json` files used by the benchmark
-contract. It is meant for small demos and design reviews, not as the final public
-leaderboard frontend.
+contract. If `leaderboard_summary.json` is present, the visible leaderboard
+preview and participant coverage table are rendered from that versioned summary
+artifact instead of recalculating the ranking only for HTML. It is meant for
+small demos and design reviews, not as the final public leaderboard frontend.
 
 ## Five-Model Demo
 

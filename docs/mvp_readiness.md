@@ -79,6 +79,8 @@ Implemented:
   manifest consistency checks.
 - Machine-readable leaderboard aggregation with ranked run rows, participant
   role-coverage summaries, and buyer/seller role-track summaries.
+- Artifact-backed leaderboard rendering in the static demo report when
+  `leaderboard_summary.json` is present.
 - Shared no-key workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.

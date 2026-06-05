@@ -118,6 +118,11 @@ whether a model or NPC was evaluated as buyer, seller, or both. This scorecard
 track is deterministic and no-key; pairwise Elo-style arena tracks can be added
 later once benchmark schedules include enough reciprocal matchups.
 
+When `leaderboard_summary.json` is present in a report input directory,
+`opennego report` uses that artifact for the visible leaderboard preview and
+participant coverage table. Older run directories without the summary still
+render with direct run-artifact fallback.
+
 ## No-Key Smoke Benchmark
 
 Run:
