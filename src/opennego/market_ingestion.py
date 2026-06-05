@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import re
 import statistics
@@ -14,6 +15,7 @@ from opennego.artifacts import write_json
 from opennego.schema import parse_price
 
 MARKET_INGESTION_SCHEMA_VERSION = "opennego.market_ingestion.v1"
+MARKET_DATASET_MANIFEST_SCHEMA_VERSION = "opennego.market_dataset_manifest.v1"
 
 QUERY_KEYS = ("query", "product_name", "product", "cluster", "name")
 TITLE_KEYS = ("title", "listing_title", "item_title", "name")
@@ -37,6 +39,7 @@ class MarketIngestionResult:
     comps_output: str
     product_count: int
     comparable_count: int
+    manifest_output: str | None = None
 
 
 def ingest_market_data(
@@ -49,10 +52,12 @@ def ingest_market_data(
     window_days: int | None = None,
     asking_multiplier: float = 1.25,
     buyer_budget_multiplier: float = 1.2,
+    manifest_output: str | Path | None = None,
 ) -> MarketIngestionResult:
     """Normalize a local CSV/JSON sold-comps export into OpenNego fixtures."""
 
-    records = _read_records(Path(input_path))
+    source_path = Path(input_path)
+    records = _read_records(source_path)
     comparables = [
         _normalize_record(record, index, source, currency)
         for index, record in enumerate(records)
@@ -73,6 +78,22 @@ def ingest_market_data(
     comps_path.parent.mkdir(parents=True, exist_ok=True)
     write_json(products_path, products)
     write_json(comps_path, [_comparable_output(record) for record in comparables])
+    manifest_path = Path(manifest_output) if manifest_output is not None else None
+    if manifest_path is not None:
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        write_json(
+            manifest_path,
+            _dataset_manifest(
+                input_path=source_path,
+                products_output=products_path,
+                comps_output=comps_path,
+                source=source,
+                fallback_currency=currency,
+                window_days=window_days,
+                products=products,
+                comparables=comparables,
+            ),
+        )
     return MarketIngestionResult(
         schema_version=MARKET_INGESTION_SCHEMA_VERSION,
         input_path=str(input_path),
@@ -80,6 +101,7 @@ def ingest_market_data(
         comps_output=str(comps_path),
         product_count=len(products),
         comparable_count=len(comparables),
+        manifest_output=str(manifest_path) if manifest_path is not None else None,
     )
 
 
@@ -212,6 +234,125 @@ def _comparable_output(record: NormalizedComparable) -> Mapping[str, Any]:
     if record.sold_at is not None:
         payload["sold_at"] = record.sold_at
     return payload
+
+
+def _dataset_manifest(
+    *,
+    input_path: Path,
+    products_output: Path,
+    comps_output: Path,
+    source: str,
+    fallback_currency: str,
+    window_days: int | None,
+    products: Sequence[Mapping[str, Any]],
+    comparables: Sequence[NormalizedComparable],
+) -> Mapping[str, Any]:
+    prices = sorted(record.price for record in comparables)
+    return {
+        "schema_version": MARKET_DATASET_MANIFEST_SCHEMA_VERSION,
+        "ingestion_schema_version": MARKET_INGESTION_SCHEMA_VERSION,
+        "input": {
+            "path": str(input_path),
+            "sha256": _sha256(input_path),
+            "format": _input_format(input_path),
+        },
+        "outputs": {
+            "products": str(products_output),
+            "market_comps": str(comps_output),
+        },
+        "source": source,
+        "fallback_currency": fallback_currency,
+        "window_days": window_days,
+        "product_count": len(products),
+        "comparable_count": len(comparables),
+        "quality": {
+            "missing_sold_at_count": sum(
+                1 for record in comparables if record.sold_at is None
+            ),
+            "price_summary": _price_summary(prices),
+            "counts_by_source": _counts(record.source for record in comparables),
+            "counts_by_currency": _counts(record.currency for record in comparables),
+            "counts_by_condition": _counts(record.condition for record in comparables),
+            "counts_by_sale_mechanism": _counts(
+                record.sale_mechanism for record in comparables
+            ),
+            "clusters": _cluster_summaries(products, comparables),
+        },
+        "privacy": {
+            "contains_raw_listing_titles": False,
+            "contains_credentials": False,
+        },
+    }
+
+
+def _cluster_summaries(
+    products: Sequence[Mapping[str, Any]],
+    comparables: Sequence[NormalizedComparable],
+) -> list[Mapping[str, Any]]:
+    summaries = []
+    for product in products:
+        name = str(product["name"])
+        items = [record for record in comparables if record.query == name]
+        prices = sorted(record.price for record in items)
+        market_reference = product.get("market_reference", {})
+        summaries.append(
+            {
+                "product_id": product["id"],
+                "name": name,
+                "sample_size": len(items),
+                "reference_price": market_reference.get("reference_price"),
+                "p25_price": market_reference.get("p25_price"),
+                "p75_price": market_reference.get("p75_price"),
+                "price_summary": _price_summary(prices),
+                "counts_by_source": _counts(record.source for record in items),
+                "counts_by_condition": _counts(record.condition for record in items),
+                "counts_by_sale_mechanism": _counts(
+                    record.sale_mechanism for record in items
+                ),
+            }
+        )
+    return summaries
+
+
+def _price_summary(prices: Sequence[float]) -> Mapping[str, float | int]:
+    if not prices:
+        return {
+            "count": 0,
+            "min": 0.0,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0,
+            "max": 0.0,
+        }
+    return {
+        "count": len(prices),
+        "min": round(prices[0], 2),
+        "p25": round(_percentile(prices, 0.25), 2),
+        "median": round(statistics.median(prices), 2),
+        "p75": round(_percentile(prices, 0.75), 2),
+        "max": round(prices[-1], 2),
+    }
+
+
+def _counts(values) -> Mapping[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        key = str(value)
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _input_format(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix == ".csv":
+        return "csv"
+    if suffix == ".json":
+        return "json"
+    return suffix.lstrip(".") or "unknown"
 
 
 def _required_alias(

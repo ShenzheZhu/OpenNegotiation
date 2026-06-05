@@ -464,6 +464,13 @@ def _ingest_market_main(argv: list[str] | None = None) -> int:
         help="Path to write normalized market_comps.json.",
     )
     parser.add_argument(
+        "--manifest-output",
+        help=(
+            "Optional path to write a versioned aggregate dataset manifest "
+            "with provenance and quality stats."
+        ),
+    )
+    parser.add_argument(
         "--source",
         default="offline_sold_comps",
         help="Fallback source label when input rows do not include one.",
@@ -488,6 +495,7 @@ def _ingest_market_main(argv: list[str] | None = None) -> int:
             window_days=args.window_days,
             asking_multiplier=args.asking_multiplier,
             buyer_budget_multiplier=args.buyer_budget_multiplier,
+            manifest_output=args.manifest_output,
         )
     except (OSError, MarketIngestionError) as exc:
         print(json.dumps({"error": str(exc)}, indent=2))

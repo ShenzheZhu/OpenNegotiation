@@ -12,6 +12,8 @@ on `main`: benchmark runs, policy-learning battle reports, strategy candidate
 reruns, local marketplace export, strategy sparring, transaction settlement
 guards, config-level LLM agents, provider-neutral profile LLM NPCs, and CLI
 loading for local user-agent factories, plus offline sold-comps ingestion.
+Offline ingested datasets can optionally write an aggregate dataset manifest
+with input fingerprint and quality summaries.
 The no-key test suite also includes a shared workflow contract smoke for the
 benchmark -> policy learning -> strategy candidate -> sparring rerun ->
 comparison -> marketplace export loop.
@@ -68,8 +70,8 @@ Implemented:
 - Fixture transaction settlement guards for buyer all-in cost caps, seller
   net-revenue floors, shipping failure, item mismatch, return-window policy,
   and dispute-risk caps.
-- Offline CSV/JSON sold-comps ingestion into `products.json` and
-  `market_comps.json` fixtures.
+- Offline CSV/JSON sold-comps ingestion into `products.json`,
+  `market_comps.json`, and optional aggregate dataset manifest artifacts.
 - Shared no-key workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.

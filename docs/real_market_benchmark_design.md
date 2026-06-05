@@ -128,6 +128,7 @@ opennego ingest-market \
   --input /tmp/sold_comps.csv \
   --products-output /tmp/opennego-products.json \
   --comps-output /tmp/opennego-market-comps.json \
+  --manifest-output /tmp/opennego-market-dataset.json \
   --source ebay_offline_export \
   --window-days 90
 ```
@@ -139,9 +140,15 @@ sold date. It writes:
 - `products.json`: product clusters with `market_reference` median, p25, p75,
   sample size, currency, source, sale mechanism, and ingestion metadata.
 - `market_comps.json`: comparable records loadable by `MarketPriceTool`.
+- `market_dataset.json`: optional aggregate manifest with schema version,
+  source file SHA-256, output paths, product/comparable counts, price summary,
+  missing-date counts, grouped source/condition/mechanism stats, and cluster
+  summaries.
 
 This is an offline normalization path only. It does not scrape websites, call
-marketplace APIs, bypass marketplace terms, or store live credentials.
+marketplace APIs, bypass marketplace terms, or store live credentials. The
+dataset manifest intentionally stores aggregate quality statistics and does not
+copy raw listing titles.
 
 ## Demo Commands
 
