@@ -29,6 +29,7 @@ from opennego.learning import (
     write_battle_report,
 )
 from opennego.market_ingestion import MarketIngestionError, ingest_market_data
+from opennego.market_validation import validate_market_dataset
 from opennego.marketplace import MarketplaceError, write_marketplace_profile
 from opennego.model_demo import (
     DEFAULT_MODEL_DEMO_MODELS,
@@ -76,6 +77,8 @@ def main(argv: list[str] | None = None) -> int:
         return _marketplace_export_main(argv[1:])
     if argv and argv[0] == "ingest-market":
         return _ingest_market_main(argv[1:])
+    if argv and argv[0] == "validate-market":
+        return _validate_market_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
         return _mvp_demo_main(argv[1:])
     if argv and argv[0] == "spar":
@@ -503,6 +506,35 @@ def _ingest_market_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps(to_jsonable(result), indent=2))
     return 0
+
+
+def _validate_market_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate normalized OpenNego market fixture files."
+    )
+    parser.add_argument(
+        "--products-file",
+        required=True,
+        help="Path to normalized products.json.",
+    )
+    parser.add_argument(
+        "--market-comps-file",
+        required=True,
+        help="Path to normalized market_comps.json.",
+    )
+    parser.add_argument(
+        "--manifest-file",
+        help="Optional market dataset manifest produced by ingest-market.",
+    )
+    args = parser.parse_args(argv)
+
+    result = validate_market_dataset(
+        products_file=args.products_file,
+        market_comps_file=args.market_comps_file,
+        manifest_file=args.manifest_file,
+    )
+    print(json.dumps(to_jsonable(result), indent=2))
+    return 0 if result.status == "passed" else 1
 
 
 def _mvp_demo_main(argv: list[str] | None = None) -> int:

@@ -150,6 +150,21 @@ marketplace APIs, bypass marketplace terms, or store live credentials. The
 dataset manifest intentionally stores aggregate quality statistics and does not
 copy raw listing titles.
 
+Validate normalized fixtures before running a benchmark:
+
+```bash
+opennego validate-market \
+  --products-file /tmp/opennego-products.json \
+  --market-comps-file /tmp/opennego-market-comps.json \
+  --manifest-file /tmp/opennego-market-dataset.json
+```
+
+The validator returns `opennego.market_validation.v1` JSON. It fails on
+malformed products/comps, manifest count mismatches, price-summary median
+mismatches, unsafe manifest privacy flags, and input hash mismatches when the
+original source file is available. If artifacts were moved and the original
+input path is unavailable, validation emits a warning instead of failing.
+
 ## Demo Commands
 
 Run a tiny fixture-backed market demo:

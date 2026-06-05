@@ -13,7 +13,8 @@ reruns, local marketplace export, strategy sparring, transaction settlement
 guards, config-level LLM agents, provider-neutral profile LLM NPCs, and CLI
 loading for local user-agent factories, plus offline sold-comps ingestion.
 Offline ingested datasets can optionally write an aggregate dataset manifest
-with input fingerprint and quality summaries.
+with input fingerprint and quality summaries, then validate those fixtures with
+`opennego validate-market`.
 The no-key test suite also includes a shared workflow contract smoke for the
 benchmark -> policy learning -> strategy candidate -> sparring rerun ->
 comparison -> marketplace export loop.
@@ -72,6 +73,8 @@ Implemented:
   and dispute-risk caps.
 - Offline CSV/JSON sold-comps ingestion into `products.json`,
   `market_comps.json`, and optional aggregate dataset manifest artifacts.
+- Market fixture validation CLI for products/comps plus optional dataset
+  manifest consistency checks.
 - Shared no-key workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.
@@ -115,7 +118,7 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 102 passed.
+- `pytest -q`: 106 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Secret-pattern scan: no matches.
