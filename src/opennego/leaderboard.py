@@ -1,0 +1,254 @@
+"""Machine-readable leaderboard aggregation for benchmark artifacts."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Mapping, Sequence
+
+from opennego.artifacts import (
+    ArtifactValidationError,
+    load_manifest,
+    load_metric_report,
+)
+from opennego.artifacts import write_json
+
+LEADERBOARD_SCHEMA_VERSION = "opennego.leaderboard.v1"
+
+
+@dataclass(frozen=True)
+class LeaderboardRunRow:
+    rank: int
+    run_id: str
+    scenario_id: str
+    tool_regime_id: str
+    score: float
+    outcome: str
+    deal_price: float | None
+    buyer_participant_id: str
+    seller_participant_id: str
+    metrics: Mapping[str, float]
+
+
+@dataclass(frozen=True)
+class RoleTrackEntry:
+    rank: int
+    role: str
+    participant_id: str
+    run_count: int
+    average_score: float
+    deal_rate: float
+    transaction_completion_rate: float
+    average_normalized_market_gap: float
+    tool_failure_rate: float
+    average_role_value_vs_market_reference: float
+
+
+@dataclass(frozen=True)
+class LeaderboardSummary:
+    schema_version: str
+    input_dir: str
+    run_count: int
+    role_tracks: tuple[RoleTrackEntry, ...]
+    runs: tuple[LeaderboardRunRow, ...]
+
+
+def build_leaderboard(input_dir: str | Path) -> LeaderboardSummary:
+    """Aggregate benchmark artifact directories into leaderboard rows."""
+
+    base = Path(input_dir)
+    loaded = _load_runs(base)
+    if not loaded:
+        raise ValueError(f"{base}: no benchmark run artifacts found")
+    run_rows = tuple(
+        LeaderboardRunRow(
+            rank=index,
+            run_id=item["run_id"],
+            scenario_id=item["scenario_id"],
+            tool_regime_id=item["tool_regime_id"],
+            score=item["score"],
+            outcome=item["outcome"],
+            deal_price=item["deal_price"],
+            buyer_participant_id=item["buyer_participant_id"],
+            seller_participant_id=item["seller_participant_id"],
+            metrics=item["metrics"],
+        )
+        for index, item in enumerate(
+            sorted(loaded, key=lambda item: item["score"], reverse=True),
+            start=1,
+        )
+    )
+    return LeaderboardSummary(
+        schema_version=LEADERBOARD_SCHEMA_VERSION,
+        input_dir=str(base),
+        run_count=len(run_rows),
+        role_tracks=_role_tracks(run_rows),
+        runs=run_rows,
+    )
+
+
+def write_leaderboard(input_dir: str | Path, output_path: str | Path) -> Path:
+    """Write a versioned leaderboard summary JSON artifact."""
+
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_json(path, build_leaderboard(input_dir))
+    return path
+
+
+def _load_runs(base: Path) -> list[dict]:
+    candidates = [base] if (base / "metrics.json").exists() else sorted(base.iterdir())
+    rows: list[dict] = []
+    for candidate in candidates:
+        if not candidate.is_dir():
+            continue
+        try:
+            manifest = load_manifest(candidate / "manifest.json")
+            metrics_report = load_metric_report(candidate / "metrics.json")
+        except (OSError, ArtifactValidationError, ValueError):
+            continue
+        metrics = dict(metrics_report.metrics)
+        rows.append(
+            {
+                "run_id": manifest.run_id,
+                "scenario_id": metrics_report.scenario_id,
+                "tool_regime_id": _tool_regime_id(manifest.tool_regime),
+                "score": _score(metrics),
+                "outcome": metrics_report.outcome,
+                "deal_price": metrics_report.deal_price,
+                "buyer_participant_id": _participant_id(manifest, "buyer"),
+                "seller_participant_id": _participant_id(manifest, "seller"),
+                "metrics": metrics,
+            }
+        )
+    return rows
+
+
+def _participant_id(manifest, role: str) -> str:
+    models = manifest.models
+    if isinstance(models, Mapping) and models.get(role):
+        return str(models[role])
+    agents = manifest.agents
+    agent = agents.get(role) if isinstance(agents, Mapping) else None
+    if isinstance(agent, Mapping):
+        kind = str(agent.get("kind", "agent"))
+        name = str(agent.get("name", kind))
+        return f"{kind}:{name}"
+    return f"unknown_{role}"
+
+
+def _tool_regime_id(tool_regime: Mapping[str, object]) -> str:
+    return str(tool_regime.get("id", "unknown"))
+
+
+def _score(metrics: Mapping[str, float]) -> float:
+    deal = metrics.get("deal_rate", 0.0)
+    tx = metrics.get("transaction_completed_rate", 0.0)
+    gap = metrics.get("normalized_market_gap", 0.0)
+    gap_component = max(0.0, 1.0 - min(gap, 2.0) / 2.0)
+    tool_calls = metrics.get("tool_call_count", 0.0)
+    failures = metrics.get("tool_failure_count", 0.0)
+    tool_quality = 1.0 if tool_calls == 0 else max(0.0, 1.0 - failures / tool_calls)
+    return round(
+        100 * (0.35 * deal + 0.25 * tx + 0.25 * gap_component + 0.15 * tool_quality),
+        1,
+    )
+
+
+def _role_tracks(rows: Sequence[LeaderboardRunRow]) -> tuple[RoleTrackEntry, ...]:
+    entries = []
+    for role in ("buyer", "seller"):
+        by_participant: dict[str, list[LeaderboardRunRow]] = {}
+        for row in rows:
+            participant_id = (
+                row.buyer_participant_id if role == "buyer" else row.seller_participant_id
+            )
+            by_participant.setdefault(participant_id, []).append(row)
+        role_entries = [
+            _role_track_entry(role, participant_id, participant_rows)
+            for participant_id, participant_rows in by_participant.items()
+        ]
+        entries.extend(
+            entry
+            for _, entry in enumerate(
+                sorted(
+                    role_entries,
+                    key=lambda item: (
+                        item.role,
+                        -item.average_score,
+                        item.participant_id,
+                    ),
+                ),
+                start=1,
+            )
+        )
+    ranked = []
+    for role in ("buyer", "seller"):
+        role_entries = [
+            entry for entry in entries if entry.role == role
+        ]
+        for rank, entry in enumerate(role_entries, start=1):
+            ranked.append(
+                RoleTrackEntry(
+                    rank=rank,
+                    role=entry.role,
+                    participant_id=entry.participant_id,
+                    run_count=entry.run_count,
+                    average_score=entry.average_score,
+                    deal_rate=entry.deal_rate,
+                    transaction_completion_rate=entry.transaction_completion_rate,
+                    average_normalized_market_gap=entry.average_normalized_market_gap,
+                    tool_failure_rate=entry.tool_failure_rate,
+                    average_role_value_vs_market_reference=(
+                        entry.average_role_value_vs_market_reference
+                    ),
+                )
+            )
+    return tuple(ranked)
+
+
+def _role_track_entry(
+    role: str,
+    participant_id: str,
+    rows: Sequence[LeaderboardRunRow],
+) -> RoleTrackEntry:
+    return RoleTrackEntry(
+        rank=0,
+        role=role,
+        participant_id=participant_id,
+        run_count=len(rows),
+        average_score=_average(row.score for row in rows),
+        deal_rate=_average(row.metrics.get("deal_rate", 0.0) for row in rows),
+        transaction_completion_rate=_average(
+            row.metrics.get("transaction_completed_rate", 0.0) for row in rows
+        ),
+        average_normalized_market_gap=_average(
+            row.metrics.get("normalized_market_gap", 0.0) for row in rows
+        ),
+        tool_failure_rate=_tool_failure_rate(rows),
+        average_role_value_vs_market_reference=_role_value(role, rows),
+    )
+
+
+def _average(values) -> float:
+    items = [float(value) for value in values]
+    if not items:
+        return 0.0
+    return round(sum(items) / len(items), 4)
+
+
+def _tool_failure_rate(rows: Sequence[LeaderboardRunRow]) -> float:
+    calls = sum(row.metrics.get("tool_call_count", 0.0) for row in rows)
+    failures = sum(row.metrics.get("tool_failure_count", 0.0) for row in rows)
+    if calls <= 0:
+        return 0.0
+    return round(failures / calls, 4)
+
+
+def _role_value(role: str, rows: Sequence[LeaderboardRunRow]) -> float:
+    metric_key = (
+        "buyer_savings_vs_market_reference"
+        if role == "buyer"
+        else "seller_revenue_vs_market_reference"
+    )
+    return _average(row.metrics.get(metric_key, 0.0) for row in rows)

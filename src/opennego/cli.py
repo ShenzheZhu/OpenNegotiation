@@ -28,6 +28,7 @@ from opennego.learning import (
     registry_listing,
     write_battle_report,
 )
+from opennego.leaderboard import build_leaderboard, write_leaderboard
 from opennego.market_ingestion import MarketIngestionError, ingest_market_data
 from opennego.market_validation import validate_market_dataset
 from opennego.marketplace import MarketplaceError, write_marketplace_profile
@@ -73,6 +74,8 @@ def main(argv: list[str] | None = None) -> int:
         return _evolve_main(argv[1:])
     if argv and argv[0] == "compare":
         return _compare_main(argv[1:])
+    if argv and argv[0] == "leaderboard":
+        return _leaderboard_main(argv[1:])
     if argv and argv[0] == "marketplace-export":
         return _marketplace_export_main(argv[1:])
     if argv and argv[0] == "ingest-market":
@@ -379,6 +382,33 @@ def _compare_main(argv: list[str] | None = None) -> int:
         return 2
 
     print(json.dumps({"strategy_comparison": str(output_path)}, indent=2))
+    return 0
+
+
+def _leaderboard_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Aggregate benchmark artifacts into leaderboard JSON."
+    )
+    parser.add_argument(
+        "--input-dir",
+        required=True,
+        help="Directory containing benchmark run artifact subdirectories.",
+    )
+    parser.add_argument(
+        "--output",
+        help="Optional path to write leaderboard_summary.json.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        summary = build_leaderboard(args.input_dir)
+        if args.output:
+            write_leaderboard(args.input_dir, args.output)
+    except (OSError, ValueError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(summary), indent=2))
     return 0
 
 

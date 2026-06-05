@@ -104,6 +104,18 @@ Market-grounded runs additionally report:
 - `buyer_savings_vs_market_reference`
 - `seller_revenue_vs_market_reference`
 
+Run directories can be aggregated with:
+
+```bash
+opennego leaderboard --input-dir runs/real_market_demo --output runs/leaderboard_summary.json
+```
+
+The generated `opennego.leaderboard.v1` artifact is the machine-readable
+scorecard layer for local demos and external dashboards. It includes run-level
+rankings plus separate buyer and seller role-track aggregates. This scorecard
+track is deterministic and no-key; pairwise Elo-style arena tracks can be added
+later once benchmark schedules include enough reciprocal matchups.
+
 ## No-Key Smoke Benchmark
 
 Run:

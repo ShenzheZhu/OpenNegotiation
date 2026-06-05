@@ -18,6 +18,8 @@ with input fingerprint and quality summaries, then validate those fixtures with
 The no-key test suite also includes a shared workflow contract smoke for the
 benchmark -> policy learning -> strategy candidate -> sparring rerun ->
 comparison -> marketplace export loop.
+Benchmark outputs can also be aggregated into a machine-readable leaderboard
+with buyer/seller role-track summaries.
 
 A small live five-model OpenRouter smoke was verified earlier on 2026-06-05.
 It was not rerun for this docs refresh; live provider execution remains an
@@ -75,6 +77,8 @@ Implemented:
   `market_comps.json`, and optional aggregate dataset manifest artifacts.
 - Market fixture validation CLI for products/comps plus optional dataset
   manifest consistency checks.
+- Machine-readable leaderboard aggregation with ranked run rows and buyer/seller
+  role-track summaries.
 - Shared no-key workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.
@@ -118,7 +122,7 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 106 passed.
+- `pytest -q`: 110 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Secret-pattern scan: no matches.
