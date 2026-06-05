@@ -18,11 +18,13 @@ from opennego.learning import (
     load_strategy_registry,
     write_battle_report,
 )
+from opennego.leaderboard import LEADERBOARD_SCHEMA_VERSION, write_leaderboard
 from opennego.marketplace import (
     MARKETPLACE_PROFILE_SCHEMA_VERSION,
     load_marketplace_profile,
     write_marketplace_profile,
 )
+from opennego.report import write_demo_report
 from opennego.runner import run_experiment_config
 from opennego.sparring import (
     SPARRING_EXECUTION_MODE,
@@ -57,6 +59,20 @@ def test_user_centric_workflow_contract_round_trips_artifacts(tmp_path):
         expected_seller_kind="scripted_seller",
         expected_experiment="real_market_demo",
     )
+
+    leaderboard_path = benchmark_dir / "leaderboard_summary.json"
+    report_path = tmp_path / "workflow_report.html"
+    write_leaderboard(benchmark_dir, leaderboard_path)
+    write_demo_report(benchmark_dir, report_path)
+    leaderboard_payload = json.loads(leaderboard_path.read_text())
+    report_html = report_path.read_text()
+
+    assert leaderboard_payload["schema_version"] == LEADERBOARD_SCHEMA_VERSION
+    assert leaderboard_payload["run_count"] == 3
+    assert leaderboard_payload["participant_summaries"]
+    assert f"Leaderboard artifact {LEADERBOARD_SCHEMA_VERSION}" in report_html
+    assert "Participant Coverage" in report_html
+    assert "Leaderboard source: run artifacts fallback." not in report_html
 
     before_report = tmp_path / "before_battle_report.json"
     market_tool_report = tmp_path / "market_tool_battle_report.json"
