@@ -33,6 +33,8 @@ The first scaffold focuses on:
 
 ## Quickstart
 
+OpenNego currently requires Python 3.10 or newer.
+
 ```bash
 git clone https://github.com/Kordi-AI/OpenNego.git
 cd OpenNego
@@ -72,6 +74,44 @@ scripted seller on the real-market fixture. It is intended for demos and smoke
 checks, not as a full benchmark sweep. The command writes a top-level
 `summary.json`; if a provider call fails, the failed model directory gets a
 redacted `failure.json` instead of silently disappearing from the run record.
+
+For the full no-key MVP panel covering benchmark, training / prompt
+optimization, and the local strategy marketplace:
+
+```bash
+opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp-demo.html
+```
+
+This runs the real-market fixture benchmark, generates a trace-grounded battle
+report for a buyer agent against a curated seller NPC, and renders a static
+HTML report. The battle report produces strategy-layer lessons and prompt
+optimization suggestions while keeping OpenNego's base sandbox protocol fixed.
+A curated no-key MVP page is available at
+`examples/reports/opennego_mvp_demo.html`.
+
+You can also inspect the local NPC strategy marketplace directly:
+
+```bash
+opennego strategies --role seller
+```
+
+To run the next no-key training loop against one or more marketplace NPC
+profiles:
+
+```bash
+opennego spar \
+  --output-dir /tmp/opennego-sparring \
+  --report /tmp/opennego-sparring.html \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --opponent-profile seller_hidden_fees_v1
+```
+
+This writes `/tmp/opennego-sparring/sparring_suite.json` plus one
+`battle_report.json` per selected profile, then renders a compact HTML report
+when `--report` is provided. The current execution mode is fixture-backed
+profile diagnosis: deterministic local agents generate the benchmark artifacts,
+while marketplace profiles define the opponent archetype and lessons used for
+prompt optimization.
 
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
 
@@ -114,6 +154,10 @@ for curated sample artifacts.
   and risk exposure.
 - `Benchmark artifacts`: versioned scenario, manifest, trace JSONL, and metric
   report files for reproducible external evaluation.
+- `Policy learning`: no-key battle reports that extract trace-grounded strategy
+  lessons and prompt optimization patches from completed benchmark artifacts.
+- `Strategy marketplace`: curated NPC profiles with fixed base protocol prompts
+  and editable strategy prompts for sparring and curriculum design.
 
 ## Project Layout
 
@@ -164,7 +208,12 @@ for common setup and parser issues. See
 [docs/release_checklist.md](docs/release_checklist.md) for the no-key handoff
 gate. See
 [docs/real_market_benchmark_design.md](docs/real_market_benchmark_design.md) for
-the market-grounded dataset and leaderboard design.
+the market-grounded dataset and leaderboard design. See
+[docs/policy_learning.md](docs/policy_learning.md) for the prompt-optimization
+training loop and NPC strategy marketplace MVP. See
+[docs/architecture.md](docs/architecture.md) for the current module boundaries
+and [docs/mvp_readiness.md](docs/mvp_readiness.md) for the website,
+architecture, and test readiness audit.
 
 ## Status
 

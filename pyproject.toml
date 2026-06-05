@@ -7,7 +7,7 @@ name = "opennego"
 version = "0.1.0"
 description = "Evaluation gym for agent-level agent-to-agent negotiation and transaction research."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   { name = "Kordi AI" }
 ]

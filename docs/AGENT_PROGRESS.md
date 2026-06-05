@@ -23,6 +23,20 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Selected a high-quality OpenRouter-backed five-model default set for the
   demo: GPT-5.4 Pro, Claude Opus 4.8, Gemini 3.1 Pro Preview, Grok 4.3, and
   Qwen3 235B A22B.
+- Added the first no-key policy-learning MVP slice: NPC strategy registry,
+  `opennego strategies`, `opennego learn`, battle-report JSON, and
+  trace-grounded strategy prompt patches.
+- Integrated policy-learning reports and NPC strategy profiles into the static
+  HTML demo report.
+- Added `examples/reports/opennego_mvp_demo.html` as the curated no-key MVP
+  page covering benchmark, training/prompt optimization, and strategy
+  marketplace.
+- Added `opennego mvp-demo` as the one-command no-key flow for generating the
+  benchmark artifacts, battle report, and MVP HTML page.
+- Added `opennego spar` as a no-key strategy sparring suite that runs selected
+  marketplace NPC profiles through fixture-backed battle-report diagnostics.
+- Added `opennego spar --report` for rendering a compact static HTML report
+  from `sparring_suite.json`.
 
 ### Current Live-Run State
 
@@ -39,6 +53,10 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Draft PR `#19` is open from `proto/real-market-benchmark-18` to `main`.
 - Keep PR `#19` in draft until a tiny live five-model run is generated and the
   report is refreshed from real provider artifacts.
+- Policy-learning / prompt-optimization scope is tracked separately in
+  GitHub issue `#20` and branch `codex/policy-learning-mvp-20`.
+- Strategy sparring suite scope is tracked in GitHub issue `#22` and branch
+  `codex/strategy-sparring-22`.
 
 ### Verification
 
