@@ -31,10 +31,15 @@ Top-level fields:
 - `transaction`: optional fixture transaction simulator config.
 - `metadata`: optional object copied into run manifests.
 
-Supported agent kinds in the first runner slice:
+Supported built-in no-key agent kinds:
 
 - buyer: `tool_aware_buyer`
 - seller: `scripted_seller`
+
+Supported built-in LLM agent kinds:
+
+- buyer: `llm_buyer`
+- seller: `llm_seller`
 
 Python API callers may also register custom provider-neutral `AgentPort`
 factories and reference those keys from the same `agents` block. Each agent spec
@@ -59,6 +64,59 @@ summary = run_experiment_config(
 
 The CLI only exposes built-in kinds; arbitrary Python module loading is out of
 scope for the current runner.
+
+## LLM Config Agents
+
+LLM config agents run through the same experiment runner, environment, tool
+runtime, transaction simulator, and artifact contracts as no-key agents. The
+core runner stays provider-neutral: Python API callers must pass an `LLMPort`
+factory, while the CLI wires these kinds to `LiteLLMGateway` after dependency
+and credential preflight checks.
+
+Each LLM agent spec requires `params.model`. Optional params are `name`,
+`tool_policy`, `temperature`, and `max_tokens`:
+
+```json
+"agents": {
+  "buyer": {
+    "kind": "llm_buyer",
+    "params": {
+      "model": "openrouter/openai/gpt-4o-mini",
+      "name": "llm_buyer:gpt-4o-mini",
+      "tool_policy": "available",
+      "temperature": 0.0,
+      "max_tokens": 256
+    }
+  },
+  "seller": {
+    "kind": "llm_seller",
+    "params": {
+      "model": "openrouter/anthropic/claude-3.5-haiku",
+      "name": "llm_seller:claude-3.5-haiku",
+      "tool_policy": "available"
+    }
+  }
+}
+```
+
+For no-key tests or custom providers, inject an `LLMPort` factory:
+
+```python
+summary = run_experiment_config(
+    "configs/llm_pair.example.yaml",
+    llm_factory=my_llm_port_factory,
+)
+```
+
+For live LiteLLM execution from the CLI:
+
+```bash
+python -m pip install -e ".[llm]"
+OPENROUTER_API_KEY=... opennego run --config configs/llm_pair.example.yaml
+```
+
+Run manifests record role-to-model metadata under `models`, so downstream
+reports can distinguish benchmark rows by model id.
 
 Supported tool kinds in the first runner slice:
 

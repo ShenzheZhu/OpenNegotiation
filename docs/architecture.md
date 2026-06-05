@@ -92,7 +92,8 @@ the base sandbox protocol.
 
 ## Current Known Limits
 
-- Python API users can register custom runner and sparring user-agent
+- Experiment configs support built-in no-key agents and built-in LLM buyer/seller
+  agents. Python API users can also register custom runner and sparring
   factories, but the CLI does not load arbitrary Python modules.
 - Strategy sparring defaults to deterministic fixture counterparties. Python API
   callers can supply profile-backed provider agents behind `LLMPort`, but the

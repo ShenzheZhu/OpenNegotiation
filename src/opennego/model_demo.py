@@ -29,6 +29,12 @@ DEFAULT_MODEL_DEMO_MODELS: tuple[str, ...] = (
 )
 
 
+def make_litellm_gateway() -> LLMPort:
+    """Create the default LiteLLM-backed LLM port for live demo paths."""
+
+    return LiteLLMGateway()
+
+
 @dataclass(frozen=True)
 class ModelDemoRecord:
     model: str

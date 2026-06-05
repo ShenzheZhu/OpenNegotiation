@@ -23,10 +23,19 @@ from opennego.learning import (
     write_battle_report,
 )
 from opennego.marketplace import MarketplaceError, write_marketplace_profile
-from opennego.model_demo import DEFAULT_MODEL_DEMO_MODELS, run_model_demo
+from opennego.model_demo import (
+    DEFAULT_MODEL_DEMO_MODELS,
+    make_litellm_gateway,
+    run_model_demo,
+)
 from opennego.mvp_demo import run_mvp_demo
 from opennego.report import write_demo_report
-from opennego.runner import ConfigValidationError, run_experiment_config
+from opennego.runner import (
+    ConfigValidationError,
+    LLM_AGENT_KINDS,
+    load_experiment_config,
+    run_experiment_config,
+)
 from opennego.schema import Product, Scenario
 from opennego.sparring import run_sparring_suite
 from opennego.sparring_report import write_sparring_report
@@ -141,10 +150,21 @@ def _run_config_main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        llm_models = _config_llm_models(args.config)
+        llm_factory = None
+        if llm_models is not None:
+            preflight_error = (
+                _run_models_preflight_error(llm_models) if llm_models else None
+            )
+            if preflight_error is not None:
+                print(json.dumps({"error": preflight_error}, indent=2))
+                return 2
+            llm_factory = make_litellm_gateway
         summary = run_experiment_config(
             args.config,
             resume=args.resume,
             output_dir=args.output_dir,
+            llm_factory=llm_factory,
         )
     except ConfigValidationError as exc:
         print(json.dumps({"error": str(exc)}, indent=2))
@@ -152,6 +172,19 @@ def _run_config_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps(to_jsonable(summary), indent=2))
     return 1 if summary.failed else 0
+
+
+def _config_llm_models(config_path: str | Path) -> tuple[str, ...] | None:
+    config = load_experiment_config(config_path)
+    models: list[str] = []
+    has_llm_agent = False
+    for spec in (config.agents.buyer, config.agents.seller):
+        if spec.kind in LLM_AGENT_KINDS:
+            has_llm_agent = True
+            model = spec.params.get("model")
+            if isinstance(model, str) and model:
+                models.append(model)
+    return tuple(models) if has_llm_agent else None
 
 
 def _report_main(argv: list[str] | None = None) -> int:
