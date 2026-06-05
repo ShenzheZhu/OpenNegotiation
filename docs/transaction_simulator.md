@@ -19,18 +19,27 @@ real payment, escrow, shipping, tax, or marketplace APIs.
 - `seller_fee_rate`: seller-side marketplace or platform fee.
 - `return_risk`: deterministic return-risk placeholder.
 - `reputation_risk`: deterministic counterparty/reputation-risk placeholder.
+- `dispute_risk`: deterministic dispute-risk placeholder; included in total
+  risk exposure and exposed as a separate metric.
 - `payment_success`: when false, the transaction is recorded as failed.
+- `shipping_success`: when false, settlement fails after payment validation.
+- `item_matches_listing`: when false, settlement fails as an item-mismatch
+  dispute.
 - `max_buyer_total_cost`: optional all-in buyer cost cap. Settlement fails if
   computed buyer total cost exceeds this value.
 - `min_seller_net_revenue`: optional seller net revenue floor. Settlement fails
   if computed seller net revenue is below this value.
+- `max_dispute_risk`: optional deterministic dispute-risk cap.
+- `return_window_days`: return-window policy attached to the fixture
+  transaction.
+- `min_return_window_days`: optional minimum acceptable return-window policy.
 
 For a completed transaction:
 
 ```text
 buyer_total_cost = negotiated_price + shipping_cost + tax + escrow_fee + payment_fee
 seller_net_revenue = negotiated_price - seller_fee - escrow_fee
-risk_exposure = return_risk + reputation_risk
+risk_exposure = return_risk + reputation_risk + dispute_risk
 ```
 
 For a failed transaction, buyer cost and seller revenue are recorded as `0.0`,
@@ -41,13 +50,21 @@ Settlement guard failures use deterministic reasons:
 
 - `buyer_total_cost_exceeded`
 - `seller_net_revenue_below_floor`
+- `shipping_failed`
+- `item_mismatch_dispute`
+- `return_window_below_minimum`
+- `dispute_risk_exceeded`
 
 The failed transaction metadata records:
 
 - `computed_buyer_total_cost`
 - `computed_seller_net_revenue`
+- `computed_risk_exposure`
 - the configured guard values
+- lifecycle inputs such as `shipping_success`, `item_matches_listing`,
+  `return_window_days`, and `dispute_risk`
 - `violated_guard`
+- `lifecycle_stage`
 
 ## Trace Contract
 
@@ -78,9 +95,10 @@ The metrics report keeps negotiation and transaction quantities separate:
 - `transaction_completed_rate`
 - `failed_transaction_rate`
 - `transaction_risk_exposure`
+- `transaction_dispute_risk`
 
 ## Boundaries
 
 This simulator is suitable for deterministic benchmark comparisons. It is not a
 claim about real payment success, legal compliance, tax calculation, logistics,
-or platform policy.
+returns, disputes, warranties, or platform policy.

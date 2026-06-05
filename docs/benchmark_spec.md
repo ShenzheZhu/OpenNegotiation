@@ -78,8 +78,9 @@ simulator separates negotiated product price from:
 - escrow fees
 - payment fees
 - seller platform fees
-- return and reputation risk
-- payment failure
+- return, reputation, and dispute risk
+- deterministic payment, shipping, item-mismatch, return-window, and dispute
+  guard failures
 
 Transaction outcomes are recorded as public system events.
 

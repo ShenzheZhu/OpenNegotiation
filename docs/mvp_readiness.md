@@ -62,8 +62,9 @@ Implemented:
   factories or CLI LiteLLM preflight.
 - Profile-backed LLM NPC factory support through `LLMPort` for Python API
   sparring.
-- Fixture transaction settlement guards for buyer all-in cost caps and seller
-  net-revenue floors.
+- Fixture transaction settlement guards for buyer all-in cost caps, seller
+  net-revenue floors, shipping failure, item mismatch, return-window policy,
+  and dispute-risk caps.
 - Static HTML report generators for benchmark/MVP and sparring surfaces.
 - Architecture overview in `docs/architecture.md`.
 - Python runtime declaration aligned to current syntax: Python 3.10+.
@@ -84,9 +85,9 @@ Known architecture limits:
   coaching are not implemented.
 - Real-market evidence remains fixture/offline-data backed. Live eBay or C2C
   marketplace collection is not implemented.
-- Transaction simulation validates deterministic settlement fees and guard
-  failures, but richer shipping, payment, return, warranty, and dispute
-  workflows are not implemented.
+- Transaction simulation validates deterministic settlement fees and lifecycle
+  guard failures, but real payment, logistics, warranty, legal/compliance, and
+  platform dispute integrations are not implemented.
 
 ## Tests And Static Checks
 

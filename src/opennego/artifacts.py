@@ -517,6 +517,7 @@ def _transaction_from_mapping(data: Any) -> TransactionOutcome:
         seller_fee=_optional_number(data, "seller_fee"),
         return_risk=_optional_number(data, "return_risk"),
         reputation_risk=_optional_number(data, "reputation_risk"),
+        dispute_risk=_optional_number(data, "dispute_risk"),
         risk_exposure=_optional_number(data, "risk_exposure"),
         failure_reason=data.get("failure_reason"),
         metadata=_optional_mapping(data, "metadata"),

@@ -304,6 +304,7 @@ class TransactionOutcome:
     seller_fee: float = 0.0
     return_risk: float = 0.0
     reputation_risk: float = 0.0
+    dispute_risk: float = 0.0
     risk_exposure: float = 0.0
     failure_reason: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
