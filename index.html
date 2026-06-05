@@ -6,21 +6,23 @@
   <title>OpenNegotiation | Real-Market Negotiation Gym for AI Agents</title>
   <style>
     :root {
-      --ink: #102126;
-      --muted: #5c6f76;
-      --line: #d7e7e3;
-      --panel: #ffffff;
-      --soft: #f3faf8;
-      --accent: #0f766e;
-      --accent-dark: #124e45;
-      --blue: #2f6fed;
-      --amber: #b7791f;
+      --ink: #26302e;
+      --muted: #6b7470;
+      --line: #d8d1c8;
+      --panel: #fffdf8;
+      --soft: #eee8df;
+      --accent: #66786e;
+      --accent-dark: #4a5b55;
+      --blue: #60758a;
+      --amber: #8b6c56;
+      --canvas: #f4f0e8;
+      --shadow: rgba(84, 76, 68, .055);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       color: var(--ink);
-      background: #f7fbfa;
+      background: var(--canvas);
       font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     a { color: inherit; text-decoration: none; }
@@ -28,7 +30,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(255, 255, 255, .92);
+      background: rgba(255, 253, 248, .9);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(12px);
     }
@@ -56,7 +58,7 @@
     .subtitle { max-width: 840px; color: var(--muted); font-size: 18px; }
     .brand-word {
       color: var(--accent-dark);
-      box-shadow: inset 0 -0.18em 0 rgba(15, 118, 110, .16);
+      box-shadow: inset 0 -0.18em 0 rgba(102, 120, 110, .22);
     }
     .section {
       margin-top: 24px;
@@ -64,7 +66,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, .035);
+      box-shadow: 0 12px 32px var(--shadow);
     }
     .section-head {
       display: flex;
@@ -94,8 +96,8 @@
       min-width: 1000px;
       height: auto;
     }
-    .diagram-bg { fill: #f7fbfa; }
-    .diagram-panel { fill: #fff; stroke: var(--line); stroke-width: 1.2; }
+    .diagram-bg { fill: var(--canvas); }
+    .diagram-panel { fill: var(--panel); stroke: var(--line); stroke-width: 1.2; }
     .diagram-panel-soft { fill: var(--soft); stroke: var(--line); stroke-width: 1.2; }
     .diagram-title { fill: var(--ink); font-size: 22px; font-weight: 800; letter-spacing: 0; }
     .diagram-label { fill: var(--accent-dark); font-size: 13px; font-weight: 800; letter-spacing: 0; text-transform: uppercase; }
@@ -105,21 +107,21 @@
     .architecture-svg g[data-box] .diagram-text,
     .architecture-svg g[data-box] .diagram-small { text-anchor: middle; }
     .diagram-arrow { stroke: var(--accent-dark); stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
-    .diagram-arrow-soft { stroke: #9ab4ad; stroke-width: 1.7; fill: none; marker-end: url(#arrowheadSoft); }
+    .diagram-arrow-soft { stroke: #b7aaa1; stroke-width: 1.7; fill: none; marker-end: url(#arrowheadSoft); }
     .diagram-exchange { stroke: var(--accent-dark); stroke-width: 1.6; fill: none; marker-end: url(#arrowheadSmall); stroke-linecap: round; stroke-linejoin: round; }
-    .diagram-arrow-soft-small { stroke: #9ab4ad; stroke-width: 1.5; fill: none; marker-end: url(#arrowheadSoftSmall); stroke-linecap: round; stroke-linejoin: round; }
+    .diagram-arrow-soft-small { stroke: #b7aaa1; stroke-width: 1.5; fill: none; marker-end: url(#arrowheadSoftSmall); stroke-linecap: round; stroke-linejoin: round; }
     .diagram-loop { stroke: var(--blue); stroke-width: 2; fill: none; stroke-dasharray: 7 7; marker-end: url(#arrowheadBlue); }
-    .diagram-node-green { fill: #e7f5f0; stroke: var(--accent); stroke-width: 1.4; }
-    .diagram-node-blue { fill: #edf4ff; stroke: var(--blue); stroke-width: 1.4; }
-    .diagram-node-amber { fill: #fff7e8; stroke: var(--amber); stroke-width: 1.4; }
-    .diagram-node-dark { fill: #e9f2ef; stroke: var(--accent-dark); stroke-width: 1.4; }
+    .diagram-node-green { fill: #eef1ea; stroke: #7f8d82; stroke-width: 1.4; }
+    .diagram-node-blue { fill: #eef1f4; stroke: var(--blue); stroke-width: 1.4; }
+    .diagram-node-amber { fill: #f2ebe2; stroke: var(--amber); stroke-width: 1.4; }
+    .diagram-node-dark { fill: #e9ebe5; stroke: var(--accent-dark); stroke-width: 1.4; }
     .muted { color: var(--muted); }
     .pill {
       display: inline-block;
       padding: 3px 9px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: #fff;
+      background: var(--panel);
       color: var(--muted);
       font-size: 12px;
       white-space: nowrap;
@@ -198,19 +200,19 @@
           <desc id="architecture-desc">Benchmark mode and evolution mode share the same scenario setup, agent adapters, negotiation environment, tool gateway, transaction layer, trace artifacts, and metrics. Benchmark mode produces leaderboard reports. Evolution mode produces failure analysis, strategy patches, and optional marketplace sharing.</desc>
           <defs>
             <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-              <path d="M0,0 L10,4 L0,8 Z" fill="#124e45" />
+              <path d="M0,0 L10,4 L0,8 Z" fill="#4a5b55" />
             </marker>
             <marker id="arrowheadSoft" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-              <path d="M0,0 L10,4 L0,8 Z" fill="#9ab4ad" />
+              <path d="M0,0 L10,4 L0,8 Z" fill="#b7aaa1" />
             </marker>
             <marker id="arrowheadBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-              <path d="M0,0 L10,4 L0,8 Z" fill="#2f6fed" />
+              <path d="M0,0 L10,4 L0,8 Z" fill="#60758a" />
             </marker>
             <marker id="arrowheadSmall" markerWidth="7" markerHeight="6" refX="6.4" refY="3" orient="auto">
-              <path d="M0,0 L7,3 L0,6 Z" fill="#124e45" />
+              <path d="M0,0 L7,3 L0,6 Z" fill="#4a5b55" />
             </marker>
             <marker id="arrowheadSoftSmall" markerWidth="7" markerHeight="6" refX="6.4" refY="3" orient="auto">
-              <path d="M0,0 L7,3 L0,6 Z" fill="#9ab4ad" />
+              <path d="M0,0 L7,3 L0,6 Z" fill="#b7aaa1" />
             </marker>
           </defs>
 

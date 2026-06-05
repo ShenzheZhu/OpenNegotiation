@@ -6,21 +6,23 @@
   <title>OpenNegotiation | Leaderboard</title>
   <style>
     :root {
-      --ink: #102126;
-      --muted: #5c6f76;
-      --line: #d7e7e3;
-      --panel: #ffffff;
-      --soft: #f3faf8;
-      --accent: #0f766e;
-      --accent-dark: #124e45;
-      --blue: #2f6fed;
-      --amber: #b7791f;
+      --ink: #26302e;
+      --muted: #6b7470;
+      --line: #d8d1c8;
+      --panel: #fffdf8;
+      --soft: #eee8df;
+      --accent: #66786e;
+      --accent-dark: #4a5b55;
+      --blue: #60758a;
+      --amber: #8b6c56;
+      --canvas: #f4f0e8;
+      --shadow: rgba(84, 76, 68, .055);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       color: var(--ink);
-      background: #f7fbfa;
+      background: var(--canvas);
       font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     a { color: inherit; text-decoration: none; }
@@ -28,7 +30,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(255, 255, 255, .92);
+      background: rgba(255, 253, 248, .9);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(12px);
     }
@@ -65,7 +67,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, .04);
+      box-shadow: 0 12px 32px var(--shadow);
     }
     .strip-item {
       padding-top: 12px;
@@ -81,7 +83,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, .035);
+      box-shadow: 0 12px 32px var(--shadow);
     }
     .section-head {
       display: flex;
@@ -92,8 +94,8 @@
     }
     .section-copy { max-width: 740px; color: var(--muted); }
     .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 14px; }
-    .tab { padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: #fff; font-size: 13px; }
-    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .tab { padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--panel); font-size: 13px; }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #fffdf8; }
     table { width: 100%; border-collapse: collapse; }
     .table-scroll { width: 100%; overflow-x: auto; }
     .table-scroll table { min-width: 780px; }
@@ -108,7 +110,7 @@
       padding: 3px 9px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: #fff;
+      background: var(--panel);
       color: var(--muted);
       font-size: 12px;
       white-space: nowrap;

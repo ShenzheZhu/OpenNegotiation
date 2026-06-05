@@ -6,23 +6,25 @@
   <title>OpenNegotiation | Agent Improvement Toolkit</title>
   <style>
     :root {
-      --ink: #102126;
-      --muted: #5c6f76;
-      --line: #d7e7e3;
-      --panel: #ffffff;
-      --soft: #f3faf8;
-      --accent: #0f766e;
-      --accent-dark: #124e45;
-      --blue: #2f6fed;
-      --amber: #b7791f;
-      --red: #b91c1c;
+      --ink: #26302e;
+      --muted: #6b7470;
+      --line: #d8d1c8;
+      --panel: #fffdf8;
+      --soft: #eee8df;
+      --accent: #66786e;
+      --accent-dark: #4a5b55;
+      --blue: #60758a;
+      --amber: #8b6c56;
+      --red: #8f5c58;
+      --canvas: #f4f0e8;
+      --shadow: rgba(84, 76, 68, .055);
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
       color: var(--ink);
-      background: #f7fbfa;
+      background: var(--canvas);
       font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     a { color: inherit; text-decoration: none; }
@@ -30,7 +32,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(255, 255, 255, .92);
+      background: rgba(255, 253, 248, .9);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(12px);
     }
@@ -64,7 +66,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, .04);
+      box-shadow: 0 12px 32px var(--shadow);
     }
     .run-steps { display: grid; gap: 10px; margin-top: 12px; }
     .run-step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; }
@@ -74,7 +76,7 @@
       height: 26px;
       place-items: center;
       border-radius: 999px;
-      color: #fff;
+      color: #fffdf8;
       background: var(--accent);
       font-size: 12px;
       font-weight: 800;
@@ -85,7 +87,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, .035);
+      box-shadow: 0 12px 32px var(--shadow);
     }
     .section-head {
       display: flex;
@@ -103,7 +105,7 @@
       border: 1px solid var(--line);
       border-radius: 8px;
     }
-    .mode-card { background: #fff; }
+    .mode-card { background: var(--panel); }
     .mode-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
     .avatar {
       display: inline-grid;
@@ -111,7 +113,7 @@
       height: 42px;
       place-items: center;
       border-radius: 8px;
-      color: #fff;
+      color: #fffdf8;
       background: var(--accent);
       font-weight: 850;
     }
@@ -123,7 +125,7 @@
       padding: 3px 9px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: #fff;
+      background: var(--panel);
       color: var(--muted);
       font-size: 12px;
       white-space: nowrap;
@@ -135,7 +137,7 @@
       padding: 16px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fff;
+      background: var(--panel);
     }
     .pack-card strong { display: block; margin-bottom: 6px; }
     .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
@@ -143,8 +145,8 @@
       margin-top: 12px;
       padding: 13px;
       border-radius: 8px;
-      background: #10212b;
-      color: #e7f6f2;
+      background: #3b3a34;
+      color: #f2ece4;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
