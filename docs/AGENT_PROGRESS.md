@@ -77,6 +77,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   export.
 - Added CLI LiteLLM profile NPC sparring with explicit opponent-profile
   selection and no-key fake-gateway tests.
+- Added `opennego train` as a one-command no-key training loop for baseline
+  sparring, strategy extraction, candidate rerun, and before/after comparison.
 
 ### Current Live-Run State
 
@@ -99,10 +101,11 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 118 passed after adding the MVP demo bundle validator.
+- `pytest -q`: 121 passed after adding the no-key training loop.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
+- `opennego train` no-key training loop: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next

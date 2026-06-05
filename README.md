@@ -130,6 +130,20 @@ against counterparties instantiated from marketplace NPC profiles, so the
 selected profile appears in the trace, manifest, opponent archetype, expected
 traps, failure modes, and strategy patch.
 
+For a one-command no-key training loop:
+
+```bash
+opennego train \
+  --output-dir /tmp/opennego-training \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --parent-strategy-id buyer_baseline
+```
+
+This writes baseline sparring artifacts, selects the lowest-scoring completed
+battle report, emits `strategy_candidate.json`, reruns the same NPC with that
+candidate, writes `strategy_comparison.json`, and records the full handoff in
+`training_loop.json`.
+
 To use a provider-backed profile NPC through LiteLLM, install the optional LLM
 dependency, keep credentials in environment variables, and select explicit
 opponent profiles to bound live calls:

@@ -49,6 +49,7 @@ from opennego.schema import Product, Scenario
 from opennego.sparring import run_sparring_suite
 from opennego.sparring_report import write_sparring_report
 from opennego.tools import MarketPriceTool
+from opennego.training import run_training_loop
 
 
 def load_first_product(path: str | Path) -> Product:
@@ -86,6 +87,8 @@ def main(argv: list[str] | None = None) -> int:
         return _validate_demo_bundle_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
         return _mvp_demo_main(argv[1:])
+    if argv and argv[0] == "train":
+        return _train_main(argv[1:])
     if argv and argv[0] == "spar":
         return _spar_main(argv[1:])
 
@@ -636,6 +639,79 @@ def _mvp_demo_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps(to_jsonable(summary), indent=2))
     return 0 if summary.benchmark_failed == 0 else 1
+
+
+def _train_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Run a no-key sparring, strategy patch, and rerun loop."
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="runs/training_loop",
+        help="Directory for baseline, rerun, candidate, comparison, and summary artifacts.",
+    )
+    parser.add_argument(
+        "--config",
+        default="configs/real_market_demo.yaml",
+        help="Experiment config used for sparring slices.",
+    )
+    parser.add_argument(
+        "--registry",
+        default=str(DEFAULT_NPC_REGISTRY_PATH),
+        help="Path to an NPC strategy registry JSON file.",
+    )
+    parser.add_argument(
+        "--user-role",
+        default="buyer",
+        choices=("buyer", "seller"),
+        help="Role of the user-owned agent to optimize.",
+    )
+    parser.add_argument(
+        "--opponent-profile",
+        action="append",
+        dest="opponent_profiles",
+        help=(
+            "NPC profile id to include in baseline sparring. Repeat for multiple "
+            "profiles. The loop reruns the lowest-scoring completed profile."
+        ),
+    )
+    parser.add_argument(
+        "--learning-tool-regime",
+        default="no_tools",
+        help="Completed run tool regime to diagnose for policy learning.",
+    )
+    parser.add_argument(
+        "--parent-strategy-id",
+        default="user_strategy_v0",
+        help="Stable id of the strategy being patched.",
+    )
+    parser.add_argument(
+        "--iteration",
+        type=int,
+        default=1,
+        help="Positive strategy iteration number.",
+    )
+    parser.add_argument("--no-fail-fast", action="store_true")
+    args = parser.parse_args(argv)
+
+    try:
+        summary = run_training_loop(
+            output_dir=args.output_dir,
+            config_path=args.config,
+            registry_path=args.registry,
+            user_role=args.user_role,
+            opponent_profile_ids=args.opponent_profiles,
+            learning_tool_regime=args.learning_tool_regime,
+            parent_strategy_id=args.parent_strategy_id,
+            iteration=args.iteration,
+            fail_fast=not args.no_fail_fast,
+        )
+    except (OSError, ValueError, KeyError, ConfigValidationError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(summary), indent=2))
+    return 0 if summary.status == "completed" else 1
 
 
 def _spar_main(argv: list[str] | None = None) -> int:
