@@ -8,6 +8,10 @@ OpenNego uses a `src/` Python package layout.
   helpers.
 - `src/opennego/environment.py`: core buyer-seller loop and private tool trace
   handling.
+- `src/opennego/ports/`: provider-neutral contracts for agents, LLM gateways,
+  tools, and future transaction systems.
+- `src/opennego/adapters/`: concrete provider integrations. LiteLLM belongs
+  here, not in core environment code.
 - `src/opennego/tools/`: tool interfaces and concrete tool implementations.
 - `src/opennego/agents/`: baseline agents used for deterministic smoke tests.
 - `src/opennego/metrics.py`: run-level evaluation metrics.
@@ -25,11 +29,20 @@ python -m opennego.cli --products-file examples/data/products.json --market-comp
 pytest
 ```
 
+For LLM-backed agents, install the optional gateway dependency:
+
+```bash
+python -m pip install -e ".[dev,llm]"
+```
+
 ## Coding Style
 
 Use Python 3.9+ and keep the core package provider-neutral. Prefer explicit
 dataclasses, small pure functions, and deterministic tests. Do not bind the
 environment layer directly to a specific LLM provider or web API.
+
+Use ports before adapters. Core code may depend on `opennego.ports`; provider
+SDKs such as LiteLLM should only be imported lazily from `opennego.adapters`.
 
 Tool calls are part of the research surface. Preserve provenance, arguments,
 results, and whether the event is private to one agent or visible to both.

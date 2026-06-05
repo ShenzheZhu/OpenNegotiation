@@ -52,6 +52,8 @@ tool-call cost.
 ## Design Principles
 
 - Keep the environment provider-neutral.
+- Route LLM-backed agents through a formal `LLMPort`; use LiteLLM as the
+  preferred gateway adapter for provider coverage, routing, and cost metadata.
 - Keep tool traces auditable.
 - Separate private information from public dialogue.
 - Make no-tool and tool-using settings directly comparable.
