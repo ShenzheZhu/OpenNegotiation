@@ -38,6 +38,50 @@ Return one `AgentAction`:
 Private tool events are only visible to the caller during the run, but all tool
 events are written to artifacts for audit.
 
+## Config Runner Registration
+
+Python API users can run custom `AgentPort` implementations through the same
+config runner used by no-key benchmark runs:
+
+```python
+from opennego.runner import run_experiment_config
+from opennego.schema import Role
+
+
+def my_buyer_factory(role, params):
+    if role != Role.BUYER:
+        raise ValueError("my_buyer requires buyer role")
+    return MyBuyerAgent(
+        name=params.get("name", "my_buyer"),
+        max_price=float(params["max_price"]),
+    )
+
+
+summary = run_experiment_config(
+    "configs/my_eval.yaml",
+    agent_factories={"my_buyer": my_buyer_factory},
+)
+```
+
+The config references the registered factory key and passes optional params:
+
+```json
+{
+  "agents": {
+    "buyer": {
+      "kind": "my_buyer",
+      "params": {"name": "team_a_buyer", "max_price": 760}
+    },
+    "seller": {"kind": "scripted_seller"}
+  }
+}
+```
+
+Factories receive `(role, params)` and must return a fresh agent with matching
+`role`, a non-empty `name`, and callable `act(context)`. The runner validates
+unknown kinds and wrong-role agents before creating run outputs. The generated
+manifest records the configured `kind` and runtime agent `name`.
+
 ## Option 2: Use `LLMNegotiationAgent`
 
 Use the built-in LLM baseline when your model can emit the OpenNego structured
@@ -91,9 +135,9 @@ Tool-aware agents can return:
 No-tool agents cannot call tools even when the environment has them. The parser
 rejects disallowed tool calls and triggers the repair prompt.
 
-## Current Runner Integration
+## Current Runner Boundary
 
-The config runner currently instantiates built-in scripted baselines. External
-teams can integrate custom agents by importing the Python API and constructing a
-`NegotiationEnvironment` directly. Runner-level custom agent registration is a
-planned extension after the first benchmark handoff.
+The CLI intentionally does not import arbitrary Python modules. Use the Python
+API registration path above for custom local agents. Provider-backed LLM agents
+should still stay behind `LLMPort` and adapter modules rather than importing
+provider SDKs into the environment layer.

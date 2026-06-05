@@ -90,8 +90,8 @@ the base sandbox protocol.
 
 ## Current Known Limits
 
-- Runner-level custom agent registration is not implemented yet; external
-  teams can currently integrate custom agents through the Python API.
+- Python API users can register custom runner agent factories, but the CLI does
+  not load arbitrary Python modules.
 - Strategy sparring instantiates selected profiles as deterministic fixture
   counterparties, not live provider-backed model opponents.
 - Hosted marketplace, live marketplace collection, and provider-backed coaching
