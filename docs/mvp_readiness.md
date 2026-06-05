@@ -94,6 +94,9 @@ Implemented:
   demo outputs.
 - MVP demo bundle validation CLI with schema drift, artifact existence, and
   workflow-order checks.
+- One-command `opennego handoff` external package with package README,
+  `opennego.external_handoff.v1` manifest, MVP bundle validation, market fixture
+  validation, marketplace validation, and role-swapped coverage artifacts.
 - Shared no-key workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.
@@ -134,6 +137,7 @@ git diff --check
 opennego run-models --output-dir /tmp/opennego-live-five-fixed-20260605 --max-turns 3 --max-tokens 220
 opennego mvp-demo --output-dir "$tmpdir/mvp" --report "$tmpdir/mvp.html"
 opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
+opennego handoff --output-dir "$tmpdir/handoff"
 opennego train --output-dir "$tmpdir/training" --opponent-profile seller_hardline_anchor_v1 --parent-strategy-id buyer_baseline
 opennego apply-strategy --candidate "$tmpdir/training/strategy_candidate.json" --output "$tmpdir/training/manual_strategy_config.json" --strategy-id buyer_baseline_manual_v1
 opennego validate-marketplace --registry examples/data/npc_strategies.json
@@ -143,10 +147,12 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 130 passed.
+- `pytest -q`: 132 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - MVP demo bundle validation smoke: passed with no errors or warnings.
+- External handoff package smoke: passed and wrote
+  `opennego.external_handoff.v1`.
 - Training loop smoke: passed and wrote `opennego.training_loop.v1` plus
   `opennego.strategy_config.v1`.
 - Strategy application smoke: passed and wrote `opennego.strategy_config.v1`.

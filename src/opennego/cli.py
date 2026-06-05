@@ -23,6 +23,7 @@ from opennego.evolution import (
     write_strategy_candidate,
     write_strategy_comparison,
 )
+from opennego.handoff import run_external_handoff_package
 from opennego.learning import (
     DEFAULT_NPC_REGISTRY_PATH,
     registry_listing,
@@ -103,6 +104,8 @@ def main(argv: list[str] | None = None) -> int:
         return _validate_demo_bundle_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
         return _mvp_demo_main(argv[1:])
+    if argv and argv[0] == "handoff":
+        return _handoff_main(argv[1:])
     if argv and argv[0] == "train":
         return _train_main(argv[1:])
     if argv and argv[0] == "spar":
@@ -768,6 +771,59 @@ def _mvp_demo_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps(to_jsonable(summary), indent=2))
     return 0 if summary.benchmark_failed == 0 else 1
+
+
+def _handoff_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Generate a validated no-key external handoff package."
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="runs/external_handoff",
+        help="Directory for the handoff package.",
+    )
+    parser.add_argument(
+        "--config",
+        default="configs/real_market_demo.yaml",
+        help="Fixture config reused for MVP and role-swapped runs.",
+    )
+    parser.add_argument(
+        "--registry",
+        default=str(DEFAULT_NPC_REGISTRY_PATH),
+        help="Path to the local NPC strategy registry to validate.",
+    )
+    parser.add_argument(
+        "--products-file",
+        default="examples/data/real_market_products.json",
+        help="Products fixture file to validate for handoff.",
+    )
+    parser.add_argument(
+        "--market-comps-file",
+        default="examples/data/real_market_comps.json",
+        help="Market comparables fixture file to validate for handoff.",
+    )
+    parser.add_argument(
+        "--participant-id",
+        default="baseline_strategy",
+        help="Stable participant id used for the role-swapped handoff track.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        summary = run_external_handoff_package(
+            output_dir=args.output_dir,
+            config_path=args.config,
+            registry_path=args.registry,
+            products_file=args.products_file,
+            market_comps_file=args.market_comps_file,
+            participant_id=args.participant_id,
+        )
+    except (OSError, ValueError, KeyError, ConfigValidationError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(summary), indent=2))
+    return 0 if summary.status == "passed" else 1
 
 
 def _train_main(argv: list[str] | None = None) -> int:

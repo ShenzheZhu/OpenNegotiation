@@ -118,6 +118,17 @@ artifacts are missing or their schema versions drift.
 A curated no-key MVP page is available at
 `examples/reports/opennego_mvp_demo.html`.
 
+For an external no-key handoff package:
+
+```bash
+opennego handoff --output-dir /tmp/opennego-handoff
+```
+
+This writes `handoff_manifest.json`, a package `README.md`, MVP demo artifacts,
+validation JSON, and a small role-swapped benchmark track. The manifest uses
+schema `opennego.external_handoff.v1` and records whether the no-key handoff
+passed its bundle, market fixture, marketplace, and role-coverage checks.
+
 You can also inspect the local NPC strategy marketplace directly:
 
 ```bash

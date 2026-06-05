@@ -71,6 +71,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added `opennego validate-demo-bundle` for no-key MVP bundle release checks
   across manifest schema, artifact existence, workflow order, and artifact
   schema versions.
+- Added `opennego handoff` for a one-command external no-key package with
+  package README, MVP artifacts, validation JSON, role-swapped artifacts, and
+  `opennego.external_handoff.v1` manifest.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   leaderboard summaries, artifact-backed reports, battle reports, strategy
   candidates, sparring reruns, comparison artifacts, and local marketplace
@@ -108,10 +111,12 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 130 passed after adding strategy config application.
+- `pytest -q`: 132 passed after adding external handoff packaging.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
+- `opennego handoff`: passing with MVP, market, marketplace, and role-swap
+  validations.
 - `opennego train` no-key training loop: passing and writing strategy configs.
 - `opennego apply-strategy`: passing for candidate-to-config application.
 - `opennego validate-marketplace`: passing for the curated registry and an
