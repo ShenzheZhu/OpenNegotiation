@@ -104,8 +104,7 @@
     .diagram-heading { fill: var(--ink); font-size: 16px; font-weight: 800; letter-spacing: 0; }
     .diagram-text { fill: var(--muted); font-size: 12px; letter-spacing: 0; }
     .diagram-small { fill: var(--muted); font-size: 12px; letter-spacing: 0; }
-    .architecture-svg g[data-box] .diagram-text,
-    .architecture-svg g[data-box] .diagram-small { text-anchor: middle; }
+    .architecture-svg g[data-box] text { text-anchor: middle; }
     .diagram-arrow { stroke: var(--accent-dark); stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
     .diagram-arrow-soft { stroke: #b7aaa1; stroke-width: 1.7; fill: none; marker-end: url(#arrowheadSoft); }
     .diagram-exchange { stroke: var(--accent-dark); stroke-width: 1.6; fill: none; marker-end: url(#arrowheadSmall); stroke-linecap: round; stroke-linejoin: round; }
@@ -326,5 +325,22 @@
     </section>
 
   </main>
+  <script>
+    (() => {
+      document.querySelectorAll('.architecture-svg g[data-box]').forEach((group) => {
+        const rect = group.querySelector('rect');
+        if (!rect) return;
+
+        const x = Number(rect.getAttribute('x'));
+        const width = Number(rect.getAttribute('width'));
+        const centerX = x + width / 2;
+
+        group.querySelectorAll('text').forEach((text) => {
+          text.setAttribute('x', String(centerX));
+          text.setAttribute('text-anchor', 'middle');
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
