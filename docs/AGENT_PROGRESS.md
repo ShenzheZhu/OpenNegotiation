@@ -107,8 +107,14 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Real provider execution requires optional LiteLLM dependencies and provider
   credentials in environment variables.
 - Optional LiteLLM dependencies are installed in the local `.venv`.
-- The current local environment did not expose provider API keys through shell
-  environment variables when checked.
+- OpenRouter and OpenAI credentials are available from local Keychain under the
+  OpenNegotiation service names; live commands inject them into child-process
+  environment variables at execution time.
+- Issue `#100` ran a fresh bounded OpenRouter validation on 2026-06-05:
+  two-model `opennego run-models`, live `llm_buyer` / `llm_seller` config
+  runner, live profile-backed NPC sparring, strategy evolution, marketplace
+  validation, and external training adapter validation all completed without
+  writing credentials to the repository.
 
 ### Issue And PR State
 
@@ -137,6 +143,10 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - `opennego role-swap`: passing with buyer/seller role coverage 1.0.
 - `opennego arena-plan`: passing with reciprocal buyer/seller matchups and
   `opennego.arena_plan.v1`.
+- Bounded live OpenRouter validation for issue `#100`: passing across
+  `run-models`, config runner LLM agents, profile-backed LLM NPC sparring,
+  strategy evolution, local marketplace validation, and external training
+  adapter validation.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next

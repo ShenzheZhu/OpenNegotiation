@@ -24,9 +24,10 @@ with participant role-coverage summaries and buyer/seller role-track summaries.
 One-command MVP demo bundles can be validated independently with
 `opennego validate-demo-bundle`.
 
-A small live five-model OpenRouter smoke was verified earlier on 2026-06-05.
-It was not rerun for this docs refresh; live provider execution remains an
-optional demo path that requires local credentials.
+A fresh bounded OpenRouter validation was run on 2026-06-05 for issue `#100`.
+Live provider execution remains an optional demo path that requires local
+credentials, but the current LiteLLM/OpenRouter paths were exercised with
+Keychain-supplied credentials and low turn/token budgets.
 
 ## Website / Demo Surfaces
 
@@ -183,21 +184,24 @@ Latest local result on this readiness branch:
 - Role-swapped benchmark smoke: passed with buyer/seller role coverage 1.0.
 - Secret-pattern scan: no matches.
 
-Historical live provider status:
+Current live provider status:
 
 - OpenRouter credentials were supplied from local Keychain at command time.
-- No API keys were written to the repository or generated live artifacts.
-- Live five-model run earlier on 2026-06-05: 5 completed, 0 failed.
+- No API keys were written to the repository.
+- Live traces and generated validation artifacts were kept in local `/tmp`
+  outputs and were not committed.
+- OpenRouter model catalog access succeeded; the validation used currently
+  available low-cost model IDs.
 
-Live run summary:
+Fresh live run summary for issue `#100`:
 
-| Model | Status | Outcome | Deal price | LLM calls | Total tokens | Cost USD |
-| --- | --- | --- | --- | --- | --- | --- |
-| `openrouter/openai/gpt-5.4-pro` | completed | timeout | - | 4 | 3500 | 0.237 |
-| `openrouter/anthropic/claude-opus-4.8` | completed | timeout | - | 2 | 2937 | 0.019025 |
-| `openrouter/google/gemini-3.1-pro-preview` | completed | timeout | - | 4 | 3642 | 0.015924 |
-| `openrouter/x-ai/grok-4.3` | completed | deal | 550.0 | 1 | 1011 | 0.0015356 |
-| `openrouter/qwen/qwen3-235b-a22b` | completed | timeout | - | 4 | 7220 | 0.009732 |
+| Path | Models / profile | Result | Artifact evidence |
+| --- | --- | --- | --- |
+| `opennego run-models` | `openrouter/openai/gpt-4.1-nano`, `openrouter/openai/gpt-4.1-mini` | 2 completed, 0 failed; both reached deals | `summary.json`, per-run `manifest.json`, `scenario.json`, `trace.jsonl`, `metrics.json`, leaderboard JSON, HTML report |
+| `opennego run --config` | live `llm_buyer` + live `llm_seller` using `openrouter/openai/gpt-4.1-nano` | 1 completed, 0 failed; timeout outcome after 2 turns | benchmark artifacts plus HTML report |
+| `opennego spar` | `seller_hardline_anchor_v1` as `litellm_profile_npc:openrouter/openai/gpt-4.1-nano` | 1 profile completed, 0 failed; 3 benchmark slices completed | `sparring_suite.json`, `battle_report.json`, HTML report |
+| Strategy evolution | live sparring `battle_report.json` | candidate and strategy config generated | `opennego.strategy_evolution.v1`, `opennego.strategy_config.v1` |
+| Marketplace / adapter | live-derived strategy candidate/config | marketplace validation and external adapter validation passed | `opennego.strategy_marketplace_profile.v1`, `opennego.external_training_adapter.v1` |
 
 ## Issue And PR Status
 
@@ -220,7 +224,7 @@ Readiness conclusion:
   verified.
 - Architecture: documented and guarded by tests.
 - Tests: passing locally.
-- Live provider smoke: historically verified with five OpenRouter models, not
-  rerun in this docs refresh.
+- Live provider smoke: freshly verified with bounded OpenRouter runs on issue
+  `#100`; this is smoke evidence, not a batch benchmark.
 - Hosted/public site: not complete until the GitHub Pages/private-repo blocker
   is resolved or another hosting target is selected.
