@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OpenNego | Agent Improvement Toolkit</title>
+  <title>OpenNegotiation | Agent Improvement Toolkit</title>
   <style>
     :root {
       --ink: #102126;
@@ -175,7 +175,7 @@
 <body>
   <header class="topbar">
     <nav class="nav">
-      <a class="brand" href="./">OpenNego</a>
+      <a class="brand" href="./">OpenNegotiation</a>
       <div class="navlinks">
         <a href="index.html">Overview</a>
         <a href="leaderboard.html">Leaderboard</a>
@@ -205,7 +205,7 @@
       <div class="section-head">
         <div>
           <h2>Connect Your Agent</h2>
-          <p class="section-copy">OpenNego should meet users where they are: prompt experiments, local agent code, or hosted internal agents. The base protocol stays fixed across all three modes.</p>
+          <p class="section-copy">OpenNegotiation should meet users where they are: prompt experiments, local agent code, or hosted internal agents. The base protocol stays fixed across all three modes.</p>
         </div>
         <span class="pill strong">base fixed, strategy editable</span>
       </div>
@@ -214,15 +214,15 @@
           <div class="mode-top"><span class="avatar">P</span><span class="pill">fastest</span></div>
           <h3>Prompt-only Agent</h3>
           <p class="muted">Paste a strategy prompt and run it against NPC packs. Best for prompt iteration and paper demos.</p>
-          <div class="code-block">opennego train prompt \
+          <div class="code-block">opennegotiation train prompt \
   --strategy buyer_strategy.md \
   --suite seller_basics</div>
         </div>
         <div class="card mode-card">
           <div class="mode-top"><span class="avatar sdk">S</span><span class="pill">SDK</span></div>
           <h3>Local AgentPort</h3>
-          <p class="muted">Implement the OpenNego agent interface and run deterministic sparring locally.</p>
-          <div class="code-block">opennego spar \
+          <p class="muted">Implement the OpenNegotiation agent interface and run deterministic sparring locally.</p>
+          <div class="code-block">opennegotiation spar \
   --agent my_agent.py:Agent \
   --suite hidden_fees \
   --rounds 5</div>
@@ -230,8 +230,8 @@
         <div class="card mode-card">
           <div class="mode-top"><span class="avatar api">A</span><span class="pill">hosted</span></div>
           <h3>Hosted Endpoint</h3>
-          <p class="muted">Expose an action endpoint for internal agents without moving private model code into OpenNego.</p>
-          <div class="code-block">opennego spar \
+          <p class="muted">Expose an action endpoint for internal agents without moving private model code into OpenNegotiation.</p>
+          <div class="code-block">opennegotiation spar \
   --endpoint https://agent.example/action \
   --suite stale_comps</div>
         </div>
@@ -274,7 +274,7 @@
         <div class="card">
           <h3>Generated Strategy Patch</h3>
           <div class="code-block">Role strategy patch for buyer:
-Keep OpenNego base protocol fixed. Edit only the strategy layer.
+Keep OpenNegotiation base protocol fixed. Edit only the strategy layer.
 
 1. Never exceed market_reference * 1.05 unless a written exception is justified by condition, bundle value, warranty, or time preference.
 2. Before accepting, compute all-in price: item + shipping + fees + tax.
@@ -293,14 +293,14 @@ Keep OpenNego base protocol fixed. Edit only the strategy layer.
       <div class="grid-2">
         <div class="card">
           <h3>CLI Loop</h3>
-          <div class="code-block">opennego spar --agent my_agent.py:Agent --suite seller_basics --rounds 5
-opennego diagnose --run runs/latest
-opennego patch-strategy --run runs/latest --out strategy_patch.md
-opennego spar --agent my_agent.py:Agent --suite seller_basics --strategy strategy_patch.md</div>
+          <div class="code-block">opennegotiation spar --agent my_agent.py:Agent --suite seller_basics --rounds 5
+opennegotiation diagnose --run runs/latest
+opennegotiation patch-strategy --run runs/latest --out strategy_patch.md
+opennegotiation spar --agent my_agent.py:Agent --suite seller_basics --strategy strategy_patch.md</div>
         </div>
         <div class="card">
           <h3>Python SDK Sketch</h3>
-          <div class="code-block">from opennego.training import SparringSuite
+          <div class="code-block">from opennegotiation.training import SparringSuite
 
 suite = SparringSuite.load("seller_basics")
 run = suite.run(agent=my_agent, rounds=5)
@@ -311,7 +311,7 @@ patch = report.strategy_patch(role="buyer")</div>
     </section>
 
     <footer>
-      Generated from OpenNego benchmark and policy-learning artifacts. This is a product-facing toolkit sketch, not a hosted training service.
+      Generated from OpenNegotiation benchmark and policy-learning artifacts. This is a product-facing toolkit sketch, not a hosted training service.
     </footer>
   </main>
 </body>
