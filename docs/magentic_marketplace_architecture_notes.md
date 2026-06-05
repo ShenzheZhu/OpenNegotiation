@@ -4,7 +4,7 @@ Reviewed sources:
 
 - Paper: [Magentic Marketplace: An Open-Source Environment for Studying Agentic
   Markets](https://arxiv.org/abs/2510.25779)
-- Repository: [microsoft/multi-agent-marketplace](https://github.com/microsoft/multi-agent-marketplace)
+- Repository: [microsoft/multi-agent-marketplace][magentic-repo]
 - Microsoft Foundry Labs overview:
   [Magentic Marketplace](https://labs.ai.azure.com/innovations/magentic-marketplace/)
 
@@ -236,3 +236,5 @@ The fastest credible path for next-week external testing is:
 
 Server mode, Postgres, and a UI should remain planned but not on the critical
 path for the first serious benchmark handoff.
+
+[magentic-repo]: https://github.com/microsoft/multi-agent-marketplace
