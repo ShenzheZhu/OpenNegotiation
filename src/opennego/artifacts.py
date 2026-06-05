@@ -18,6 +18,7 @@ from opennego.schema import (
     RunResult,
     Scenario,
     ToolCall,
+    TransactionOutcome,
     TranscriptEvent,
 )
 
@@ -165,6 +166,7 @@ class TraceEventRecord:
     offer: Offer | None = None
     tool_call: ToolCall | None = None
     tool_result: Mapping[str, Any] | None = None
+    transaction: TransactionOutcome | None = None
     error: Mapping[str, Any] | None = None
 
     @classmethod
@@ -196,6 +198,7 @@ class TraceEventRecord:
             offer=event.offer,
             tool_call=event.tool_call,
             tool_result=event.tool_result,
+            transaction=event.transaction,
             error=error,
         )
 
@@ -204,6 +207,7 @@ class TraceEventRecord:
         _require_version(data)
         offer_data = data.get("offer")
         tool_call_data = data.get("tool_call")
+        transaction_data = data.get("transaction")
         return cls(
             schema_version=ARTIFACT_SCHEMA_VERSION,
             run_id=_required_str(data, "run_id"),
@@ -218,6 +222,7 @@ class TraceEventRecord:
             offer=_offer_from_mapping(offer_data) if offer_data else None,
             tool_call=_tool_call_from_mapping(tool_call_data) if tool_call_data else None,
             tool_result=data.get("tool_result"),
+            transaction=_transaction_from_mapping(transaction_data) if transaction_data else None,
             error=data.get("error"),
         )
 
@@ -231,6 +236,7 @@ class TraceEventRecord:
             offer=self.offer,
             tool_call=self.tool_call,
             tool_result=self.tool_result,
+            transaction=self.transaction,
             private=self.private,
         )
 
@@ -274,7 +280,10 @@ class MetricReport:
             outcome=_required_str(data, "outcome"),
             deal_price=float(deal_price) if deal_price is not None else None,
             completed_turns=int(_required_number(data, "completed_turns")),
-            metrics={key: float(value) for key, value in _required_mapping(data, "metrics").items()},
+            metrics={
+                key: float(value)
+                for key, value in _required_mapping(data, "metrics").items()
+            },
         )
 
 
@@ -493,6 +502,27 @@ def _tool_call_from_mapping(data: Any) -> ToolCall:
     )
 
 
+def _transaction_from_mapping(data: Any) -> TransactionOutcome:
+    if not isinstance(data, Mapping):
+        raise ArtifactValidationError("transaction: expected object")
+    return TransactionOutcome(
+        status=_required_str(data, "status"),
+        negotiated_price=_required_number(data, "negotiated_price"),
+        buyer_total_cost=_required_number(data, "buyer_total_cost"),
+        seller_net_revenue=_required_number(data, "seller_net_revenue"),
+        shipping_cost=_optional_number(data, "shipping_cost"),
+        tax=_optional_number(data, "tax"),
+        escrow_fee=_optional_number(data, "escrow_fee"),
+        payment_fee=_optional_number(data, "payment_fee"),
+        seller_fee=_optional_number(data, "seller_fee"),
+        return_risk=_optional_number(data, "return_risk"),
+        reputation_risk=_optional_number(data, "reputation_risk"),
+        risk_exposure=_optional_number(data, "risk_exposure"),
+        failure_reason=data.get("failure_reason"),
+        metadata=_optional_mapping(data, "metadata"),
+    )
+
+
 def _deal_price_from_trace(trace_records: Sequence[TraceEventRecord]) -> float | None:
     latest_offer: Offer | None = None
     latest_offer_role: Role | None = None
@@ -507,6 +537,13 @@ def _deal_price_from_trace(trace_records: Sequence[TraceEventRecord]) -> float |
         ):
             return latest_offer.price
     return None
+
+
+def _optional_number(data: Mapping[str, Any], key: str) -> float:
+    value = data.get(key, 0.0)
+    if not isinstance(value, (int, float)):
+        raise ArtifactValidationError(f"{key}: expected number")
+    return float(value)
 
 
 def _git(args: Sequence[str]) -> str | None:

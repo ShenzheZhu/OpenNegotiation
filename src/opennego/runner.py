@@ -22,6 +22,7 @@ from opennego.environment import ToolRuntimeConfig
 from opennego.ports import AgentPort, ToolPort
 from opennego.schema import Product, Role, Scenario
 from opennego.tools import MarketPriceTool
+from opennego.transactions import FixtureTransactionSimulator
 
 EXPERIMENT_CONFIG_VERSION = "opennego.experiment.v1"
 
@@ -78,6 +79,7 @@ class ExperimentConfig:
     seeds: tuple[int | None, ...] = (None,)
     resume: bool = False
     fail_fast: bool = True
+    transaction: "TransactionConfig | None" = None
     metadata: Mapping[str, Any] | None = None
 
 
@@ -90,7 +92,24 @@ class PreparedRun:
     tool_regime: ToolRegimeConfig
     tools: tuple[ToolPort, ...]
     tool_configs: tuple[ToolRuntimeConfig, ...]
+    transaction_simulator: FixtureTransactionSimulator | None
     seed: int | None
+
+
+@dataclass(frozen=True)
+class TransactionConfig:
+    kind: str = "fixture"
+    enabled: bool = False
+    shipping_cost: float = 0.0
+    tax_rate: float = 0.0
+    escrow_fee: float = 0.0
+    payment_fee_rate: float = 0.0
+    seller_fee_rate: float = 0.0
+    return_risk: float = 0.0
+    reputation_risk: float = 0.0
+    payment_success: bool = True
+    failure_reason: str | None = None
+    metadata: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -156,6 +175,7 @@ def load_experiment_config(path: str | Path) -> ExperimentConfig:
 
     resume = _optional_bool(data, "resume", False)
     fail_fast = _optional_bool(data, "fail_fast", True)
+    transaction = _parse_transaction_config(data.get("transaction"))
     metadata = _optional_mapping(data, "metadata")
     return ExperimentConfig(
         name=name,
@@ -166,6 +186,7 @@ def load_experiment_config(path: str | Path) -> ExperimentConfig:
         seeds=seeds,
         resume=resume,
         fail_fast=fail_fast,
+        transaction=transaction,
         metadata=metadata,
     )
 
@@ -257,6 +278,9 @@ def prepare_runs(config: ExperimentConfig) -> tuple[PreparedRun, ...]:
                         tool_regime=tool_regime,
                         tools=tools,
                         tool_configs=tool_configs,
+                        transaction_simulator=_build_transaction_simulator(
+                            config.transaction
+                        ),
                         seed=seed,
                     )
                 )
@@ -272,6 +296,7 @@ def _execute_prepared_run(prepared_run: PreparedRun, config: ExperimentConfig):
         seller=seller,
         tools=prepared_run.tools,
         tool_configs=prepared_run.tool_configs,
+        transaction_simulator=prepared_run.transaction_simulator,
     )
     result = env.run()
     write_run_artifacts(
@@ -287,6 +312,7 @@ def _execute_prepared_run(prepared_run: PreparedRun, config: ExperimentConfig):
         tool_regime=_tool_regime_metadata(prepared_run.tool_regime),
         metadata={
             "experiment_name": config.name,
+            "transaction": _transaction_metadata(config.transaction),
             **dict(config.metadata or {}),
         },
     )
@@ -563,6 +589,68 @@ def _parse_agents(data: Mapping[str, Any]) -> AgentPairConfig:
         buyer_kind=_required_str(buyer, "kind"),
         seller_kind=_required_str(seller, "kind"),
     )
+
+
+def _parse_transaction_config(data: Any) -> TransactionConfig | None:
+    if data is None:
+        return None
+    if not isinstance(data, Mapping):
+        raise ConfigValidationError("transaction: expected object")
+    kind = _optional_str(data, "kind") or "fixture"
+    if kind != "fixture":
+        raise ConfigValidationError(f"transaction.kind: unsupported kind {kind!r}")
+    return TransactionConfig(
+        kind=kind,
+        enabled=_optional_bool(data, "enabled", True),
+        shipping_cost=_optional_float(data, "shipping_cost") or 0.0,
+        tax_rate=_optional_float(data, "tax_rate") or 0.0,
+        escrow_fee=_optional_float(data, "escrow_fee") or 0.0,
+        payment_fee_rate=_optional_float(data, "payment_fee_rate") or 0.0,
+        seller_fee_rate=_optional_float(data, "seller_fee_rate") or 0.0,
+        return_risk=_optional_float(data, "return_risk") or 0.0,
+        reputation_risk=_optional_float(data, "reputation_risk") or 0.0,
+        payment_success=_optional_bool(data, "payment_success", True),
+        failure_reason=_optional_str(data, "failure_reason"),
+        metadata=_optional_mapping(data, "metadata"),
+    )
+
+
+def _build_transaction_simulator(
+    config: TransactionConfig | None,
+) -> FixtureTransactionSimulator | None:
+    if config is None or not config.enabled:
+        return None
+    return FixtureTransactionSimulator(
+        shipping_cost=config.shipping_cost,
+        tax_rate=config.tax_rate,
+        escrow_fee=config.escrow_fee,
+        payment_fee_rate=config.payment_fee_rate,
+        seller_fee_rate=config.seller_fee_rate,
+        return_risk=config.return_risk,
+        reputation_risk=config.reputation_risk,
+        payment_success=config.payment_success,
+        failure_reason=config.failure_reason,
+        metadata=dict(config.metadata or {}),
+    )
+
+
+def _transaction_metadata(config: TransactionConfig | None) -> Mapping[str, Any]:
+    if config is None:
+        return {"enabled": False}
+    return {
+        "kind": config.kind,
+        "enabled": config.enabled,
+        "shipping_cost": config.shipping_cost,
+        "tax_rate": config.tax_rate,
+        "escrow_fee": config.escrow_fee,
+        "payment_fee_rate": config.payment_fee_rate,
+        "seller_fee_rate": config.seller_fee_rate,
+        "return_risk": config.return_risk,
+        "reputation_risk": config.reputation_risk,
+        "payment_success": config.payment_success,
+        "failure_reason": config.failure_reason,
+        "metadata": dict(config.metadata or {}),
+    }
 
 
 def _parse_seeds(value: Any) -> tuple[int | None, ...]:

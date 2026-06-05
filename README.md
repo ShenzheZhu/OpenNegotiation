@@ -116,7 +116,9 @@ for architecture lessons from recent agentic marketplace work and how those
 lessons translate into OpenNego-specific design choices. See
 [docs/experiment_runner.md](docs/experiment_runner.md) for config-driven
 benchmark execution and [docs/llm_baselines.md](docs/llm_baselines.md) for the
-structured action contract used by LLM-backed agents.
+structured action contract used by LLM-backed agents. See
+[docs/transaction_simulator.md](docs/transaction_simulator.md) for the first
+fixture-backed settlement model.
 
 ## Status
 

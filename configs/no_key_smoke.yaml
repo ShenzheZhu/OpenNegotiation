@@ -4,6 +4,17 @@
   "output_dir": "runs/no_key_smoke",
   "resume": true,
   "fail_fast": true,
+  "transaction": {
+    "kind": "fixture",
+    "enabled": true,
+    "shipping_cost": 18.0,
+    "tax_rate": 0.08,
+    "escrow_fee": 4.0,
+    "payment_fee_rate": 0.02,
+    "seller_fee_rate": 0.05,
+    "return_risk": 0.03,
+    "reputation_risk": 0.02
+  },
   "seeds": [7],
   "agents": {
     "buyer": {

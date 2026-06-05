@@ -10,6 +10,7 @@ from typing import Any, Mapping, Sequence
 class Role(str, Enum):
     BUYER = "buyer"
     SELLER = "seller"
+    SYSTEM = "system"
 
 
 class ActionType(str, Enum):
@@ -18,6 +19,7 @@ class ActionType(str, Enum):
     ACCEPT = "accept"
     REJECT = "reject"
     MESSAGE = "message"
+    TRANSACTION = "transaction"
 
 
 def parse_price(value: Any) -> float:
@@ -156,6 +158,7 @@ class TranscriptEvent:
     offer: Offer | None = None
     tool_call: ToolCall | None = None
     tool_result: Mapping[str, Any] | None = None
+    transaction: "TransactionOutcome | None" = None
     private: bool = False
 
 
@@ -176,3 +179,26 @@ class RunResult:
     deal_price: float | None
     completed_turns: int
     metrics: Mapping[str, float]
+    transaction: "TransactionOutcome | None" = None
+
+
+@dataclass(frozen=True)
+class TransactionOutcome:
+    status: str
+    negotiated_price: float
+    buyer_total_cost: float
+    seller_net_revenue: float
+    shipping_cost: float = 0.0
+    tax: float = 0.0
+    escrow_fee: float = 0.0
+    payment_fee: float = 0.0
+    seller_fee: float = 0.0
+    return_risk: float = 0.0
+    reputation_risk: float = 0.0
+    risk_exposure: float = 0.0
+    failure_reason: str | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.status not in {"completed", "failed"}:
+            raise ValueError("transaction status must be 'completed' or 'failed'")

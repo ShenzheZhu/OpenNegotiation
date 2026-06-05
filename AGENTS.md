@@ -16,6 +16,7 @@ OpenNego uses a `src/` Python package layout.
 - `src/opennego/adapters/`: concrete provider integrations. LiteLLM belongs
   here, not in core environment code.
 - `src/opennego/tools/`: tool interfaces and concrete tool implementations.
+- `src/opennego/transactions/`: deterministic transaction simulators.
 - `src/opennego/agents/`: scripted and LLM-backed baseline agents.
 - `src/opennego/metrics.py`: run-level evaluation metrics.
 - `examples/data/`: small fixtures for local demos.

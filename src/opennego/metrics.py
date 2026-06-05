@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from .schema import ActionType, Scenario, TranscriptEvent
+from .schema import ActionType, Scenario, TransactionOutcome, TranscriptEvent
 
 
 def compute_metrics(
@@ -37,6 +37,8 @@ def compute_metrics(
         "public_tool_call_count": float(public_tool_call_count),
         "tool_evidence_event_count": float(tool_evidence_event_count),
     }
+    transaction = _latest_transaction(events)
+    metrics.update(_transaction_metrics(transaction))
 
     if deal_price is None:
         metrics.update(
@@ -60,3 +62,37 @@ def compute_metrics(
         }
     )
     return metrics
+
+
+def _latest_transaction(events: Sequence[TranscriptEvent]) -> TransactionOutcome | None:
+    for event in reversed(events):
+        if event.action_type == ActionType.TRANSACTION and event.transaction is not None:
+            return event.transaction
+    return None
+
+
+def _transaction_metrics(transaction: TransactionOutcome | None) -> dict[str, float]:
+    if transaction is None:
+        return {
+            "transaction_completed_rate": 0.0,
+            "failed_transaction_rate": 0.0,
+            "buyer_total_transaction_cost": 0.0,
+            "seller_net_transaction_revenue": 0.0,
+            "transaction_risk_exposure": 0.0,
+            "transaction_shipping_cost": 0.0,
+            "transaction_tax": 0.0,
+            "transaction_fees": 0.0,
+        }
+    completed = transaction.status == "completed"
+    return {
+        "transaction_completed_rate": 1.0 if completed else 0.0,
+        "failed_transaction_rate": 0.0 if completed else 1.0,
+        "buyer_total_transaction_cost": transaction.buyer_total_cost,
+        "seller_net_transaction_revenue": transaction.seller_net_revenue,
+        "transaction_risk_exposure": transaction.risk_exposure,
+        "transaction_shipping_cost": transaction.shipping_cost,
+        "transaction_tax": transaction.tax,
+        "transaction_fees": (
+            transaction.escrow_fee + transaction.payment_fee + transaction.seller_fee
+        ),
+    }

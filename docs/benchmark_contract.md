@@ -60,7 +60,9 @@ runner configs can add fields without changing the core environment API.
 
 - public dialogue actions: `message`, `offer`, `accept`, `reject`
 - private tool actions: `tool_call`
+- system settlement actions: `transaction`
 - tool result summaries and provenance
+- transaction outcomes and cost/risk breakdowns
 - parser, judge, and error events in future extensions
 
 Required fields per record:
@@ -79,6 +81,17 @@ Tool events must preserve `tool_call`, `tool_result`, and `error` when
 available. Private tool events are visible in the artifact for auditability, but
 the environment still hides them from the counterparty during the run.
 
+Transaction events use `action_type: "transaction"` and preserve a
+`transaction` object with:
+
+- `status`
+- `negotiated_price`
+- `buyer_total_cost`
+- `seller_net_revenue`
+- shipping, tax, escrow, payment, and seller fee fields
+- return, reputation, and aggregate risk fields
+- optional `failure_reason`
+
 ## Metrics
 
 `metrics.json` records the outcome, deal price, completed public turns, and
@@ -89,10 +102,23 @@ Current core metrics:
 
 - `deal_rate`
 - `tool_call_count`
+- `tool_success_count`
+- `tool_failure_count`
+- `private_tool_call_count`
+- `public_tool_call_count`
+- `tool_evidence_event_count`
 - `buyer_savings_vs_list`
 - `buyer_budget_slack`
 - `seller_profit_vs_reservation`
 - `normalized_deal_price`
+- `transaction_completed_rate`
+- `failed_transaction_rate`
+- `buyer_total_transaction_cost`
+- `seller_net_transaction_revenue`
+- `transaction_risk_exposure`
+- `transaction_shipping_cost`
+- `transaction_tax`
+- `transaction_fees`
 
 ## Compatibility
 
