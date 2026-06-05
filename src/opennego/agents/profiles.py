@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from opennego.agents.scripted import ScriptedSeller, ToolAwareBuyer
+from opennego.agents.user_strategy import make_strategy_candidate_user_agent
+from opennego.evolution import StrategyCandidate
 from opennego.learning import StrategyProfile
 from opennego.schema import ActionType, AgentAction, AgentContext, Role, TranscriptEvent
 
@@ -13,19 +15,30 @@ def make_profile_agent_pair(
     *,
     profile: StrategyProfile,
     user_role: Role,
+    user_strategy: StrategyCandidate | None = None,
 ):
     """Create a deterministic user-vs-profile agent pair for sparring."""
 
     if profile.role == user_role:
         raise ValueError("opponent profile role must differ from user_role")
+    if user_strategy is not None and user_strategy.user_role != user_role:
+        raise ValueError(
+            f"user strategy role {user_strategy.user_role.value!r} does not "
+            f"match user_role {user_role.value!r}"
+        )
+    user_agent = (
+        make_strategy_candidate_user_agent(candidate=user_strategy)
+        if user_strategy is not None
+        else None
+    )
     if profile.role == Role.SELLER:
         return (
-            ToolAwareBuyer(name="user_buyer"),
+            user_agent or ToolAwareBuyer(name="user_buyer"),
             ProfileBackedSeller(profile=profile),
         )
     return (
         ProfileBackedBuyer(profile=profile),
-        ScriptedSeller(name="user_seller"),
+        user_agent or ScriptedSeller(name="user_seller"),
     )
 
 

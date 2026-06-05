@@ -410,6 +410,10 @@ def _spar_main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
+        "--user-strategy",
+        help="Optional strategy_candidate.json artifact to apply to the user agent.",
+    )
+    parser.add_argument(
         "--learning-tool-regime",
         default="no_tools",
         help="Completed run tool regime to diagnose for policy learning.",
@@ -428,6 +432,7 @@ def _spar_main(argv: list[str] | None = None) -> int:
             registry_path=args.registry,
             user_role=args.user_role,
             opponent_profile_ids=args.opponent_profiles,
+            user_strategy_path=args.user_strategy,
             learning_tool_regime=args.learning_tool_regime,
             fail_fast=not args.no_fail_fast,
         )

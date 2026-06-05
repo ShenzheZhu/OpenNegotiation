@@ -4,6 +4,12 @@ from pathlib import Path
 import pytest
 
 from opennego.cli import main
+from opennego.evolution import (
+    STRATEGY_EVOLUTION_SCHEMA_VERSION,
+    write_strategy_candidate,
+)
+from opennego.learning import write_battle_report
+from opennego.runner import run_experiment_config
 from opennego.sparring import (
     SPARRING_EXECUTION_MODE,
     SPARRING_SUITE_SCHEMA_VERSION,
@@ -85,6 +91,69 @@ def test_sparring_suite_supports_seller_user_against_buyer_profile(tmp_path):
     assert "npc_buyer:buyer_budget_probe_v1" in trace
 
 
+def test_sparring_suite_applies_user_strategy_candidate_to_buyer_policy(tmp_path):
+    candidate_path = _write_buyer_strategy_candidate(tmp_path)
+    output_dir = tmp_path / "strategy_sparring"
+
+    summary = run_sparring_suite(
+        output_dir=output_dir,
+        opponent_profile_ids=("seller_hardline_anchor_v1",),
+        user_strategy_path=candidate_path,
+    )
+    result = summary.results[0]
+    assert result.learning_input_dir is not None
+    manifest = json.loads(
+        (Path(result.learning_input_dir) / "manifest.json").read_text()
+    )
+    metrics = json.loads((Path(result.learning_input_dir) / "metrics.json").read_text())
+    trace = (Path(result.learning_input_dir) / "trace.jsonl").read_text()
+
+    assert summary.user_strategy_candidate_id == "buyer_baseline-iter-1"
+    assert summary.user_strategy_path == str(candidate_path)
+    assert result.user_strategy_candidate_id == "buyer_baseline-iter-1"
+    assert result.deal_price <= 575.0 * 1.05
+    assert metrics["deal_price"] <= 575.0 * 1.05
+    assert manifest["agents"]["buyer"]["kind"] == "strategy_candidate_buyer"
+    assert manifest["agents"]["buyer"]["candidate_id"] == "buyer_baseline-iter-1"
+    assert manifest["metadata"]["user_strategy"]["enabled"] is True
+    assert "user_buyer:buyer_baseline-iter-1" in trace
+
+
+def test_sparring_suite_rejects_wrong_role_user_strategy(tmp_path):
+    candidate_path = tmp_path / "seller_candidate.json"
+    candidate_path.write_text(
+        json.dumps(
+            {
+                "schema_version": STRATEGY_EVOLUTION_SCHEMA_VERSION,
+                "candidate_id": "seller_candidate-iter-1",
+                "parent_strategy_id": "seller_candidate",
+                "iteration": 1,
+                "user_role": "seller",
+                "source_battle_report": "battle_report.json",
+                "source_run_id": "run-1",
+                "scenario_id": "scenario-1",
+                "opponent_profile_id": "buyer_budget_probe_v1",
+                "strategy_prompt": "seller patch",
+                "applied_lesson_ids": ["seller_undersold_market"],
+                "applied_patches": ["Tighten seller floor."],
+                "expected_improvements": ["price discipline"],
+                "evaluation_plan": {},
+                "metadata": {},
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+
+    with pytest.raises(ValueError, match="does not match user_role"):
+        run_sparring_suite(
+            output_dir=tmp_path / "sparring",
+            user_role="buyer",
+            opponent_profile_ids=("seller_hardline_anchor_v1",),
+            user_strategy_path=candidate_path,
+        )
+
+
 def test_spar_cli_prints_suite_artifact(tmp_path, capsys):
     output_dir = tmp_path / "cli_spar"
 
@@ -108,6 +177,29 @@ def test_spar_cli_prints_suite_artifact(tmp_path, capsys):
     assert (output_dir / "sparring_suite.json").exists()
 
 
+def test_spar_cli_accepts_user_strategy_candidate(tmp_path, capsys):
+    candidate_path = _write_buyer_strategy_candidate(tmp_path)
+    output_dir = tmp_path / "cli_strategy_spar"
+
+    status = main(
+        [
+            "spar",
+            "--output-dir",
+            str(output_dir),
+            "--opponent-profile",
+            "seller_hardline_anchor_v1",
+            "--user-strategy",
+            str(candidate_path),
+        ]
+    )
+    stdout = capsys.readouterr().out
+    payload = json.loads(stdout)
+
+    assert status == 0
+    assert payload["user_strategy_candidate_id"] == "buyer_baseline-iter-1"
+    assert payload["completed"] == 1
+
+
 def test_spar_cli_rejects_wrong_role_profile(tmp_path, capsys):
     status = main(
         [
@@ -122,3 +214,26 @@ def test_spar_cli_rejects_wrong_role_profile(tmp_path, capsys):
 
     assert status == 2
     assert "expected seller profile" in stdout
+
+
+def _write_buyer_strategy_candidate(tmp_path):
+    runs_dir = tmp_path / "runs"
+    run_experiment_config("configs/real_market_demo.yaml", output_dir=runs_dir)
+    run_dir = (
+        runs_dir
+        / "real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13"
+    )
+    battle_report_path = tmp_path / "battle_report.json"
+    candidate_path = tmp_path / "strategy_candidate.json"
+    write_battle_report(
+        run_dir,
+        battle_report_path,
+        user_role="buyer",
+        opponent_profile_id="seller_hardline_anchor_v1",
+    )
+    write_strategy_candidate(
+        battle_report_path,
+        candidate_path,
+        parent_strategy_id="buyer_baseline",
+    )
+    return candidate_path
