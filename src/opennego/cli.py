@@ -53,6 +53,11 @@ from opennego.runner import (
 from opennego.schema import Product, Scenario
 from opennego.sparring import run_sparring_suite
 from opennego.sparring_report import write_sparring_report
+from opennego.strategy_config import (
+    StrategyConfigError,
+    load_strategy_config,
+    write_strategy_config,
+)
 from opennego.tools import MarketPriceTool
 from opennego.training import run_training_loop
 
@@ -78,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
         return _learn_main(argv[1:])
     if argv and argv[0] == "evolve":
         return _evolve_main(argv[1:])
+    if argv and argv[0] == "apply-strategy":
+        return _apply_strategy_main(argv[1:])
     if argv and argv[0] == "compare":
         return _compare_main(argv[1:])
     if argv and argv[0] == "leaderboard":
@@ -361,6 +368,56 @@ def _evolve_main(argv: list[str] | None = None) -> int:
         return 2
 
     print(json.dumps({"strategy_candidate": str(output_path)}, indent=2))
+    return 0
+
+
+def _apply_strategy_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Apply a strategy candidate into a versioned strategy config."
+    )
+    parser.add_argument(
+        "--candidate",
+        required=True,
+        help="Path to an opennego.strategy_evolution.v1 strategy candidate.",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to write the opennego.strategy_config.v1 JSON artifact.",
+    )
+    parser.add_argument(
+        "--base-config",
+        help="Optional prior strategy_config.json to preserve base prompt and lineage.",
+    )
+    parser.add_argument(
+        "--strategy-id",
+        help="Optional id for the resulting strategy config.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        output_path = write_strategy_config(
+            args.candidate,
+            args.output,
+            base_config_path=args.base_config,
+            strategy_id=args.strategy_id,
+        )
+        config = load_strategy_config(output_path)
+    except (OSError, StrategyEvolutionError, StrategyConfigError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(
+        json.dumps(
+            {
+                "strategy_config": str(output_path),
+                "strategy_id": config.strategy_id,
+                "version": config.version,
+                "role": config.role.value,
+            },
+            indent=2,
+        )
+    )
     return 0
 
 

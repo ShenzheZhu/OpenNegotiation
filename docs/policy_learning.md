@@ -276,6 +276,23 @@ records:
 - expected improvements derived from trace-grounded recommendations
 - a recommended rerun command and comparison command
 
+`opennego apply-strategy` applies that candidate into a reusable strategy
+configuration artifact:
+
+```bash
+opennego apply-strategy \
+  --candidate /tmp/opennego-real-market-demo/strategy_candidate.json \
+  --output /tmp/opennego-real-market-demo/strategy_config.json \
+  --strategy-id buyer_baseline_v1
+```
+
+The config artifact uses schema version `opennego.strategy_config.v1`. It keeps
+the base sandbox prompt fixed, stores the editable strategy prompt, records the
+prompt-layer contract, and preserves candidate lineage, applied lesson ids,
+patch snippets, source run id, source battle report, and expected improvements.
+External user agents can consume this config without OpenNego mutating their
+source code.
+
 The deterministic sparring runtime can consume the candidate directly:
 
 ```bash
@@ -363,14 +380,15 @@ In scope:
 - no-key battle report generation from artifacts
 - trace-grounded policy lessons
 - strategy prompt patch suggestions
-- versioned strategy candidate and comparison artifacts
+- versioned strategy candidate, applied strategy config, and comparison
+  artifacts
 - CLI commands for listing profiles, writing battle reports, and rendering the
   one-command MVP demo with visual, machine-readable, and bundle-manifest
   artifacts
 - no-key sparring suite artifacts for selected marketplace profiles
 - no-key runtime application of versioned strategy candidates in sparring
 - one-command no-key training loop for sparring, strategy extraction, rerun,
-  and comparison artifacts
+  applied strategy config, and comparison artifacts
 - local export and installation of strategy candidates as marketplace profiles
 
 Out of scope:
@@ -388,10 +406,11 @@ The near-term product loop is:
 2. OpenNego scores the run.
 3. OpenNego generates a battle report.
 4. OpenNego converts the battle report into a strategy candidate.
-5. User applies the candidate through `opennego spar --user-strategy` or edits
-   only the strategy prompt in their own agent integration.
-6. User reruns against the same or harder NPC profile.
-7. OpenNego compares the before/after battle reports.
+5. OpenNego applies the candidate into a versioned `strategy_config.json`.
+6. User consumes that config in their own agent integration, or reruns the
+   no-key local candidate through `opennego spar --user-strategy`.
+7. User reruns against the same or harder NPC profile.
+8. OpenNego compares the before/after battle reports.
 
-`opennego train` automates steps 3-7 for the no-key local strategy-candidate
-runtime.
+`opennego train` automates steps 3-8 for the no-key local strategy-candidate
+runtime and writes `strategy_config.json` next to the candidate.

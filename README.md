@@ -152,9 +152,24 @@ opennego train \
 ```
 
 This writes baseline sparring artifacts, selects the lowest-scoring completed
-battle report, emits `strategy_candidate.json`, reruns the same NPC with that
-candidate, writes `strategy_comparison.json`, and records the full handoff in
+battle report, emits `strategy_candidate.json`, applies it into a versioned
+`strategy_config.json`, reruns the same NPC with that candidate, writes
+`strategy_comparison.json`, and records the full handoff in
 `training_loop.json`.
+
+To apply a candidate into a reusable strategy config without running the full
+training loop:
+
+```bash
+opennego apply-strategy \
+  --candidate /tmp/opennego-training/strategy_candidate.json \
+  --output /tmp/opennego-training/strategy_config.json \
+  --strategy-id buyer_baseline_v1
+```
+
+The config uses schema `opennego.strategy_config.v1`, keeps the base sandbox
+prompt fixed, stores the editable strategy prompt, and preserves candidate
+lineage for external user-agent integration.
 
 To use a provider-backed profile NPC through LiteLLM, install the optional LLM
 dependency, keep credentials in environment variables, and select explicit
