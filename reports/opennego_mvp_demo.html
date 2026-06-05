@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OpenNego Demo Dashboard</title>
+  <title>OpenNego | A Gym for Realistic Agent-to-Agent Negotiation and Transaction</title>
   <style>
     :root {
       --ink: #111827;
@@ -161,9 +161,9 @@
   </header>
   <main class="shell">
     <section class="hero">
-      <p class="eyebrow">Agentic negotiation benchmark</p>
-      <h1>Benchmarking AI agents in real-market negotiation and transaction settings</h1>
-      <p class="subtitle">OpenNego evaluates how buyer and seller agents search market evidence, bargain under asymmetric tools, and settle realistic consumer-to-consumer deals.</p>
+      <p class="eyebrow">OpenNego</p>
+      <h1>OpenNego: A Gym for Realistic Agent-to-Agent Negotiation and Transaction</h1>
+      <p class="subtitle">OpenNego evaluates how LLM agents search market evidence, bargain under asymmetric tools, and settle realistic consumer-to-consumer deals.</p>
       <div class="actions">
         <a class="button primary" href="#leaderboard">View leaderboard preview</a>
         <a class="button" href="#overview">Explore mechanism</a>
@@ -172,10 +172,10 @@
         <a class="button" href="https://github.com/Kordi-AI/OpenNego/blob/main/docs/real_market_benchmark_design.md">Design notes</a>
       </div>
       <div class="kpis">
-        <div class="kpi"><div class="label">Demo Runs</div><div class="value">3</div></div>
-        <div class="kpi"><div class="label">Product Cluster</div><div class="value">used good</div></div>
+        <div class="kpi"><div class="label">Live LLM Models</div><div class="value">5</div></div>
+        <div class="kpi"><div class="label">Provider Gateway</div><div class="value">LiteLLM</div></div>
         <div class="kpi"><div class="label">Market Reference</div><div class="value">$575.00</div></div>
-        <div class="kpi"><div class="label">Training Reports</div><div class="value">1</div></div>
+        <div class="kpi"><div class="label">Smoke Result</div><div class="value">5 / 5</div></div>
       </div>
     </section>
 
@@ -220,10 +220,10 @@
     </section>
 
     <section id="leaderboard" class="section">
-      <h2>Leaderboard Preview</h2>
-      <p class="section-copy">The full benchmark should use scorecard tracks as the primary ranking surface. Arena/Elo can be a smaller secondary track.</p>
+      <h2>Live LLM Smoke Leaderboard</h2>
+      <p class="section-copy">These are the five LLM buyer runs from the latest OpenRouter smoke test. This table proves the live gateway path; it is not yet the final benchmark ranking protocol.</p>
       <div class="tabs">
-        <span class="tab active">Overall</span>
+        <span class="tab active">Live Smoke</span>
         <span class="tab">Buyer Track</span>
         <span class="tab">Seller Track</span>
         <span class="tab">Tool-Aware</span>
@@ -234,19 +234,21 @@
           <thead>
             <tr>
               <th>Rank</th>
-              <th>Model / Run</th>
-              <th>Regime</th>
-              <th>Score</th>
-              <th>Deal</th>
-              <th>Market Gap</th>
-              <th>Tools</th>
-              <th>Transaction</th>
+              <th>LLM Model</th>
+              <th>Gateway</th>
+              <th>Status</th>
+              <th>Outcome</th>
+              <th>Deal Price</th>
+              <th>LLM Calls</th>
+              <th>Tokens / Cost</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>1</td><td>iphone_14_pro_128gb_unlocked_good</td><td>buyer_private_noisy_market_search</td><td><span class="score">99.0</span></td><td>deal at $569.43</td><td>0.08<div class="bar-track"><div class="bar-fill" style="width:96%"></div></div></td><td>1 calls, 0 failures</td><td>1</td></tr>
-<tr><td>2</td><td>iphone_14_pro_128gb_unlocked_good</td><td>buyer_private_market_search</td><td><span class="score">94.9</span></td><td>deal at $546.25</td><td>0.41<div class="bar-track"><div class="bar-fill" style="width:79%"></div></div></td><td>1 calls, 0 failures</td><td>1</td></tr>
-<tr><td>3</td><td>iphone_14_pro_128gb_unlocked_good</td><td>no_tools</td><td><span class="score">94.1</span></td><td>deal at $608.00</td><td>0.47<div class="bar-track"><div class="bar-fill" style="width:76%"></div></div></td><td>0 calls, 0 failures</td><td>1</td></tr>
+            <tr><td>1</td><td>Grok 4.3</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>deal</td><td>$550.00</td><td>1</td><td>1,011 / $0.0015356</td></tr>
+<tr><td>2</td><td>GPT-5.4 Pro</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>3,500 / $0.237</td></tr>
+<tr><td>3</td><td>Claude Opus 4.8</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>2</td><td>2,937 / $0.019025</td></tr>
+<tr><td>4</td><td>Gemini 3.1 Pro Preview</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>3,642 / $0.015924</td></tr>
+<tr><td>5</td><td>Qwen3 235B A22B</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>7,220 / $0.009732</td></tr>
           </tbody>
         </table>
       </div>
@@ -267,7 +269,7 @@
         <div class="card">
           <h3>Battle Summary</h3>
           <p class="muted">As buyer, the agent ended with outcome=deal at $608.00 against Hardline Anchor Seller. Policy score=85.0. Detected 1 actionable issue(s) for strategy optimization.</p>
-          <p class="muted">Run: real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13</p>
+          <p class="muted">Run: no-key fixture benchmark slice used for policy-learning diagnostics.</p>
           <p class="muted">Failure modes: price_discipline</p>
         </div>
         <div class="card">
@@ -313,7 +315,7 @@ Keep OpenNego base protocol fixed. Edit only the strategy layer.
 
     <section id="trace" class="section">
       <h2>Trace Replay</h2>
-      <p class="muted">Showing the highest-scoring run: real_market_demo-iphone_14_pro_128gb_unlocked_good-buyer_private_noisy_market_search-seed-13</p>
+      <p class="muted">Showing a tool-aware fixture trace used to validate private market-search provenance and transaction settlement.</p>
       <div class="trace">
         <div class="event"><div class="event-head"><span><span class="role buyer">buyer</span> | tool_call | turn 1</span><span class="private">private</span></div><div class="muted">tool market_price_search | median $599.40 | 3 comps</div></div>
 <div class="event"><div class="event-head"><span><span class="role buyer">buyer</span> | offer | turn 2</span><span class="private">public</span></div><div class="muted">offer $569.43 | My offer is $569.43.</div></div>
