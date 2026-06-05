@@ -73,6 +73,21 @@ checks, not as a full benchmark sweep. The command writes a top-level
 `summary.json`; if a provider call fails, the failed model directory gets a
 redacted `failure.json` instead of silently disappearing from the run record.
 
+For the no-key policy-learning loop, list NPC strategy profiles and generate a
+trace-grounded battle report from one completed benchmark run:
+
+```bash
+opennego strategies --role seller
+opennego learn \
+  --input-dir /tmp/opennego-real-market-demo/real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13 \
+  --output /tmp/opennego-battle-report.json \
+  --user-role buyer \
+  --opponent-profile seller_hardline_anchor_v1
+```
+
+This produces strategy-layer lessons and prompt optimization suggestions while
+keeping OpenNego's base sandbox protocol fixed.
+
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
 
 ```bash
@@ -114,6 +129,10 @@ for curated sample artifacts.
   and risk exposure.
 - `Benchmark artifacts`: versioned scenario, manifest, trace JSONL, and metric
   report files for reproducible external evaluation.
+- `Policy learning`: no-key battle reports that extract trace-grounded strategy
+  lessons and prompt optimization patches from completed benchmark artifacts.
+- `Strategy marketplace`: curated NPC profiles with fixed base protocol prompts
+  and editable strategy prompts for sparring and curriculum design.
 
 ## Project Layout
 
@@ -164,7 +183,9 @@ for common setup and parser issues. See
 [docs/release_checklist.md](docs/release_checklist.md) for the no-key handoff
 gate. See
 [docs/real_market_benchmark_design.md](docs/real_market_benchmark_design.md) for
-the market-grounded dataset and leaderboard design.
+the market-grounded dataset and leaderboard design. See
+[docs/policy_learning.md](docs/policy_learning.md) for the prompt-optimization
+training loop and NPC strategy marketplace MVP.
 
 ## Status
 

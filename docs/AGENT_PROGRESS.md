@@ -23,6 +23,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Selected a high-quality OpenRouter-backed five-model default set for the
   demo: GPT-5.4 Pro, Claude Opus 4.8, Gemini 3.1 Pro Preview, Grok 4.3, and
   Qwen3 235B A22B.
+- Added the first no-key policy-learning MVP slice: NPC strategy registry,
+  `opennego strategies`, `opennego learn`, battle-report JSON, and
+  trace-grounded strategy prompt patches.
 
 ### Current Live-Run State
 
@@ -39,6 +42,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Draft PR `#19` is open from `proto/real-market-benchmark-18` to `main`.
 - Keep PR `#19` in draft until a tiny live five-model run is generated and the
   report is refreshed from real provider artifacts.
+- Policy-learning / prompt-optimization scope is tracked separately in
+  GitHub issue `#20` and branch `codex/policy-learning-mvp-20`.
 
 ### Verification
 

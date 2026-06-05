@@ -12,6 +12,11 @@ from pathlib import Path
 from opennego.artifacts import to_jsonable, write_run_artifacts
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.environment import NegotiationEnvironment
+from opennego.learning import (
+    DEFAULT_NPC_REGISTRY_PATH,
+    registry_listing,
+    write_battle_report,
+)
 from opennego.model_demo import DEFAULT_MODEL_DEMO_MODELS, run_model_demo
 from opennego.report import write_demo_report
 from opennego.runner import ConfigValidationError, run_experiment_config
@@ -34,6 +39,10 @@ def main(argv: list[str] | None = None) -> int:
         return _run_models_main(argv[1:])
     if argv and argv[0] == "report":
         return _report_main(argv[1:])
+    if argv and argv[0] == "strategies":
+        return _strategies_main(argv[1:])
+    if argv and argv[0] == "learn":
+        return _learn_main(argv[1:])
 
     parser = argparse.ArgumentParser(description="Run a deterministic OpenNego smoke demo.")
     parser.add_argument("--products-file", default="examples/data/products.json")
@@ -147,6 +156,76 @@ def _report_main(argv: list[str] | None = None) -> int:
         return 2
 
     print(json.dumps({"report": str(output_path)}, indent=2))
+    return 0
+
+
+def _strategies_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="List OpenNego NPC strategy profiles.")
+    parser.add_argument(
+        "--registry",
+        default=str(DEFAULT_NPC_REGISTRY_PATH),
+        help="Path to an NPC strategy registry JSON file.",
+    )
+    parser.add_argument(
+        "--role",
+        choices=("buyer", "seller"),
+        help="Optional role filter.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        payload = registry_listing(args.registry, role=args.role)
+    except (OSError, ValueError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+    print(json.dumps(payload, indent=2))
+    return 0
+
+
+def _learn_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Generate a policy-learning battle report from run artifacts."
+    )
+    parser.add_argument(
+        "--input-dir",
+        required=True,
+        help="Directory containing one completed benchmark run artifact set.",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to write the battle report JSON.",
+    )
+    parser.add_argument(
+        "--user-role",
+        default="buyer",
+        choices=("buyer", "seller"),
+        help="Role of the user-owned agent to optimize.",
+    )
+    parser.add_argument(
+        "--registry",
+        default=str(DEFAULT_NPC_REGISTRY_PATH),
+        help="Path to an NPC strategy registry JSON file.",
+    )
+    parser.add_argument(
+        "--opponent-profile",
+        help="Optional NPC strategy profile id for the counterparty.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        output_path = write_battle_report(
+            args.input_dir,
+            args.output,
+            user_role=args.user_role,
+            npc_registry_path=args.registry,
+            opponent_profile_id=args.opponent_profile,
+        )
+    except (OSError, ValueError, KeyError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps({"battle_report": str(output_path)}, indent=2))
     return 0
 
 
