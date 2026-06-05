@@ -200,6 +200,22 @@ The config uses schema `opennego.strategy_config.v1`, keeps the base sandbox
 prompt fixed, stores the editable strategy prompt, and preserves candidate
 lineage for external user-agent integration.
 
+To package that strategy config for an external user agent without mutating the
+agent source tree:
+
+```bash
+opennego export-training-adapter \
+  --strategy-config /tmp/opennego-training/strategy_config.json \
+  --output /tmp/opennego-training/external_training_adapter.json \
+  --agent-kind team_buyer_agent
+opennego validate-training-adapter \
+  --adapter /tmp/opennego-training/external_training_adapter.json
+```
+
+The adapter package uses schema `opennego.external_training_adapter.v1` and
+records the fixed base prompt, editable strategy prompt, lineage, target role,
+and integration contract for the external agent.
+
 To use a provider-backed profile NPC through LiteLLM, install the optional LLM
 dependency, keep credentials in environment variables, and select explicit
 opponent profiles to bound live calls:

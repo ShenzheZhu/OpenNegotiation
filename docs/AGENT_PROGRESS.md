@@ -88,6 +88,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added `opennego apply-strategy` for applying strategy candidates into
   versioned `opennego.strategy_config.v1` artifacts with fixed-base/editable
   strategy prompt-layer metadata.
+- Added `opennego export-training-adapter` and
+  `opennego validate-training-adapter` for external user-agent strategy config
+  handoff without arbitrary source-code mutation.
 - Added `opennego validate-marketplace` for local strategy registry and shared
   marketplace profile release checks.
 - Added `opennego role-swap` for a small no-key role-swapped benchmark track

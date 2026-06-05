@@ -70,6 +70,8 @@ Implemented:
 - One-command no-key training loop that runs sparring, extracts a strategy
   candidate, applies it into a versioned strategy config, reruns the same
   profile, and compares before/after reports.
+- External training adapter export and validation for handing strategy configs
+  to user-owned agents without mutating arbitrary source code.
 - Local strategy marketplace profile export, registry installation, and no-key
   marketplace config validation.
 - No-key role-swapped benchmark track with combined leaderboard role coverage.
@@ -145,6 +147,8 @@ opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
 opennego handoff --output-dir "$tmpdir/handoff"
 opennego train --output-dir "$tmpdir/training" --opponent-profile seller_hardline_anchor_v1 --parent-strategy-id buyer_baseline
 opennego apply-strategy --candidate "$tmpdir/training/strategy_candidate.json" --output "$tmpdir/training/manual_strategy_config.json" --strategy-id buyer_baseline_manual_v1
+opennego export-training-adapter --strategy-config "$tmpdir/training/strategy_config.json" --output "$tmpdir/training/external_training_adapter.json" --agent-kind buyer_baseline
+opennego validate-training-adapter --adapter "$tmpdir/training/external_training_adapter.json"
 opennego validate-marketplace --registry examples/data/npc_strategies.json
 opennego role-swap --output-dir "$tmpdir/role_swap" --participant-id baseline_strategy
 opennego arena-plan --participant model_a --participant model_b --participant model_c --scenario-id real_market_demo --seed 13 --output "$tmpdir/arena_plan.json"
@@ -165,6 +169,8 @@ Latest local result on this readiness branch:
 - Training loop smoke: passed and wrote `opennego.training_loop.v1` plus
   `opennego.strategy_config.v1`.
 - Strategy application smoke: passed and wrote `opennego.strategy_config.v1`.
+- External training adapter validation smoke: passed and wrote
+  `opennego.external_training_adapter.v1`.
 - Marketplace validation smoke: curated registry and exported profile registry
   passed with no errors or warnings.
 - Role-swapped benchmark smoke: passed with buyer/seller role coverage 1.0.
@@ -191,8 +197,8 @@ Live run summary:
 Current state:
 
 - Current `main` includes the local backend workflow slices for benchmark,
-  training, marketplace export, transaction guards, offline data, and
-  leaderboard artifacts.
+  training, external strategy handoff, marketplace export, transaction guards,
+  offline data, and leaderboard artifacts.
 - Open issue `#29` tracks remaining backend/product loop scale-up work.
 - Open issue `#28` tracks public GitHub Pages hosting and remains blocked by
   repository/private-plan support for Pages.

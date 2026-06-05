@@ -293,6 +293,23 @@ patch snippets, source run id, source battle report, and expected improvements.
 External user agents can consume this config without OpenNegotiation mutating their
 source code.
 
+External teams can also package the config into a validated adapter artifact:
+
+```bash
+opennego export-training-adapter \
+  --strategy-config /tmp/opennego-real-market-demo/strategy_config.json \
+  --output /tmp/opennego-real-market-demo/external_training_adapter.json \
+  --agent-kind team_buyer_agent
+opennego validate-training-adapter \
+  --adapter /tmp/opennego-real-market-demo/external_training_adapter.json
+```
+
+The adapter uses schema `opennego.external_training_adapter.v1`. It tells an
+external user agent to load `base_prompt` as the read-only sandbox layer and
+`strategy_prompt` as the editable policy layer. It deliberately sets
+`code_mutation: false`; OpenNegotiation does not rewrite arbitrary external
+agent code.
+
 The deterministic sparring runtime can consume the candidate directly:
 
 ```bash
