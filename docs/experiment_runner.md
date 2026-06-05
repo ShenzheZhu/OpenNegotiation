@@ -182,3 +182,16 @@ The report is dependency-free and reads the same `manifest.json`,
 `scenario.json`, `trace.jsonl`, and `metrics.json` files used by the benchmark
 contract. It is meant for small demos and design reviews, not as the final public
 leaderboard frontend.
+
+## Five-Model Demo
+
+For a small live-model run:
+
+```bash
+opennego run-models --output-dir /tmp/opennego-five-model-demo
+opennego report --input-dir /tmp/opennego-five-model-demo --output /tmp/opennego-five-model-demo.html
+```
+
+`run-models` runs a fixed real-market scenario across a short default set of
+five LiteLLM/OpenRouter model IDs. It keeps the seller scripted so the demo
+isolates buyer-side model behavior and avoids pairwise arena cost.

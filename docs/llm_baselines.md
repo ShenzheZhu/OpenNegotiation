@@ -62,3 +62,26 @@ python -m pip install -e ".[llm]"
 
 Keep provider credentials in environment variables or a LiteLLM proxy config.
 Do not commit keys or live provider traces.
+
+## Five-Model Demo
+
+OpenNego includes a tiny live-model demo command:
+
+```bash
+opennego run-models --output-dir /tmp/opennego-five-model-demo
+opennego report --input-dir /tmp/opennego-five-model-demo --output /tmp/opennego-five-model-demo.html
+```
+
+The default model set uses LiteLLM OpenRouter model IDs so one provider key can
+cover multiple model families:
+
+- `openrouter/openai/gpt-4o-mini`
+- `openrouter/anthropic/claude-3.5-haiku`
+- `openrouter/google/gemini-2.5-flash-lite`
+- `openrouter/meta-llama/llama-3.3-70b-instruct`
+- `openrouter/mistralai/mistral-small-3.2-24b-instruct`
+
+This command runs each model as the buyer-side LLM agent against the scripted
+seller on the real-market fixture. It writes the same benchmark artifacts as the
+main runner, so `opennego report` can render the results as a leaderboard
+preview.

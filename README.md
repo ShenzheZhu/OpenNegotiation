@@ -57,6 +57,20 @@ The generated HTML report introduces OpenNego, shows the agentic negotiation
 mechanism, previews a scorecard-style leaderboard, and replays the trace for the
 highest-scoring fixture run.
 
+For a tiny live-model demo, install the optional LiteLLM dependency and keep
+provider credentials in environment variables:
+
+```bash
+python -m pip install -e ".[dev,llm]"
+export OPENROUTER_API_KEY=...
+opennego run-models --output-dir /tmp/opennego-five-model-demo
+opennego report --input-dir /tmp/opennego-five-model-demo --output /tmp/opennego-five-model-demo.html
+```
+
+The default `run-models` set runs five buyer-side models against the same
+scripted seller on the real-market fixture. It is intended for demos and smoke
+checks, not as a full benchmark sweep.
+
 Install the optional LiteLLM adapter when running LLM-backed agents:
 
 ```bash

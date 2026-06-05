@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
 
 from opennego.artifacts import to_jsonable, write_run_artifacts
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.environment import NegotiationEnvironment
+from opennego.model_demo import DEFAULT_MODEL_DEMO_MODELS, run_model_demo
 from opennego.report import write_demo_report
 from opennego.runner import ConfigValidationError, run_experiment_config
 from opennego.schema import Product, Scenario
@@ -27,6 +30,8 @@ def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv and argv[0] == "run":
         return _run_config_main(argv[1:])
+    if argv and argv[0] == "run-models":
+        return _run_models_main(argv[1:])
     if argv and argv[0] == "report":
         return _report_main(argv[1:])
 
@@ -143,6 +148,78 @@ def _report_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps({"report": str(output_path)}, indent=2))
     return 0
+
+
+def _run_models_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run a tiny live-model OpenNego demo.")
+    parser.add_argument(
+        "--models",
+        default=",".join(DEFAULT_MODEL_DEMO_MODELS),
+        help="Comma-separated LiteLLM model ids.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="runs/five_model_demo",
+        help="Directory for model run artifacts.",
+    )
+    parser.add_argument(
+        "--products-file",
+        default="examples/data/real_market_products.json",
+    )
+    parser.add_argument(
+        "--market-comps-file",
+        default="examples/data/real_market_comps.json",
+    )
+    parser.add_argument("--max-turns", type=int, default=6)
+    parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--max-tokens", type=int, default=384)
+    parser.add_argument("--fail-fast", action="store_true")
+    args = parser.parse_args(argv)
+
+    models = tuple(model.strip() for model in args.models.split(",") if model.strip())
+    if not models:
+        print(json.dumps({"error": "--models must include at least one model"}, indent=2))
+        return 2
+    preflight_error = _run_models_preflight_error(models)
+    if preflight_error is not None:
+        print(json.dumps({"error": preflight_error}, indent=2))
+        return 2
+
+    summary = run_model_demo(
+        models=models,
+        output_dir=args.output_dir,
+        products_file=args.products_file,
+        market_comps_file=args.market_comps_file,
+        max_turns=args.max_turns,
+        temperature=args.temperature,
+        max_tokens=args.max_tokens,
+        fail_fast=args.fail_fast,
+    )
+    print(json.dumps(to_jsonable(summary), indent=2))
+    return 1 if summary.failed else 0
+
+
+def _run_models_preflight_error(models: tuple[str, ...]) -> str | None:
+    if importlib.util.find_spec("litellm") is None:
+        return (
+            "LiteLLM is not installed. Install optional dependencies with: "
+            "python -m pip install -e '.[llm]'"
+        )
+
+    missing = []
+    if any(model.startswith("openrouter/") for model in models):
+        if not os.environ.get("OPENROUTER_API_KEY"):
+            missing.append("OPENROUTER_API_KEY")
+    if any(model.startswith("openai/") for model in models):
+        if not os.environ.get("OPENAI_API_KEY"):
+            missing.append("OPENAI_API_KEY")
+    if any(model.startswith("anthropic/") for model in models):
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            missing.append("ANTHROPIC_API_KEY")
+
+    if missing:
+        return "Missing provider environment variable(s): " + ", ".join(sorted(set(missing)))
+    return None
 
 
 if __name__ == "__main__":

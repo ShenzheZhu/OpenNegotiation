@@ -301,7 +301,7 @@ def render_demo_report(runs: Sequence[DemoRun]) -> str:
           <thead>
             <tr>
               <th>Rank</th>
-              <th>Run</th>
+              <th>Model / Run</th>
               <th>Regime</th>
               <th>Score</th>
               <th>Deal</th>
@@ -353,7 +353,7 @@ def _leaderboard_rows(runs: Sequence[DemoRun]) -> str:
         rows.append(
             "<tr>"
             f"<td>{index}</td>"
-            f"<td>{_escape(run.metrics.scenario_id)}</td>"
+            f"<td>{_escape(_run_label(run))}</td>"
             f"<td>{_escape(_tool_regime_id(run))}</td>"
             f"<td><span class=\"score\">{score:.1f}</span></td>"
             f"<td>{_escape(run.metrics.outcome)} at {_money_or_empty(run.metrics.deal_price)}</td>"
@@ -418,6 +418,17 @@ def _tool_regime_id(run: DemoRun) -> str:
     regime = run.manifest.tool_regime
     value = regime.get("id") if isinstance(regime, dict) else None
     return str(value or "unknown")
+
+
+def _run_label(run: DemoRun) -> str:
+    models = run.manifest.models
+    if isinstance(models, dict) and models.get("buyer"):
+        return _shorten_model(str(models["buyer"]))
+    return run.metrics.scenario_id
+
+
+def _shorten_model(model: str) -> str:
+    return model.removeprefix("openrouter/")
 
 
 def _money_or_empty(value: float | None) -> str:
