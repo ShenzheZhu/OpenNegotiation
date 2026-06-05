@@ -82,6 +82,19 @@ Factories receive `(role, params)` and must return a fresh agent with matching
 unknown kinds and wrong-role agents before creating run outputs. The generated
 manifest records the configured `kind` and runtime agent `name`.
 
+The CLI can load explicit local factories for the same config path:
+
+```bash
+opennego run \
+  --config configs/my_eval.yaml \
+  --agent-factory my_buyer=/absolute/path/to/my_agents.py:my_buyer_factory
+```
+
+The loaded function must use the same `(role, params)` signature as Python API
+registration. OpenNegotiation does not auto-discover modules or install remote
+plugins from this option; it only imports the exact local file path supplied by
+the user.
+
 ## Option 2: Use `LLMNegotiationAgent`
 
 Use the built-in LLM baseline when your model can emit the OpenNego structured
@@ -137,10 +150,11 @@ rejects disallowed tool calls and triggers the repair prompt.
 
 ## Current Runner Boundary
 
-The CLI intentionally does not import arbitrary Python modules. Use the Python
-API registration path above for custom local agents. Provider-backed LLM agents
-should still stay behind `LLMPort` and adapter modules rather than importing
-provider SDKs into the environment layer.
+The CLI can import explicit local agent factory files through
+`--agent-factory`, but it does not auto-discover arbitrary Python modules,
+install remote plugins, or load provider SDKs into the environment layer.
+Provider-backed LLM agents should still stay behind `LLMPort` and adapter
+modules.
 
 ## Sparring Against NPC Profiles
 
@@ -169,6 +183,21 @@ validates that the returned role matches `user_role`. Generated manifests record
 the custom `user_agent_kind` and runtime agent name. This path cannot be
 combined with `user_strategy_path`; use either a concrete custom agent or a
 versioned strategy-candidate user agent in one run.
+
+For CLI sparring with a local user agent factory:
+
+```bash
+opennego spar \
+  --output-dir /tmp/team-a-sparring \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-agent-factory /absolute/path/to/my_agents.py:my_buyer_factory \
+  --user-agent-kind team_a_buyer \
+  --user-agent-param name=team_a_buyer \
+  --user-agent-param max_price=760
+```
+
+`--user-agent-param` values use simple JSON scalar parsing, so `760`, `true`,
+and quoted JSON strings are passed as typed values when possible.
 
 You can also replace the deterministic NPC with a profile-backed provider
 agent:

@@ -62,8 +62,19 @@ summary = run_experiment_config(
 }
 ```
 
-The CLI only exposes built-in kinds; arbitrary Python module loading is out of
-scope for the current runner.
+The CLI can also load explicit local factories:
+
+```bash
+opennego run \
+  --config configs/custom_agent_eval.yaml \
+  --agent-factory my_buyer=/absolute/path/to/my_agents.py:my_buyer_factory
+```
+
+`--agent-factory` may be provided multiple times. Each loaded function receives
+`(role, params)` and must return a fresh `AgentPort`. The runner still validates
+the returned role, name, and `act(context)` contract before creating run
+outputs. Automatic module discovery, remote plugin installation, and hosted
+strategy execution are out of scope for this path.
 
 ## LLM Config Agents
 

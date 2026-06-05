@@ -9,6 +9,12 @@ import os
 import sys
 from pathlib import Path
 
+from opennego.agent_loader import (
+    AgentLoadError,
+    load_agent_factories,
+    load_sparring_user_agent_factory,
+    parse_agent_params,
+)
 from opennego.artifacts import to_jsonable, write_run_artifacts
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.environment import NegotiationEnvironment
@@ -147,9 +153,20 @@ def _run_config_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", help="Override the config output_dir.")
     parser.add_argument("--resume", dest="resume", action="store_true", default=None)
     parser.add_argument("--no-resume", dest="resume", action="store_false")
+    parser.add_argument(
+        "--agent-factory",
+        action="append",
+        default=[],
+        metavar="KIND=PATH:CALLABLE",
+        help=(
+            "Load a local AgentPort factory for a config agent kind. "
+            "May be provided multiple times."
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
+        agent_factories = load_agent_factories(args.agent_factory)
         llm_models = _config_llm_models(args.config)
         llm_factory = None
         if llm_models is not None:
@@ -164,9 +181,10 @@ def _run_config_main(argv: list[str] | None = None) -> int:
             args.config,
             resume=args.resume,
             output_dir=args.output_dir,
+            agent_factories=agent_factories,
             llm_factory=llm_factory,
         )
-    except ConfigValidationError as exc:
+    except (AgentLoadError, ConfigValidationError) as exc:
         print(json.dumps({"error": str(exc)}, indent=2))
         return 2
 
@@ -515,6 +533,28 @@ def _spar_main(argv: list[str] | None = None) -> int:
         help="Optional strategy_candidate.json artifact to apply to the user agent.",
     )
     parser.add_argument(
+        "--user-agent-factory",
+        metavar="PATH:CALLABLE",
+        help=(
+            "Load a local (role, params) AgentPort factory for the user agent. "
+            "Cannot be combined with --user-strategy."
+        ),
+    )
+    parser.add_argument(
+        "--user-agent-kind",
+        help="Manifest kind label for --user-agent-factory.",
+    )
+    parser.add_argument(
+        "--user-agent-param",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help=(
+            "Parameter passed to --user-agent-factory. Values use JSON scalar "
+            "parsing when possible. May be provided multiple times."
+        ),
+    )
+    parser.add_argument(
         "--learning-tool-regime",
         default="no_tools",
         help="Completed run tool regime to diagnose for policy learning.",
@@ -527,6 +567,22 @@ def _spar_main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        user_agent_factory = None
+        user_agent_kind = None
+        if args.user_agent_factory:
+            user_agent_factory = load_sparring_user_agent_factory(
+                args.user_agent_factory,
+                params=parse_agent_params(args.user_agent_param),
+            )
+            user_agent_kind = args.user_agent_kind or "module_user_agent"
+        elif args.user_agent_param:
+            raise AgentLoadError(
+                "--user-agent-param requires --user-agent-factory"
+            )
+        elif args.user_agent_kind:
+            raise AgentLoadError(
+                "--user-agent-kind requires --user-agent-factory"
+            )
         summary = run_sparring_suite(
             output_dir=args.output_dir,
             config_path=args.config,
@@ -534,6 +590,8 @@ def _spar_main(argv: list[str] | None = None) -> int:
             user_role=args.user_role,
             opponent_profile_ids=args.opponent_profiles,
             user_strategy_path=args.user_strategy,
+            user_agent_factory=user_agent_factory,
+            user_agent_kind=user_agent_kind,
             learning_tool_regime=args.learning_tool_regime,
             fail_fast=not args.no_fail_fast,
         )
@@ -542,7 +600,13 @@ def _spar_main(argv: list[str] | None = None) -> int:
             if args.report
             else None
         )
-    except (OSError, ValueError, KeyError, ConfigValidationError) as exc:
+    except (
+        OSError,
+        AgentLoadError,
+        ValueError,
+        KeyError,
+        ConfigValidationError,
+    ) as exc:
         print(json.dumps({"error": str(exc)}, indent=2))
         return 2
 
