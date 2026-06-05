@@ -140,6 +140,23 @@ Guard-failed transactions keep `outcome: "deal"` at the negotiation level while
 recording `failed_transaction_rate: 1.0` and a transaction failure reason such as
 `buyer_total_cost_exceeded` or `seller_net_revenue_below_floor`.
 
+## Leaderboard Summary
+
+`opennego leaderboard --input-dir <runs> --output leaderboard_summary.json`
+aggregates completed run artifact directories into
+`opennego.leaderboard.v1` JSON. The summary contains:
+
+- ranked per-run rows with run id, scenario id, tool regime, score, outcome,
+  deal price, buyer participant id, seller participant id, and raw metrics
+- buyer role-track aggregates
+- seller role-track aggregates
+
+Participant ids prefer manifest model ids when available, falling back to
+`agent_kind:agent_name` for scripted or custom agents. The first scorecard score
+uses existing deterministic metrics: deal rate, transaction completion,
+normalized market gap, and tool failure rate. Elo or Bradley-Terry fitting is a
+future arena layer, not part of this deterministic summary.
+
 ## Compatibility
 
 The artifact contract is provider-neutral. It does not assume LiteLLM, OpenAI,
