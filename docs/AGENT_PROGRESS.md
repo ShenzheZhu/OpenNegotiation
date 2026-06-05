@@ -28,6 +28,13 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - The current local environment did not expose provider API keys through shell
   environment variables when checked.
 
+### Issue And PR State
+
+- Scope is tracked in GitHub issue `#18`.
+- Draft PR `#19` is open from `proto/real-market-benchmark-18` to `main`.
+- Keep PR `#19` in draft until a tiny live five-model run is generated and the
+  report is refreshed from real provider artifacts.
+
 ### Verification
 
 - `pytest -q`: passing after the model-demo runner was added.
