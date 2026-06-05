@@ -94,7 +94,8 @@ the base sandbox protocol.
 
 - Experiment configs support built-in no-key agents and built-in LLM buyer/seller
   agents. Python API users can also register custom runner and sparring
-  factories, but the CLI does not load arbitrary Python modules.
+  factories. The CLI can load explicit local factory files, but it does not
+  auto-discover modules or install remote plugins.
 - Strategy sparring defaults to deterministic fixture counterparties. Python API
   callers can supply profile-backed provider agents behind `LLMPort`, but the
   CLI does not load arbitrary live NPC modules.
