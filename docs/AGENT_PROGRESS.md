@@ -32,7 +32,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   page covering benchmark, training/prompt optimization, and strategy
   marketplace.
 - Added `opennego mvp-demo` as the one-command no-key flow for generating the
-  benchmark artifacts, leaderboard summary, battle report, and MVP HTML page.
+  benchmark artifacts, leaderboard summary, bundle manifest, battle report, and
+  MVP HTML page.
 - Added `opennego spar` as a no-key strategy sparring suite that runs selected
   marketplace NPC profiles through fixture-backed battle-report diagnostics.
 - Added `opennego spar --report` for rendering a compact static HTML report
@@ -65,6 +66,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   role-coverage summaries, and buyer/seller role-track scorecard aggregation.
 - Added artifact-backed leaderboard rendering to `opennego report` when
   `leaderboard_summary.json` is present.
+- Added `opennego.mvp_demo_bundle.v1` as a durable manifest for one-command MVP
+  demo artifact handoff.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   leaderboard summaries, artifact-backed reports, battle reports, strategy
   candidates, sparring reruns, comparison artifacts, and local marketplace
@@ -93,8 +96,7 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 113 passed after hardening the workflow contract around
-  leaderboard-backed report rendering.
+- `pytest -q`: 113 passed after adding the MVP demo bundle manifest.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.

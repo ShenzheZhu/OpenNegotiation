@@ -81,6 +81,8 @@ Implemented:
   role-coverage summaries, and buyer/seller role-track summaries.
 - Artifact-backed leaderboard rendering in the static demo report when
   `leaderboard_summary.json` is present.
+- Versioned `opennego.mvp_demo_bundle.v1` handoff manifest for one-command MVP
+  demo outputs.
 - Shared no-key workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.
