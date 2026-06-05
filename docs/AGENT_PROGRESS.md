@@ -55,6 +55,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   provider-neutral `LLMPort` factories and CLI LiteLLM preflight.
 - Added explicit CLI local agent factory loading for benchmark configs and
   sparring user agents.
+- Added offline sold-comps CSV/JSON ingestion into normalized product clusters
+  and market-comparable fixture files.
 
 ### Current Live-Run State
 
@@ -88,7 +90,7 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Expand the transaction layer beyond deterministic lifecycle guards into real
   payment, logistics, warranty, legal/compliance, and platform dispute
   integrations when those boundaries are decided.
-- Add offline/live real-market data ingestion once API, scraping, and privacy
-  boundaries are decided.
+- Expand market-data ingestion from offline normalization toward licensed/live
+  adapters only after API, scraping, and privacy boundaries are decided.
 - Resolve public hosted site deployment for the `web` branch or choose another
   hosting target.

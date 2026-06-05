@@ -28,6 +28,7 @@ from opennego.learning import (
     registry_listing,
     write_battle_report,
 )
+from opennego.market_ingestion import MarketIngestionError, ingest_market_data
 from opennego.marketplace import MarketplaceError, write_marketplace_profile
 from opennego.model_demo import (
     DEFAULT_MODEL_DEMO_MODELS,
@@ -73,6 +74,8 @@ def main(argv: list[str] | None = None) -> int:
         return _compare_main(argv[1:])
     if argv and argv[0] == "marketplace-export":
         return _marketplace_export_main(argv[1:])
+    if argv and argv[0] == "ingest-market":
+        return _ingest_market_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
         return _mvp_demo_main(argv[1:])
     if argv and argv[0] == "spar":
@@ -434,6 +437,59 @@ def _marketplace_export_main(argv: list[str] | None = None) -> int:
             overwrite=args.overwrite,
         )
     except (OSError, StrategyEvolutionError, MarketplaceError, ValueError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(result), indent=2))
+    return 0
+
+
+def _ingest_market_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Normalize offline sold-comps CSV/JSON into OpenNego fixtures."
+    )
+    parser.add_argument(
+        "--input",
+        required=True,
+        help="Local CSV or JSON-list sold-comps export.",
+    )
+    parser.add_argument(
+        "--products-output",
+        required=True,
+        help="Path to write normalized products.json.",
+    )
+    parser.add_argument(
+        "--comps-output",
+        required=True,
+        help="Path to write normalized market_comps.json.",
+    )
+    parser.add_argument(
+        "--source",
+        default="offline_sold_comps",
+        help="Fallback source label when input rows do not include one.",
+    )
+    parser.add_argument(
+        "--currency",
+        default="USD",
+        help="Fallback currency when input rows do not include one.",
+    )
+    parser.add_argument("--window-days", type=int)
+    parser.add_argument("--asking-multiplier", type=float, default=1.25)
+    parser.add_argument("--buyer-budget-multiplier", type=float, default=1.2)
+    args = parser.parse_args(argv)
+
+    try:
+        result = ingest_market_data(
+            input_path=args.input,
+            products_output=args.products_output,
+            comps_output=args.comps_output,
+            source=args.source,
+            currency=args.currency,
+            window_days=args.window_days,
+            asking_multiplier=args.asking_multiplier,
+            buyer_budget_multiplier=args.buyer_budget_multiplier,
+        )
+    except (OSError, MarketIngestionError) as exc:
         print(json.dumps({"error": str(exc)}, indent=2))
         return 2
 
