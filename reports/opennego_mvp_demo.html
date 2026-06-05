@@ -70,11 +70,6 @@
     .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
     .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .card { padding: 16px; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; }
-    .lesson-card { padding: 16px; background: #fffaf0; border: 1px solid #f3d7a4; border-radius: 8px; }
-    .prompt-patch { margin-top: 12px; padding: 12px; background: #10212b; color: #e7f6f2; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .severity-high { color: #b91c1c; font-weight: 750; }
-    .severity-medium { color: #b45309; font-weight: 750; }
-    .severity-low { color: var(--accent-dark); font-weight: 750; }
     .muted { color: var(--muted); }
     .market-loop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
     .loop-item { padding-top: 14px; border-top: 3px solid var(--accent); }
@@ -109,7 +104,7 @@
       <div class="navlinks">
         <a href="#overview">Overview</a>
         <a href="#leaderboard">Leaderboard</a>
-        <a href="#training">Training</a>
+        <a href="../training.html">Training</a>
         <a href="../marketplace.html">Marketplace</a>
       </div>
     </nav>
@@ -199,27 +194,15 @@
     <section id="training" class="section">
       <div class="section-head">
         <div>
-          <h2>Training / Prompt Optimization</h2>
-          <p class="section-copy">Battle reports turn benchmark artifacts into strategy-layer edits. The base protocol remains fixed; only the user's strategy prompt changes.</p>
+          <h2>Agent Improvement Toolkit</h2>
+          <p class="section-copy">Connect an agent, choose an NPC curriculum, run sparring, diagnose failures, extract a strategy patch, and rerun the same suite for before/after comparison.</p>
         </div>
-        <span class="pill">Policy score 85.0</span>
+        <a class="pill" href="../training.html">Open training toolkit</a>
       </div>
-      <div class="grid-2">
-        <div class="card">
-          <h3>Battle Summary</h3>
-          <p class="muted">As buyer, the agent ended with outcome=deal at $608.00 against Hardline Anchor Seller. Policy score=85.0. Detected 1 actionable issue(s) for strategy optimization.</p>
-          <p class="muted">Run: no-key fixture benchmark slice used for policy-learning diagnostics.</p>
-          <p class="muted">Failure modes: price_discipline</p>
-        </div>
-        <div class="card">
-          <h3>Strategy Patch</h3>
-          <div class="prompt-patch">Role strategy patch for buyer:
-Keep OpenNego base protocol fixed. Edit only the strategy layer.
-1. Never exceed market_reference * 1.05 unless a written exception is justified by condition, bundle value, or time preference.</div>
-        </div>
-      </div>
-      <div class="grid-2" style="margin-top:14px;">
-        <div class="lesson-card"><h3>Price Discipline</h3><p class="muted">buyer_overpaid_market</p><p class="severity-high">HIGH</p><p>The accepted price $608.00 is more than 5% above the market reference $575.00.</p><p class="muted">Cap final buyer offers at the market reference unless the trace records a concrete quality, shipping, warranty, or urgency reason.</p><p class="muted">Evidence: turn 1 buyer offer; turn 2 seller accept</p></div>
+      <div class="grid-3">
+        <div class="card"><h3>Connect</h3><p class="muted">Use prompt-only, local AgentPort, or hosted endpoint adapters to plug your negotiation agent into OpenNego.</p></div>
+        <div class="card"><h3>Spar</h3><p class="muted">Run small NPC packs for anchors, stale comps, hidden fees, tool overuse, and deadline pressure.</p></div>
+        <div class="card"><h3>Patch</h3><p class="muted">Convert battle reports into strategy-layer edits while keeping the OpenNego base protocol fixed.</p></div>
       </div>
     </section>
 
