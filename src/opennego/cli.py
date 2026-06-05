@@ -4,27 +4,13 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import asdict, is_dataclass
-from enum import Enum
 from pathlib import Path
-from typing import Any
 
+from opennego.artifacts import to_jsonable, write_run_artifacts
 from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.environment import NegotiationEnvironment
 from opennego.schema import Product, Scenario
 from opennego.tools import MarketPriceTool
-
-
-def _jsonable(value: Any) -> Any:
-    if isinstance(value, Enum):
-        return value.value
-    if is_dataclass(value):
-        return _jsonable(asdict(value))
-    if isinstance(value, dict):
-        return {key: _jsonable(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(item) for item in value]
-    return value
 
 
 def load_first_product(path: str | Path) -> Product:
@@ -40,6 +26,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--market-comps-file", default="examples/data/market_comps.json")
     parser.add_argument("--max-turns", type=int, default=8)
     parser.add_argument("--output-json", help="Optional path for the full run trace.")
+    parser.add_argument("--output-dir", help="Optional directory for versioned benchmark artifacts.")
+    parser.add_argument("--run-id", help="Run id for benchmark artifacts.")
+    parser.add_argument("--seed", type=int, help="Seed recorded in benchmark artifacts.")
     args = parser.parse_args(argv)
 
     product = load_first_product(args.products_file)
@@ -57,10 +46,30 @@ def main(argv: list[str] | None = None) -> int:
         tools=(MarketPriceTool.from_json(args.market_comps_file),),
     )
     result = env.run()
-    payload = _jsonable(result)
+    payload = to_jsonable(result)
 
     if args.output_json:
         Path(args.output_json).write_text(json.dumps(payload, indent=2) + "\n")
+    if args.output_dir:
+        run_id = args.run_id or f"smoke-{product.id}"
+        paths = write_run_artifacts(
+            result=result,
+            output_dir=args.output_dir,
+            run_id=run_id,
+            seed=args.seed,
+            agents={
+                "buyer": {"name": "tool_aware_buyer", "kind": "scripted"},
+                "seller": {"name": "scripted_seller", "kind": "scripted"},
+            },
+            tool_regime={
+                "market_price_search": {
+                    "visibility": "buyer_private",
+                    "source": str(args.market_comps_file),
+                }
+            },
+        )
+    else:
+        paths = None
 
     print(
         json.dumps(
@@ -69,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
                 "deal_price": result.deal_price,
                 "completed_turns": result.completed_turns,
                 "metrics": result.metrics,
+                "artifacts": str(paths.output_dir) if paths else None,
             },
             indent=2,
         )
