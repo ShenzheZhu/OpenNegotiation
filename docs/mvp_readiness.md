@@ -9,9 +9,10 @@ architecture, CLI integration, and tests on `main`.
 
 The no-key local MVP and the main user-centric workflow slices are implemented
 on `main`: benchmark runs, policy-learning battle reports, strategy candidate
-reruns, local marketplace export, strategy sparring, transaction settlement
-guards, config-level LLM agents, provider-neutral profile LLM NPCs, and CLI
-loading for local user-agent factories, plus offline sold-comps ingestion.
+reruns, one-command training loops, local marketplace export, strategy
+sparring, transaction settlement guards, config-level LLM agents,
+provider-neutral profile LLM NPCs, and CLI loading for local user-agent
+factories, plus offline sold-comps ingestion.
 Offline ingested datasets can optionally write an aggregate dataset manifest
 with input fingerprint and quality summaries, then validate those fixtures with
 `opennego validate-market`.
@@ -33,6 +34,7 @@ Verified no-key surfaces:
 
 - `opennego mvp-demo --output-dir /tmp/opennego-readiness-mvp --report /tmp/opennego-readiness-mvp.html`
 - `opennego spar --output-dir /tmp/opennego-readiness-sparring --report /tmp/opennego-readiness-sparring.html --opponent-profile seller_hardline_anchor_v1 --opponent-profile seller_hidden_fees_v1`
+- `opennego train --output-dir /tmp/opennego-readiness-training --opponent-profile seller_hardline_anchor_v1 --parent-strategy-id buyer_baseline`
 
 Browser smoke evidence:
 
@@ -65,6 +67,8 @@ Implemented:
 - Local NPC strategy registry and profile-backed no-key sparring suite.
 - Versioned strategy candidate generation, sparring reruns, and before/after
   comparison artifacts.
+- One-command no-key training loop that runs sparring, extracts a strategy
+  candidate, reruns the same profile, and compares before/after reports.
 - Local strategy marketplace profile export and registry installation.
 - Config-runner custom `AgentPort` registration through Python API and explicit
   CLI local factory loading.
@@ -127,15 +131,17 @@ git diff --check
 opennego run-models --output-dir /tmp/opennego-live-five-fixed-20260605 --max-turns 3 --max-tokens 220
 opennego mvp-demo --output-dir "$tmpdir/mvp" --report "$tmpdir/mvp.html"
 opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
+opennego train --output-dir "$tmpdir/training" --opponent-profile seller_hardline_anchor_v1 --parent-strategy-id buyer_baseline
 secret-pattern scan for common provider key prefixes
 ```
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 118 passed.
+- `pytest -q`: 121 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - MVP demo bundle validation smoke: passed with no errors or warnings.
+- Training loop smoke: passed and wrote `opennego.training_loop.v1`.
 - Secret-pattern scan: no matches.
 
 Historical live provider status:

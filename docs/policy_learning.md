@@ -188,6 +188,23 @@ leaderboard summary artifact when it is available. The validation command emits
 that the benchmark, learning report, strategy candidate, and HTML report still
 line up as one coherent demo bundle.
 
+For a focused no-key training loop:
+
+```bash
+opennego train \
+  --output-dir /tmp/opennego-training \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --parent-strategy-id buyer_baseline
+```
+
+`opennego train` writes `opennego.training_loop.v1` JSON at
+`/tmp/opennego-training/training_loop.json`. It runs baseline sparring, selects
+the lowest-scoring completed battle report, writes a strategy candidate, reruns
+the same NPC profile with that candidate, and compares the before/after battle
+reports. The summary records the shared `opennego.sparring.run_sparring_suite`
+runtime so the loop remains artifact-backed instead of becoming a separate
+prompt-only simulator.
+
 `opennego learn` reads one completed benchmark run directory:
 
 ```text
@@ -343,6 +360,8 @@ In scope:
   artifacts
 - no-key sparring suite artifacts for selected marketplace profiles
 - no-key runtime application of versioned strategy candidates in sparring
+- one-command no-key training loop for sparring, strategy extraction, rerun,
+  and comparison artifacts
 - local export and installation of strategy candidates as marketplace profiles
 
 Out of scope:
@@ -364,3 +383,6 @@ The near-term product loop is:
    only the strategy prompt in their own agent integration.
 6. User reruns against the same or harder NPC profile.
 7. OpenNego compares the before/after battle reports.
+
+`opennego train` automates steps 3-7 for the no-key local strategy-candidate
+runtime.
