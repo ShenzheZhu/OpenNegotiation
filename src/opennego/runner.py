@@ -8,7 +8,12 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
-from opennego.agents import ScriptedSeller, ToolAwareBuyer
+from opennego.agents import (
+    ScriptedSeller,
+    ToolAwareBuyer,
+    make_llm_buyer,
+    make_llm_seller,
+)
 from opennego.artifacts import (
     ArtifactValidationError,
     load_manifest,
@@ -19,7 +24,7 @@ from opennego.artifacts import (
 )
 from opennego.environment import NegotiationEnvironment
 from opennego.environment import ToolRuntimeConfig
-from opennego.ports import AgentPort, ToolPort
+from opennego.ports import AgentPort, LLMPort, ToolPort
 from opennego.schema import Product, Role, Scenario
 from opennego.tools import MarketPriceTool
 from opennego.transactions import FixtureTransactionSimulator
@@ -32,6 +37,8 @@ class ConfigValidationError(ValueError):
 
 
 AgentFactory = Callable[[Role, Mapping[str, Any]], AgentPort]
+LLMFactory = Callable[[], LLMPort]
+LLM_AGENT_KINDS = frozenset({"llm_buyer", "llm_seller"})
 
 
 @dataclass(frozen=True)
@@ -215,6 +222,7 @@ def run_experiment_config(
     resume: bool | None = None,
     output_dir: str | Path | None = None,
     agent_factories: Mapping[str, AgentFactory] | None = None,
+    llm_factory: LLMFactory | None = None,
 ) -> ExperimentSummary:
     """Run all jobs declared by an experiment config."""
 
@@ -224,7 +232,10 @@ def run_experiment_config(
     if output_dir is not None:
         config = replace(config, output_dir=Path(output_dir))
 
-    agent_registry = _agent_factory_registry(agent_factories)
+    agent_registry = _agent_factory_registry(
+        agent_factories,
+        llm_factory=llm_factory,
+    )
     _validate_agent_kinds(config.agents, agent_registry)
     prepared_runs = prepare_runs(config)
     records: list[RunRecord] = []
@@ -334,6 +345,7 @@ def _execute_prepared_run(
             "buyer": {"name": buyer.name, "kind": config.agents.buyer_kind},
             "seller": {"name": seller.name, "kind": config.agents.seller_kind},
         },
+        models=_model_metadata(config.agents),
         tool_regime=_tool_regime_metadata(prepared_run.tool_regime),
         metadata={
             "experiment_name": config.name,
@@ -356,10 +368,22 @@ def _build_agents(
 
 def _agent_factory_registry(
     agent_factories: Mapping[str, AgentFactory] | None,
+    *,
+    llm_factory: LLMFactory | None,
 ) -> Mapping[str, AgentFactory]:
     registry: dict[str, AgentFactory] = {
         "tool_aware_buyer": _make_tool_aware_buyer,
         "scripted_seller": _make_scripted_seller,
+        "llm_buyer": _make_llm_agent_factory(
+            kind="llm_buyer",
+            expected_role=Role.BUYER,
+            llm_factory=llm_factory,
+        ),
+        "llm_seller": _make_llm_agent_factory(
+            kind="llm_seller",
+            expected_role=Role.SELLER,
+            llm_factory=llm_factory,
+        ),
     }
     registry.update(agent_factories or {})
     return registry
@@ -423,11 +447,101 @@ def _make_scripted_seller(role: Role, params: Mapping[str, Any]) -> AgentPort:
     return ScriptedSeller(**_agent_kwargs("scripted_seller", params))
 
 
+def _make_llm_agent_factory(
+    *,
+    kind: str,
+    expected_role: Role,
+    llm_factory: LLMFactory | None,
+) -> AgentFactory:
+    def factory(role: Role, params: Mapping[str, Any]) -> AgentPort:
+        if role != expected_role:
+            raise ConfigValidationError(
+                f"{kind} requires {expected_role.value} role"
+            )
+        model = _param_str(kind, params, "model")
+        name = _optional_param_str(kind, params, "name") or kind
+        tool_policy = _optional_param_str(kind, params, "tool_policy") or "none"
+        temperature = _optional_param_float(kind, params, "temperature", 0.0)
+        max_tokens = _optional_param_int(kind, params, "max_tokens", 512)
+        if llm_factory is None:
+            raise ConfigValidationError(
+                f"{kind} requires llm_factory; pass one to run_experiment_config "
+                "or use the CLI with LiteLLM dependencies and credentials"
+            )
+        maker = make_llm_buyer if expected_role == Role.BUYER else make_llm_seller
+        return maker(
+            llm=llm_factory(),
+            model=model,
+            name=name,
+            tool_policy=tool_policy,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+    return factory
+
+
 def _agent_kwargs(kind: str, params: Mapping[str, Any]) -> dict[str, Any]:
     try:
         return dict(params)
     except (TypeError, ValueError) as exc:
         raise ConfigValidationError(f"{kind}.params: expected object") from exc
+
+
+def _model_metadata(config: AgentPairConfig) -> Mapping[str, str]:
+    models: dict[str, str] = {}
+    for role, spec in ((Role.BUYER, config.buyer), (Role.SELLER, config.seller)):
+        if spec.kind in LLM_AGENT_KINDS:
+            model = spec.params.get("model")
+            if isinstance(model, str) and model:
+                models[role.value] = model
+    return models
+
+
+def _param_str(kind: str, params: Mapping[str, Any], key: str) -> str:
+    value = params.get(key)
+    if not isinstance(value, str) or not value:
+        raise ConfigValidationError(f"{kind}.params.{key}: expected non-empty string")
+    return value
+
+
+def _optional_param_str(
+    kind: str,
+    params: Mapping[str, Any],
+    key: str,
+) -> str | None:
+    value = params.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ConfigValidationError(f"{kind}.params.{key}: expected string")
+    return value
+
+
+def _optional_param_float(
+    kind: str,
+    params: Mapping[str, Any],
+    key: str,
+    default: float,
+) -> float:
+    value = params.get(key, default)
+    if not isinstance(value, (int, float)):
+        raise ConfigValidationError(f"{kind}.params.{key}: expected number")
+    return float(value)
+
+
+def _optional_param_int(
+    kind: str,
+    params: Mapping[str, Any],
+    key: str,
+    default: int,
+) -> int | None:
+    value = params.get(key, default)
+    if value is None:
+        return None
+    if not isinstance(value, int):
+        raise ConfigValidationError(f"{kind}.params.{key}: expected integer or null")
+    return value
 
 
 def _build_scenario(config: ScenarioConfig) -> Scenario:

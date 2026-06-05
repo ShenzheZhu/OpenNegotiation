@@ -96,6 +96,12 @@ opennego run-models --output-dir /tmp/opennego-five-model-demo
 opennego report --input-dir /tmp/opennego-five-model-demo --output /tmp/opennego-five-model-demo.html
 ```
 
+For normal experiment configs, use the built-in runner agent kinds `llm_buyer`
+and `llm_seller` with `params.model`; see
+[experiment_runner.md](experiment_runner.md#llm-config-agents). This path uses
+the same benchmark manifests, traces, metrics, tools, and transaction layer as
+scripted or custom `AgentPort` runs.
+
 The default model set uses LiteLLM OpenRouter model IDs so one provider key can
 cover multiple frontier and open-weight model families:
 

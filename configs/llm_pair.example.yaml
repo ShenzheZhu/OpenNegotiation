@@ -1,0 +1,66 @@
+{
+  "schema_version": "opennego.experiment.v1",
+  "name": "llm_pair_demo",
+  "output_dir": "runs/llm_pair_demo",
+  "resume": false,
+  "fail_fast": false,
+  "seeds": [13],
+  "agents": {
+    "buyer": {
+      "kind": "llm_buyer",
+      "params": {
+        "model": "openrouter/openai/gpt-4o-mini",
+        "name": "llm_buyer:gpt-4o-mini",
+        "tool_policy": "available",
+        "temperature": 0.0,
+        "max_tokens": 256
+      }
+    },
+    "seller": {
+      "kind": "llm_seller",
+      "params": {
+        "model": "openrouter/anthropic/claude-3.5-haiku",
+        "name": "llm_seller:claude-3.5-haiku",
+        "tool_policy": "available",
+        "temperature": 0.0,
+        "max_tokens": 256
+      }
+    }
+  },
+  "scenarios": [
+    {
+      "id": "iphone_14_pro_128gb_unlocked_good",
+      "products_file": "examples/data/real_market_products.json",
+      "product_index": 0,
+      "max_turns": 4
+    }
+  ],
+  "tool_regimes": [
+    {
+      "id": "buyer_seller_private_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "symmetric_private",
+          "mode": "clean"
+        }
+      ]
+    }
+  ],
+  "transaction": {
+    "kind": "fixture",
+    "enabled": true,
+    "shipping_cost": 12.0,
+    "tax_rate": 0.06,
+    "escrow_fee": 3.0,
+    "payment_fee_rate": 0.015,
+    "seller_fee_rate": 0.04,
+    "return_risk": 0.02,
+    "reputation_risk": 0.01
+  },
+  "metadata": {
+    "purpose": "Example live LLM buyer-vs-seller config. Requires optional LLM dependencies and local provider credentials."
+  }
+}

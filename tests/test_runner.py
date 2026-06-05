@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from opennego.artifacts import load_manifest, load_metric_report
+from opennego.ports import LLMRequest, LLMResponse
 from opennego.runner import ConfigValidationError, run_experiment_config
 from opennego.schema import AgentAction, AgentContext, Role
 
@@ -164,6 +165,89 @@ def test_config_runner_rejects_wrong_role_custom_agent_before_output(tmp_path):
     assert not output_dir.exists()
 
 
+def test_config_runner_accepts_llm_agents_with_injected_llm_factory(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = write_config(tmp_path, output_dir)
+    config = read_config(config_path)
+    config["agents"] = {
+        "buyer": {
+            "kind": "llm_buyer",
+            "params": {
+                "model": "fake/buyer-model",
+                "name": "llm_buyer:fake",
+                "tool_policy": "none",
+                "temperature": 0.1,
+                "max_tokens": 64,
+            },
+        },
+        "seller": {
+            "kind": "llm_seller",
+            "params": {
+                "model": "fake/seller-model",
+                "name": "llm_seller:fake",
+            },
+        },
+    }
+    config["tool_regimes"] = [{"id": "no_tools", "tools": []}]
+    config_path.write_text(json.dumps(config, indent=2) + "\n")
+    llm_factory = TrackingLLMFactory()
+
+    summary = run_experiment_config(config_path, llm_factory=llm_factory)
+
+    run_dir = output_dir / "runner_smoke-camera_001-no_tools-seed-11"
+    manifest = load_manifest(run_dir / "manifest.json")
+    metrics = load_metric_report(run_dir / "metrics.json")
+    assert summary.completed == 1
+    assert summary.failed == 0
+    assert manifest.agents["buyer"] == {
+        "name": "llm_buyer:fake",
+        "kind": "llm_buyer",
+    }
+    assert manifest.agents["seller"] == {
+        "name": "llm_seller:fake",
+        "kind": "llm_seller",
+    }
+    assert manifest.models == {
+        "buyer": "fake/buyer-model",
+        "seller": "fake/seller-model",
+    }
+    assert metrics.outcome == "deal"
+    assert metrics.deal_price == 760.0
+    assert [request.metadata["agent_role"] for request in llm_factory.requests] == [
+        "buyer",
+        "seller",
+    ]
+
+
+def test_config_runner_rejects_llm_agent_without_llm_factory_before_output(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = write_config(tmp_path, output_dir)
+    config = read_config(config_path)
+    config["agents"]["buyer"] = {
+        "kind": "llm_buyer",
+        "params": {"model": "fake/buyer-model"},
+    }
+    config_path.write_text(json.dumps(config, indent=2) + "\n")
+
+    with pytest.raises(ConfigValidationError, match="llm_buyer requires llm_factory"):
+        run_experiment_config(config_path)
+
+    assert not output_dir.exists()
+
+
+def test_config_runner_rejects_llm_agent_missing_model_before_output(tmp_path):
+    output_dir = tmp_path / "runs"
+    config_path = write_config(tmp_path, output_dir)
+    config = read_config(config_path)
+    config["agents"]["buyer"] = {"kind": "llm_buyer", "params": {}}
+    config_path.write_text(json.dumps(config, indent=2) + "\n")
+
+    with pytest.raises(ConfigValidationError, match="llm_buyer.params.model"):
+        run_experiment_config(config_path)
+
+    assert not output_dir.exists()
+
+
 @dataclass
 class FixedOfferBuyer:
     name: str
@@ -195,3 +279,34 @@ def fixed_offer_buyer_factory(role, params):
 
 def wrong_role_agent_factory(role, params):
     return WrongRoleAgent()
+
+
+class TrackingLLMFactory:
+    def __init__(self):
+        self.requests = []
+
+    def __call__(self):
+        return FakeRunnerLLM(self.requests)
+
+
+class FakeRunnerLLM:
+    def __init__(self, requests):
+        self.requests = requests
+
+    def complete(self, request: LLMRequest) -> LLMResponse:
+        self.requests.append(request)
+        if request.metadata["agent_role"] == "buyer":
+            return LLMResponse(
+                model=request.model,
+                content=(
+                    '{"type": "offer", "content": null, "price": 760, '
+                    '"note": "Config runner LLM offer.", "tool": null}'
+                ),
+            )
+        return LLMResponse(
+            model=request.model,
+            content=(
+                '{"type": "accept", "content": "Accepted.", "price": null, '
+                '"note": "Config runner LLM accepts.", "tool": null}'
+            ),
+        )
