@@ -36,8 +36,8 @@ The first scaffold focuses on:
 OpenNegotiation currently requires Python 3.10 or newer.
 
 ```bash
-git clone https://github.com/Kordi-AI/OpenNego.git
-cd OpenNego
+git clone https://github.com/Kordi-AI/OpenNegotiation.git
+cd OpenNegotiation
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"

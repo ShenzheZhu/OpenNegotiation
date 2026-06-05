@@ -2,7 +2,7 @@
 
 ## Project Structure
 
-OpenNego uses a `src/` Python package layout.
+OpenNegotiation uses a `src/` Python package layout.
 
 - `src/opennego/schema.py`: shared dataclasses, action types, and parsing
   helpers.

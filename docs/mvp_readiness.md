@@ -167,8 +167,9 @@ Latest local result on this readiness branch:
 - MVP demo bundle validation smoke: passed with no errors or warnings.
 - External handoff package smoke: passed and wrote
   `opennego.external_handoff.v1`.
-- Product naming scan: public-facing copy uses OpenNegotiation; remaining
-  legacy handles are limited to repository/package compatibility contexts.
+- Product naming scan: public-facing copy uses OpenNegotiation; lowercase
+  `opennego` remains only for package, CLI, schema, and generated-path
+  compatibility contexts.
 - Arena plan smoke: passed and wrote `opennego.arena_plan.v1`.
 - Training loop smoke: passed and wrote `opennego.training_loop.v1` plus
   `opennego.strategy_config.v1`.
