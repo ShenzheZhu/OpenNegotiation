@@ -68,6 +68,30 @@ opennego strategies --role seller
 This is a local curated marketplace in the MVP. A hosted marketplace or
 contributed strategy backend is intentionally out of scope for the first slice.
 
+## Strategy Sparring Suite
+
+`opennego spar` turns marketplace profiles into a repeatable no-key training
+suite:
+
+```bash
+opennego spar \
+  --output-dir /tmp/opennego-sparring \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --opponent-profile seller_hidden_fees_v1
+```
+
+The command writes `sparring_suite.json` at the output root and one
+`battle_report.json` under each selected profile directory. Its first execution
+mode is `fixture_profile_diagnosis`: deterministic local agents produce
+benchmark artifacts, and the selected NPC profile drives the battle-report
+opponent archetype, expected traps, failure modes, and strategy patch. This is
+not yet a hosted marketplace or a live profile-backed model opponent, but it
+gives users a reproducible curriculum surface for prompt optimization.
+
+If no `--opponent-profile` is provided, the command selects every registry
+profile with the opposite role from `--user-role`. A buyer-owned user agent
+therefore spars against seller profiles by default.
+
 ## Battle Report Schema
 
 The quickest end-to-end path is:
@@ -177,6 +201,7 @@ In scope:
 - strategy prompt patch suggestions
 - CLI commands for listing profiles, writing battle reports, and rendering the
   one-command MVP demo
+- no-key sparring suite artifacts for selected marketplace profiles
 
 Out of scope:
 
@@ -185,6 +210,7 @@ Out of scope:
 - provider-backed summarization
 - hosted marketplace backend
 - large NPC library
+- profile-backed live model opponent execution
 
 The near-term product loop is:
 

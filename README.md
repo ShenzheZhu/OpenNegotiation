@@ -93,6 +93,22 @@ You can also inspect the local NPC strategy marketplace directly:
 opennego strategies --role seller
 ```
 
+To run the next no-key training loop against one or more marketplace NPC
+profiles:
+
+```bash
+opennego spar \
+  --output-dir /tmp/opennego-sparring \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --opponent-profile seller_hidden_fees_v1
+```
+
+This writes `/tmp/opennego-sparring/sparring_suite.json` plus one
+`battle_report.json` per selected profile. The current execution mode is
+fixture-backed profile diagnosis: deterministic local agents generate the
+benchmark artifacts, while marketplace profiles define the opponent archetype
+and lessons used for prompt optimization.
+
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
 
 ```bash

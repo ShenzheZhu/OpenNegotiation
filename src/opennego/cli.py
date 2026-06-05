@@ -22,6 +22,7 @@ from opennego.mvp_demo import run_mvp_demo
 from opennego.report import write_demo_report
 from opennego.runner import ConfigValidationError, run_experiment_config
 from opennego.schema import Product, Scenario
+from opennego.sparring import run_sparring_suite
 from opennego.tools import MarketPriceTool
 
 
@@ -46,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
         return _learn_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
         return _mvp_demo_main(argv[1:])
+    if argv and argv[0] == "spar":
+        return _spar_main(argv[1:])
 
     parser = argparse.ArgumentParser(description="Run a deterministic OpenNego smoke demo.")
     parser.add_argument("--products-file", default="examples/data/products.json")
@@ -283,6 +286,66 @@ def _mvp_demo_main(argv: list[str] | None = None) -> int:
 
     print(json.dumps(to_jsonable(summary), indent=2))
     return 0 if summary.benchmark_failed == 0 else 1
+
+
+def _spar_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Run a no-key strategy sparring suite against NPC profiles."
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="runs/sparring_suite",
+        help="Directory for per-profile runs and sparring_suite.json.",
+    )
+    parser.add_argument(
+        "--config",
+        default="configs/real_market_demo.yaml",
+        help="Experiment config used for each sparring slice.",
+    )
+    parser.add_argument(
+        "--registry",
+        default=str(DEFAULT_NPC_REGISTRY_PATH),
+        help="Path to an NPC strategy registry JSON file.",
+    )
+    parser.add_argument(
+        "--user-role",
+        default="buyer",
+        choices=("buyer", "seller"),
+        help="Role of the user-owned agent to optimize.",
+    )
+    parser.add_argument(
+        "--opponent-profile",
+        action="append",
+        dest="opponent_profiles",
+        help=(
+            "NPC profile id to include. Repeat for multiple profiles. "
+            "Defaults to every opposite-role profile."
+        ),
+    )
+    parser.add_argument(
+        "--learning-tool-regime",
+        default="no_tools",
+        help="Completed run tool regime to diagnose for policy learning.",
+    )
+    parser.add_argument("--no-fail-fast", action="store_true")
+    args = parser.parse_args(argv)
+
+    try:
+        summary = run_sparring_suite(
+            output_dir=args.output_dir,
+            config_path=args.config,
+            registry_path=args.registry,
+            user_role=args.user_role,
+            opponent_profile_ids=args.opponent_profiles,
+            learning_tool_regime=args.learning_tool_regime,
+            fail_fast=not args.no_fail_fast,
+        )
+    except (OSError, ValueError, KeyError, ConfigValidationError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(summary), indent=2))
+    return 0 if summary.failed == 0 else 1
 
 
 def _run_models_main(argv: list[str] | None = None) -> int:
