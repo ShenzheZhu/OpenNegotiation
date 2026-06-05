@@ -77,8 +77,8 @@ Implemented:
   `market_comps.json`, and optional aggregate dataset manifest artifacts.
 - Market fixture validation CLI for products/comps plus optional dataset
   manifest consistency checks.
-- Machine-readable leaderboard aggregation with ranked run rows and buyer/seller
-  role-track summaries.
+- Machine-readable leaderboard aggregation with ranked run rows, participant
+  role-coverage summaries, and buyer/seller role-track summaries.
 - Shared no-key workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.

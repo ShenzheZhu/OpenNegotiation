@@ -148,14 +148,19 @@ aggregates completed run artifact directories into
 
 - ranked per-run rows with run id, scenario id, tool regime, score, outcome,
   deal price, buyer participant id, seller participant id, and raw metrics
+- participant summaries with observed roles, role coverage, unique run count,
+  role appearance count, per-role scores, average score, coverage-adjusted
+  score, and balanced average score when both buyer and seller roles are present
 - buyer role-track aggregates
 - seller role-track aggregates
 
 Participant ids prefer manifest model ids when available, falling back to
 `agent_kind:agent_name` for scripted or custom agents. The first scorecard score
 uses existing deterministic metrics: deal rate, transaction completion,
-normalized market gap, and tool failure rate. Elo or Bradley-Terry fitting is a
-future arena layer, not part of this deterministic summary.
+normalized market gap, and tool failure rate. Participant coverage is a contract
+check, not a new negotiation metric: it makes one-role NPC/profile results
+visibly different from balanced buyer/seller evaluations. Elo or Bradley-Terry
+fitting is a future arena layer, not part of this deterministic summary.
 
 ## Compatibility
 
