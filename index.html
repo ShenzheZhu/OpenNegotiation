@@ -91,7 +91,7 @@
     .architecture-svg {
       display: block;
       width: 100%;
-      min-width: 960px;
+      min-width: 1000px;
       height: auto;
     }
     .diagram-bg { fill: #f7fbfa; }
@@ -99,8 +99,8 @@
     .diagram-panel-soft { fill: var(--soft); stroke: var(--line); stroke-width: 1.2; }
     .diagram-title { fill: var(--ink); font-size: 22px; font-weight: 800; letter-spacing: 0; }
     .diagram-label { fill: var(--accent-dark); font-size: 13px; font-weight: 800; letter-spacing: 0; text-transform: uppercase; }
-    .diagram-heading { fill: var(--ink); font-size: 18px; font-weight: 800; letter-spacing: 0; }
-    .diagram-text { fill: var(--muted); font-size: 13px; letter-spacing: 0; }
+    .diagram-heading { fill: var(--ink); font-size: 16px; font-weight: 800; letter-spacing: 0; }
+    .diagram-text { fill: var(--muted); font-size: 12px; letter-spacing: 0; }
     .diagram-small { fill: var(--muted); font-size: 12px; letter-spacing: 0; }
     .diagram-arrow { stroke: var(--accent-dark); stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
     .diagram-arrow-soft { stroke: #9ab4ad; stroke-width: 1.7; fill: none; marker-end: url(#arrowheadSoft); }
@@ -199,7 +199,7 @@
         </div>
       </div>
       <div class="diagram-scroll" aria-label="OpenNegotiation system architecture workflow diagram">
-        <svg class="architecture-svg" viewBox="0 0 1080 610" role="img" aria-labelledby="architecture-title architecture-desc" xmlns="http://www.w3.org/2000/svg">
+        <svg class="architecture-svg" viewBox="0 0 1280 680" role="img" aria-labelledby="architecture-title architecture-desc" xmlns="http://www.w3.org/2000/svg">
           <title id="architecture-title">OpenNegotiation system architecture workflow</title>
           <desc id="architecture-desc">Market data and scenario constraints feed an agent arena with buyer and seller agents, model gateway, tool gateway, transaction checks, and versioned trace outputs for leaderboard, training, and marketplace feedback.</desc>
           <defs>
@@ -214,77 +214,106 @@
             </marker>
           </defs>
 
-          <rect class="diagram-bg" x="0" y="0" width="1080" height="610" rx="18" />
-          <text class="diagram-title" x="36" y="42">System Workflow</text>
-          <text class="diagram-small" x="36" y="65">From real-market evidence to negotiated transactions, auditable traces, and policy improvement.</text>
+          <rect class="diagram-bg" x="0" y="0" width="1280" height="680" rx="18" />
+          <text class="diagram-title" x="38" y="44">System Architecture Workflow</text>
+          <text class="diagram-small" x="38" y="68">Real-market scenarios move through an agent arena, transaction checks, and artifact feedback loops.</text>
 
-          <rect class="diagram-panel" x="36" y="96" width="230" height="392" rx="14" />
-          <text class="diagram-label" x="58" y="128">Market Setup</text>
-          <rect class="diagram-node-green" x="58" y="150" width="186" height="72" rx="10" />
-          <text class="diagram-heading" x="76" y="178">C2C Market Data</text>
-          <text class="diagram-text" x="76" y="201">sold comps, condition, fees</text>
-          <rect class="diagram-node-green" x="58" y="244" width="186" height="72" rx="10" />
-          <text class="diagram-heading" x="76" y="272">Scenario Builder</text>
-          <text class="diagram-text" x="76" y="295">product cluster + reference</text>
-          <rect class="diagram-node-green" x="58" y="338" width="186" height="90" rx="10" />
-          <text class="diagram-heading" x="76" y="366">Private Constraints</text>
-          <text class="diagram-text" x="76" y="389">buyer budget</text>
-          <text class="diagram-text" x="76" y="411">seller target and floor</text>
+          <rect class="diagram-panel" x="34" y="102" width="278" height="466" rx="16" />
+          <text class="diagram-label" x="58" y="136">Market Setup</text>
+          <g data-box="market-evidence">
+            <rect class="diagram-node-green" x="58" y="160" width="230" height="92" rx="12" />
+            <text class="diagram-heading" x="78" y="190">Market Evidence</text>
+            <text class="diagram-text" x="78" y="216">sold prices, condition</text>
+            <text class="diagram-text" x="78" y="236">fees and provenance</text>
+          </g>
+          <g data-box="scenario-builder">
+            <rect class="diagram-node-green" x="58" y="280" width="230" height="92" rx="12" />
+            <text class="diagram-heading" x="78" y="310">Scenario Builder</text>
+            <text class="diagram-text" x="78" y="336">product cluster</text>
+            <text class="diagram-text" x="78" y="356">market reference</text>
+          </g>
+          <g data-box="role-constraints">
+            <rect class="diagram-node-green" x="58" y="400" width="230" height="112" rx="12" />
+            <text class="diagram-heading" x="78" y="430">Role Constraints</text>
+            <text class="diagram-text" x="78" y="456">buyer budget</text>
+            <text class="diagram-text" x="78" y="476">seller target</text>
+            <text class="diagram-text" x="78" y="496">private walk-away rules</text>
+          </g>
 
-          <rect class="diagram-panel" x="322" y="96" width="438" height="392" rx="14" />
-          <text class="diagram-label" x="344" y="128">Negotiation Arena</text>
-          <rect class="diagram-node-blue" x="346" y="154" width="148" height="86" rx="12" />
-          <text class="diagram-heading" x="372" y="185">Buyer Agent</text>
-          <text class="diagram-text" x="372" y="209">strategy + tools</text>
-          <rect class="diagram-node-amber" x="588" y="154" width="148" height="86" rx="12" />
-          <text class="diagram-heading" x="613" y="185">Seller Agent</text>
-          <text class="diagram-text" x="613" y="209">strategy + tools</text>
-          <path class="diagram-arrow" d="M500 188 C522 165, 560 165, 582 188" />
-          <path class="diagram-arrow" d="M582 217 C558 242, 520 242, 500 217" />
+          <rect class="diagram-panel" x="350" y="102" width="570" height="466" rx="16" />
+          <text class="diagram-label" x="374" y="136">Negotiation Arena</text>
+          <g data-box="buyer-agent">
+            <rect class="diagram-node-blue" x="388" y="162" width="198" height="88" rx="14" />
+            <text class="diagram-heading" x="430" y="194">Buyer Agent</text>
+            <text class="diagram-text" x="430" y="220">model + strategy</text>
+          </g>
+          <g data-box="seller-agent">
+            <rect class="diagram-node-amber" x="684" y="162" width="198" height="88" rx="14" />
+            <text class="diagram-heading" x="726" y="194">Seller Agent</text>
+            <text class="diagram-text" x="726" y="220">model + strategy</text>
+          </g>
+          <path class="diagram-arrow" d="M594 190 C620 166, 652 166, 678 190" />
+          <path class="diagram-arrow" d="M678 224 C652 250, 620 250, 594 224" />
 
-          <rect class="diagram-node-dark" x="420" y="282" width="244" height="92" rx="12" />
-          <text class="diagram-heading" x="463" y="314">Environment Core</text>
-          <text class="diagram-text" x="454" y="338">action schema, turn loop, state</text>
-          <text class="diagram-text" x="454" y="360">private and shared trace policy</text>
-          <path class="diagram-arrow-soft" d="M420 242 L490 282" />
-          <path class="diagram-arrow-soft" d="M662 242 L594 282" />
+          <g data-box="environment-core">
+            <rect class="diagram-node-dark" x="470" y="306" width="330" height="116" rx="14" />
+            <text class="diagram-heading" x="558" y="340">Environment Core</text>
+            <text class="diagram-text" x="512" y="366">turn loop and action schema</text>
+            <text class="diagram-text" x="512" y="386">private/shared trace policy</text>
+            <text class="diagram-text" x="512" y="406">offer, accept, reject, tool call</text>
+          </g>
+          <path class="diagram-arrow-soft" d="M488 250 L560 302" />
+          <path class="diagram-arrow-soft" d="M786 250 L710 302" />
 
-          <rect class="diagram-node-blue" x="346" y="402" width="176" height="56" rx="10" />
-          <text class="diagram-heading" x="383" y="426">Tool Gateway</text>
-          <text class="diagram-small" x="373" y="447">search, evidence, provenance</text>
-          <rect class="diagram-node-amber" x="560" y="402" width="176" height="56" rx="10" />
-          <text class="diagram-heading" x="591" y="426">Transaction Layer</text>
-          <text class="diagram-small" x="585" y="447">shipping, fees, payment risk</text>
-          <path class="diagram-arrow-soft" d="M493 374 L448 400" />
-          <path class="diagram-arrow-soft" d="M594 374 L632 400" />
+          <g data-box="tool-gateway">
+            <rect class="diagram-node-blue" x="392" y="464" width="224" height="76" rx="12" />
+            <text class="diagram-heading" x="448" y="494">Tool Gateway</text>
+            <text class="diagram-text" x="428" y="518">market search + evidence</text>
+          </g>
+          <g data-box="transaction-layer">
+            <rect class="diagram-node-amber" x="654" y="464" width="224" height="76" rx="12" />
+            <text class="diagram-heading" x="703" y="494">Transaction Layer</text>
+            <text class="diagram-text" x="690" y="518">fees, shipping, escrow risk</text>
+          </g>
+          <path class="diagram-arrow-soft" d="M560 422 L510 460" />
+          <path class="diagram-arrow-soft" d="M708 422 L760 460" />
 
-          <rect class="diagram-panel" x="816" y="96" width="228" height="392" rx="14" />
-          <text class="diagram-label" x="838" y="128">Artifacts and Feedback</text>
-          <rect class="diagram-node-dark" x="838" y="150" width="184" height="72" rx="10" />
-          <text class="diagram-heading" x="874" y="178">Run Trace</text>
-          <text class="diagram-text" x="864" y="201">messages, offers, tool calls</text>
-          <rect class="diagram-node-green" x="838" y="244" width="184" height="72" rx="10" />
-          <text class="diagram-heading" x="870" y="272">Leaderboard</text>
-          <text class="diagram-text" x="862" y="295">deal, utility, market gap</text>
-          <rect class="diagram-node-blue" x="838" y="338" width="184" height="72" rx="10" />
-          <text class="diagram-heading" x="865" y="366">Training Report</text>
-          <text class="diagram-text" x="860" y="389">failures and policy patches</text>
-          <rect class="diagram-node-amber" x="838" y="432" width="184" height="36" rx="10" />
-          <text class="diagram-heading" x="863" y="456">Strategy Marketplace</text>
+          <rect class="diagram-panel" x="966" y="102" width="280" height="466" rx="16" />
+          <text class="diagram-label" x="990" y="136">Artifacts and Feedback</text>
+          <g data-box="run-trace">
+            <rect class="diagram-node-dark" x="990" y="160" width="232" height="76" rx="12" />
+            <text class="diagram-heading" x="1072" y="190">Run Trace</text>
+            <text class="diagram-text" x="1030" y="214">messages, offers, tools</text>
+          </g>
+          <g data-box="leaderboard-output">
+            <rect class="diagram-node-green" x="990" y="266" width="232" height="76" rx="12" />
+            <text class="diagram-heading" x="1064" y="296">Leaderboard</text>
+            <text class="diagram-text" x="1034" y="320">deal, utility, market gap</text>
+          </g>
+          <g data-box="training-output">
+            <rect class="diagram-node-blue" x="990" y="372" width="232" height="76" rx="12" />
+            <text class="diagram-heading" x="1048" y="402">Training Report</text>
+            <text class="diagram-text" x="1030" y="426">failures and policy patches</text>
+          </g>
+          <g data-box="marketplace-output">
+            <rect class="diagram-node-amber" x="990" y="478" width="232" height="62" rx="12" />
+            <text class="diagram-heading" x="1034" y="506">Strategy Marketplace</text>
+            <text class="diagram-text" x="1048" y="528">NPC stress-test packs</text>
+          </g>
 
-          <path class="diagram-arrow" d="M266 196 L340 196" />
-          <path class="diagram-arrow-soft" d="M266 280 L414 316" />
-          <path class="diagram-arrow-soft" d="M266 382 L414 342" />
-          <path class="diagram-arrow" d="M664 328 L812 184" />
-          <path class="diagram-arrow-soft" d="M930 222 L930 240" />
-          <path class="diagram-arrow-soft" d="M930 316 L930 334" />
-          <path class="diagram-arrow-soft" d="M930 410 L930 428" />
+          <path class="diagram-arrow" d="M312 206 L382 206" />
+          <path class="diagram-arrow-soft" d="M312 326 L466 356" />
+          <path class="diagram-arrow-soft" d="M312 456 L466 386" />
+          <path class="diagram-arrow" d="M800 364 L962 198" />
+          <path class="diagram-arrow-soft" d="M1106 236 L1106 262" />
+          <path class="diagram-arrow-soft" d="M1106 342 L1106 368" />
+          <path class="diagram-arrow-soft" d="M1106 448 L1106 474" />
 
-          <path class="diagram-loop" d="M846 390 C760 538, 415 536, 386 462" />
-          <text class="diagram-small" x="548" y="538">training feedback improves the next agent strategy run</text>
+          <path class="diagram-loop" d="M990 412 C838 602, 510 602, 474 542" />
+          <text class="diagram-small" x="536" y="626">training reports improve the next agent strategy run</text>
         </svg>
       </div>
-      <p class="diagram-caption">The diagram shows the full system boundary: real-market scenario construction, an agent negotiation arena with tool and transaction layers, and artifact outputs used for evaluation and policy improvement.</p>
+      <p class="diagram-caption">The diagram connects real-market scenario construction, an agent negotiation arena with tool and transaction layers, and artifact outputs used for evaluation and policy improvement.</p>
     </section>
 
   </main>
