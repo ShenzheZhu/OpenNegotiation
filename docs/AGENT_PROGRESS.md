@@ -57,6 +57,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   sparring user agents.
 - Added offline sold-comps CSV/JSON ingestion into normalized product clusters
   and market-comparable fixture files.
+- Added optional aggregate market dataset manifests for offline sold-comps
+  ingestion, including input fingerprints and quality summaries.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   battle reports, strategy candidates, sparring reruns, comparison artifacts,
   and local marketplace export.
@@ -78,12 +80,12 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Public hosted website work is tracked in GitHub issue `#28` and currently
   depends on resolving GitHub Pages support for the private repository.
 - The earlier stacked MVP PR train has been superseded by merged mainline
-  slices through PR `#54`.
+  slices through PR `#56`.
 - No active PR is required for the current local no-key MVP state.
 
 ### Verification
 
-- `pytest -q`: 102 passed after adding CLI LiteLLM profile NPC sparring.
+- `pytest -q`: 102 passed after adding offline market dataset manifests.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.

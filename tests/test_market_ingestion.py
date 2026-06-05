@@ -1,8 +1,12 @@
 import csv
+import hashlib
 import json
 
 from opennego.cli import main
-from opennego.market_ingestion import ingest_market_data
+from opennego.market_ingestion import (
+    MARKET_DATASET_MANIFEST_SCHEMA_VERSION,
+    ingest_market_data,
+)
 from opennego.schema import Product
 from opennego.tools import MarketPriceTool
 
@@ -11,6 +15,7 @@ def test_ingest_market_data_from_csv_writes_products_and_comps(tmp_path):
     input_path = tmp_path / "sold_comps.csv"
     products_path = tmp_path / "products.json"
     comps_path = tmp_path / "market_comps.json"
+    manifest_path = tmp_path / "dataset_manifest.json"
     _write_csv(
         input_path,
         [
@@ -53,9 +58,11 @@ def test_ingest_market_data_from_csv_writes_products_and_comps(tmp_path):
         comps_output=comps_path,
         source="ebay_sold_offline",
         window_days=90,
+        manifest_output=manifest_path,
     )
     products = json.loads(products_path.read_text())
     comps = json.loads(comps_path.read_text())
+    manifest = json.loads(manifest_path.read_text())
     product = Product.from_mapping(products[0])
     tool = MarketPriceTool.from_json(comps_path)
     tool_result = tool.call(
@@ -69,6 +76,7 @@ def test_ingest_market_data_from_csv_writes_products_and_comps(tmp_path):
 
     assert result.product_count == 1
     assert result.comparable_count == 3
+    assert result.manifest_output == str(manifest_path)
     assert product.market_reference is not None
     assert product.market_reference.reference_price == 575.0
     assert product.market_reference.p25_price == 565.0
@@ -86,6 +94,38 @@ def test_ingest_market_data_from_csv_writes_products_and_comps(tmp_path):
     assert comps[0]["sold_at"] == "2026-05-01"
     assert tool_result["count"] == 3
     assert tool_result["median_price"] == 575.0
+    assert manifest["schema_version"] == MARKET_DATASET_MANIFEST_SCHEMA_VERSION
+    assert manifest["input"]["sha256"] == hashlib.sha256(
+        input_path.read_bytes()
+    ).hexdigest()
+    assert manifest["input"]["format"] == "csv"
+    assert manifest["outputs"]["products"] == str(products_path)
+    assert manifest["outputs"]["market_comps"] == str(comps_path)
+    assert manifest["product_count"] == 1
+    assert manifest["comparable_count"] == 3
+    assert manifest["quality"]["missing_sold_at_count"] == 0
+    assert manifest["quality"]["price_summary"] == {
+        "count": 3,
+        "min": 555.0,
+        "p25": 565.0,
+        "median": 575.0,
+        "p75": 592.5,
+        "max": 610.0,
+    }
+    assert manifest["quality"]["counts_by_source"] == {"ebay_offline_export": 3}
+    assert manifest["quality"]["counts_by_sale_mechanism"] == {
+        "best_offer": 1,
+        "buy_it_now": 2,
+    }
+    assert manifest["quality"]["clusters"][0]["product_id"] == (
+        "apple-iphone-14-pro-128gb-unlocked"
+    )
+    assert manifest["quality"]["clusters"][0]["sample_size"] == 3
+    assert manifest["privacy"] == {
+        "contains_credentials": False,
+        "contains_raw_listing_titles": False,
+    }
+    assert "iPhone 14 Pro clean IMEI" not in json.dumps(manifest)
 
 
 def test_ingest_market_data_from_json_groups_multiple_products(tmp_path):
@@ -141,6 +181,7 @@ def test_ingest_market_data_rejects_bad_rows_before_writing(tmp_path):
     input_path = tmp_path / "bad_sold_comps.csv"
     products_path = tmp_path / "products.json"
     comps_path = tmp_path / "market_comps.json"
+    manifest_path = tmp_path / "dataset_manifest.json"
     _write_csv(
         input_path,
         [
@@ -157,6 +198,7 @@ def test_ingest_market_data_rejects_bad_rows_before_writing(tmp_path):
             input_path=input_path,
             products_output=products_path,
             comps_output=comps_path,
+            manifest_output=manifest_path,
         )
     except ValueError as exc:
         assert "sold/final price is not parseable" in str(exc)
@@ -165,12 +207,14 @@ def test_ingest_market_data_rejects_bad_rows_before_writing(tmp_path):
 
     assert not products_path.exists()
     assert not comps_path.exists()
+    assert not manifest_path.exists()
 
 
-def test_ingest_market_cli_writes_outputs(tmp_path):
+def test_ingest_market_cli_writes_outputs(tmp_path, capsys):
     input_path = tmp_path / "sold_comps.csv"
     products_path = tmp_path / "products.json"
     comps_path = tmp_path / "market_comps.json"
+    manifest_path = tmp_path / "dataset_manifest.json"
     _write_csv(
         input_path,
         [
@@ -192,18 +236,27 @@ def test_ingest_market_cli_writes_outputs(tmp_path):
             str(products_path),
             "--comps-output",
             str(comps_path),
+            "--manifest-output",
+            str(manifest_path),
             "--source",
             "offline_cli_export",
             "--window-days",
             "30",
         ]
     )
+    stdout = capsys.readouterr().out
+    payload = json.loads(stdout)
     products = json.loads(products_path.read_text())
+    manifest = json.loads(manifest_path.read_text())
 
     assert exit_code == 0
+    assert payload["manifest_output"] == str(manifest_path)
     assert products[0]["market_reference"]["source"] == "offline_cli_export"
     assert products[0]["market_reference"]["window_days"] == 30
     assert comps_path.exists()
+    assert manifest["source"] == "offline_cli_export"
+    assert manifest["quality"]["missing_sold_at_count"] == 1
+    assert manifest["quality"]["price_summary"]["median"] == 575.0
 
 
 def _write_csv(path, rows):
