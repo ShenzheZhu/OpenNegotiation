@@ -169,3 +169,36 @@ validates that the returned role matches `user_role`. Generated manifests record
 the custom `user_agent_kind` and runtime agent name. This path cannot be
 combined with `user_strategy_path`; use either a concrete custom agent or a
 versioned strategy-candidate user agent in one run.
+
+You can also replace the deterministic NPC with a profile-backed provider
+agent:
+
+```python
+from opennego.agents import make_profile_llm_agent
+from opennego.adapters import LiteLLMGateway
+
+
+gateway = LiteLLMGateway()
+
+
+def npc_factory(profile):
+    return make_profile_llm_agent(
+        profile=profile,
+        llm=gateway,
+        model="openrouter/openai/gpt-4o-mini",
+    )
+
+
+summary = run_sparring_suite(
+    output_dir="/tmp/team-a-live-npc-sparring",
+    user_role="buyer",
+    opponent_profile_ids=("seller_hardline_anchor_v1",),
+    user_agent_factory=user_agent_factory,
+    user_agent_kind="team_a_buyer",
+    opponent_agent_factory=npc_factory,
+    opponent_agent_kind="llm_profile_seller",
+)
+```
+
+CI tests this path with fake `LLMPort` implementations. Live provider calls
+require optional LLM dependencies and local credentials.

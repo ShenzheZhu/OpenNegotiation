@@ -139,6 +139,24 @@ The custom factory path and `--user-strategy` path are mutually exclusive in one
 run. Both use the same environment loop, traces, metrics, battle reports, and
 sparring summary contracts.
 
+The profile counterparty can also be swapped from deterministic profile-backed
+logic to a provider-backed profile agent through Python API:
+
+```python
+summary = run_sparring_suite(
+    output_dir="/tmp/my-agent-live-npc-sparring",
+    user_role="buyer",
+    opponent_profile_ids=("seller_hardline_anchor_v1",),
+    user_agent_factory=my_buyer_factory,
+    user_agent_kind="my_buyer",
+    opponent_agent_factory=my_profile_llm_factory,
+    opponent_agent_kind="llm_profile_seller",
+)
+```
+
+This still uses the same artifacts and learning reports. Live provider calls
+remain optional and are not required for no-key CI.
+
 ## Battle Report Schema
 
 The quickest end-to-end path is:

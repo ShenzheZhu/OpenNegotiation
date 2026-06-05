@@ -169,6 +169,45 @@ def test_sparring_suite_rejects_user_strategy_and_custom_agent_combo(tmp_path):
         )
 
 
+def test_sparring_suite_accepts_custom_opponent_agent_factory(tmp_path):
+    output_dir = tmp_path / "custom_opponent_sparring"
+
+    summary = run_sparring_suite(
+        output_dir=output_dir,
+        opponent_profile_ids=("seller_hardline_anchor_v1",),
+        opponent_agent_factory=profile_seller_factory,
+        opponent_agent_kind="llm_profile_seller",
+    )
+    result = summary.results[0]
+    assert result.learning_input_dir is not None
+    manifest = json.loads(
+        (Path(result.learning_input_dir) / "manifest.json").read_text()
+    )
+    trace = (Path(result.learning_input_dir) / "trace.jsonl").read_text()
+
+    assert summary.opponent_agent_kind == "llm_profile_seller"
+    assert result.opponent_agent_kind == "llm_profile_seller"
+    assert summary.completed == 1
+    assert manifest["agents"]["seller"]["kind"] == "llm_profile_seller"
+    assert manifest["agents"]["seller"]["name"] == (
+        "profile_seller:seller_hardline_anchor_v1"
+    )
+    assert "profile_seller:seller_hardline_anchor_v1" in trace
+
+
+def test_sparring_suite_rejects_wrong_role_opponent_agent(tmp_path):
+    output_dir = tmp_path / "bad_custom_opponent"
+
+    with pytest.raises(ValueError, match="expected 'seller'"):
+        run_sparring_suite(
+            output_dir=output_dir,
+            opponent_profile_ids=("seller_hardline_anchor_v1",),
+            opponent_agent_factory=wrong_role_opponent_factory,
+        )
+
+    assert not output_dir.exists()
+
+
 def test_sparring_suite_rejects_wrong_role_user_strategy(tmp_path):
     candidate_path = tmp_path / "seller_candidate.json"
     candidate_path.write_text(
@@ -317,3 +356,36 @@ def custom_buyer_factory(role):
 
 def wrong_role_user_factory(role):
     return WrongRoleUser()
+
+
+@dataclass
+class ProfileSeller:
+    profile_id: str
+    role: Role = Role.SELLER
+
+    @property
+    def name(self):
+        return f"profile_seller:{self.profile_id}"
+
+    def act(self, context: AgentContext) -> AgentAction:
+        for event in reversed(context.transcript):
+            if event.role == Role.BUYER and event.offer is not None:
+                return AgentAction.accept("Profile seller accepts.")
+        return AgentAction.offer_price(620.0, "Profile seller offer.")
+
+
+@dataclass
+class WrongRoleOpponent:
+    role: Role = Role.BUYER
+    name: str = "wrong_role_opponent"
+
+    def act(self, context: AgentContext) -> AgentAction:
+        return AgentAction.reject("Wrong role.")
+
+
+def profile_seller_factory(profile):
+    return ProfileSeller(profile_id=profile.id)
+
+
+def wrong_role_opponent_factory(profile):
+    return WrongRoleOpponent()

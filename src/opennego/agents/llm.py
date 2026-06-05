@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
 from opennego.artifacts import to_jsonable
+from opennego.learning import StrategyProfile
 from opennego.ports import LLMPort, LLMRequest
 from opennego.schema import (
     ActionType,
@@ -75,6 +76,7 @@ class LLMNegotiationAgent:
     temperature: float = 0.0
     max_tokens: int | None = 512
     max_repair_attempts: int = 1
+    system_instructions: str | None = None
 
     def __post_init__(self) -> None:
         self.role = Role(self.role)
@@ -129,7 +131,14 @@ class LLMNegotiationAgent:
         allowed_tools: Sequence[str],
     ) -> list[Mapping[str, Any]]:
         return [
-            {"role": "system", "content": _system_prompt(self.role, allowed_tools)},
+            {
+                "role": "system",
+                "content": _system_prompt(
+                    self.role,
+                    allowed_tools,
+                    system_instructions=self.system_instructions,
+                ),
+            },
             {
                 "role": "user",
                 "content": json.dumps(
@@ -178,6 +187,30 @@ def make_llm_seller(
         tool_policy=tool_policy,
         temperature=temperature,
         max_tokens=max_tokens,
+    )
+
+
+def make_profile_llm_agent(
+    *,
+    profile: StrategyProfile,
+    llm: LLMPort,
+    model: str,
+    name: str | None = None,
+    tool_policy: str = "available",
+    temperature: float = 0.0,
+    max_tokens: int | None = 512,
+) -> LLMNegotiationAgent:
+    """Create an LLM-backed NPC from a marketplace strategy profile."""
+
+    return LLMNegotiationAgent(
+        llm=llm,
+        model=model,
+        role=profile.role,
+        name=name or f"llm_profile_{profile.role.value}:{profile.id}",
+        tool_policy=tool_policy,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        system_instructions=_profile_system_instructions(profile),
     )
 
 
@@ -249,13 +282,18 @@ def _parse_offer_action(data: Mapping[str, Any]) -> AgentAction:
     )
 
 
-def _system_prompt(role: Role, allowed_tools: Sequence[str]) -> str:
+def _system_prompt(
+    role: Role,
+    allowed_tools: Sequence[str],
+    *,
+    system_instructions: str | None = None,
+) -> str:
     tool_instruction = (
         "You may request exactly one available tool by returning a tool_call action."
         if allowed_tools
         else "You may not request tools. Do not return tool_call."
     )
-    return (
+    prompt = (
         "You are an OpenNego baseline negotiation agent. "
         f"Your role is {role.value}. "
         "Choose one next action for the current turn. "
@@ -264,6 +302,25 @@ def _system_prompt(role: Role, allowed_tools: Sequence[str]) -> str:
         "counterparty's latest offer, type=reject to end negotiation, type=message "
         "for non-binding text, and type=tool_call only when tools are allowed. "
         f"{tool_instruction}"
+    )
+    if system_instructions:
+        prompt += f"\n\nMarketplace strategy profile:\n{system_instructions}"
+    return prompt
+
+
+def _profile_system_instructions(profile: StrategyProfile) -> str:
+    traps = "\n".join(f"- {item}" for item in profile.expected_traps) or "- none"
+    tools = ", ".join(profile.allowed_tools) or "none"
+    return (
+        f"Profile id: {profile.id}\n"
+        f"Profile name: {profile.name}\n"
+        f"Archetype: {profile.archetype}\n"
+        f"Difficulty: {profile.difficulty}\n"
+        f"Summary: {profile.summary}\n"
+        f"Allowed tools declared by profile: {tools}\n"
+        f"Base protocol prompt:\n{profile.base_prompt}\n"
+        f"Strategy prompt:\n{profile.strategy_prompt}\n"
+        f"Expected traps tested by this profile:\n{traps}"
     )
 
 
