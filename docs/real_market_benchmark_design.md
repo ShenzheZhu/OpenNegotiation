@@ -118,6 +118,31 @@ Official or licensed data sources can be adapted later. The no-key demo uses
 fixture-backed sold comps only. Live collection, marketplace API credentials,
 and scraping are out of scope for the initial benchmark slice.
 
+## Offline Sold-Comps Ingestion
+
+Local CSV or JSON-list exports can be normalized into OpenNego fixtures without
+live marketplace access:
+
+```bash
+opennego ingest-market \
+  --input /tmp/sold_comps.csv \
+  --products-output /tmp/opennego-products.json \
+  --comps-output /tmp/opennego-market-comps.json \
+  --source ebay_offline_export \
+  --window-days 90
+```
+
+The ingester accepts common field names for product/query, listing title,
+sold/final price, condition, marketplace/source, sale mechanism, currency, and
+sold date. It writes:
+
+- `products.json`: product clusters with `market_reference` median, p25, p75,
+  sample size, currency, source, sale mechanism, and ingestion metadata.
+- `market_comps.json`: comparable records loadable by `MarketPriceTool`.
+
+This is an offline normalization path only. It does not scrape websites, call
+marketplace APIs, bypass marketplace terms, or store live credentials.
+
 ## Demo Commands
 
 Run a tiny fixture-backed market demo:

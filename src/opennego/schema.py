@@ -70,9 +70,15 @@ class MarketReference:
             "window_days",
             "source",
             "sale_mechanism",
+            "metadata",
         }
         sample_size = data.get("sample_size")
         window_days = data.get("window_days")
+        raw_metadata = data.get("metadata", {})
+        if raw_metadata is None:
+            raw_metadata = {}
+        if not isinstance(raw_metadata, Mapping):
+            raise ValueError("market_reference.metadata must be an object")
         return cls(
             reference_price=parse_price(reference_price),
             p25_price=_optional_price(data.get("p25_price", data.get("p25", data.get("q1_price")))),
@@ -82,7 +88,10 @@ class MarketReference:
             window_days=int(window_days) if window_days is not None else None,
             source=str(data.get("source", "unknown")),
             sale_mechanism=str(data.get("sale_mechanism", "mixed")),
-            metadata={key: value for key, value in data.items() if key not in known_keys},
+            metadata={
+                **raw_metadata,
+                **{key: value for key, value in data.items() if key not in known_keys},
+            },
         )
 
     @property

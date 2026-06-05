@@ -11,7 +11,7 @@ The no-key local MVP and the main user-centric workflow slices are implemented
 on `main`: benchmark runs, policy-learning battle reports, strategy candidate
 reruns, local marketplace export, strategy sparring, transaction settlement
 guards, config-level LLM agents, provider-neutral profile LLM NPCs, and CLI
-loading for local user-agent factories.
+loading for local user-agent factories, plus offline sold-comps ingestion.
 
 A small live five-model OpenRouter smoke was verified earlier on 2026-06-05.
 It was not rerun for this docs refresh; live provider execution remains an
@@ -65,6 +65,8 @@ Implemented:
 - Fixture transaction settlement guards for buyer all-in cost caps, seller
   net-revenue floors, shipping failure, item mismatch, return-window policy,
   and dispute-risk caps.
+- Offline CSV/JSON sold-comps ingestion into `products.json` and
+  `market_comps.json` fixtures.
 - Static HTML report generators for benchmark/MVP and sparring surfaces.
 - Architecture overview in `docs/architecture.md`.
 - Python runtime declaration aligned to current syntax: Python 3.10+.
@@ -83,8 +85,9 @@ Known architecture limits:
   provider-backed NPC loading is not implemented.
 - Hosted marketplace backend, account-backed sharing, and provider-backed
   coaching are not implemented.
-- Real-market evidence remains fixture/offline-data backed. Live eBay or C2C
-  marketplace collection is not implemented.
+- Real-market evidence remains fixture/offline-data backed. Offline sold-comps
+  normalization is implemented; live eBay or C2C marketplace collection is not
+  implemented.
 - Transaction simulation validates deterministic settlement fees and lifecycle
   guard failures, but real payment, logistics, warranty, legal/compliance, and
   platform dispute integrations are not implemented.
