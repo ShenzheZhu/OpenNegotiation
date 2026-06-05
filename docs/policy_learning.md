@@ -179,7 +179,8 @@ This runs the small real-market benchmark, writes
 `/tmp/opennego-mvp-demo/leaderboard_summary.json` plus
 `/tmp/opennego-mvp-demo/battle_report.json`, and renders an HTML page with the
 leaderboard preview, Training / Prompt Optimization section, and Strategy
-Marketplace section.
+Marketplace section. The leaderboard preview is rendered from the versioned
+leaderboard summary artifact when it is available.
 
 `opennego learn` reads one completed benchmark run directory:
 
@@ -278,8 +279,8 @@ agent code.
 
 When `battle_report.json` is present in the benchmark output root, the static
 HTML report renders a Training / Prompt Optimization section. The same report
-also renders the local NPC strategy marketplace from
-`examples/data/npc_strategies.json`.
+also renders `leaderboard_summary.json` participant coverage when available and
+loads the local NPC strategy marketplace from `examples/data/npc_strategies.json`.
 
 Example lesson excerpt from the no-key real-market demo:
 

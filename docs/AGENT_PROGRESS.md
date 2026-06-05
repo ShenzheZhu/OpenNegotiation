@@ -63,6 +63,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   manifest consistency checks.
 - Added `opennego leaderboard` for machine-readable run rankings, participant
   role-coverage summaries, and buyer/seller role-track scorecard aggregation.
+- Added artifact-backed leaderboard rendering to `opennego report` when
+  `leaderboard_summary.json` is present.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   battle reports, strategy candidates, sparring reruns, comparison artifacts,
   and local marketplace export.
@@ -90,7 +92,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 111 passed after adding MVP leaderboard artifact output.
+- `pytest -q`: 113 passed after adding artifact-backed report leaderboard
+  rendering.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.

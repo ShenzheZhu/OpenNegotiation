@@ -19,6 +19,7 @@ from opennego.artifacts import (
     load_scenario_artifact,
     load_trace,
 )
+from opennego.leaderboard import LEADERBOARD_SCHEMA_VERSION
 from opennego.learning import DEFAULT_NPC_REGISTRY_PATH, StrategyProfile, load_strategy_registry
 
 
@@ -81,6 +82,40 @@ class StrategyCandidateView:
     rerun_command: str
 
 
+@dataclass(frozen=True)
+class LeaderboardRunView:
+    rank: int
+    run_id: str
+    scenario_id: str
+    tool_regime_id: str
+    score: float
+    outcome: str
+    deal_price: float | None
+    buyer_participant_id: str
+    seller_participant_id: str
+    metrics: Mapping[str, float]
+
+
+@dataclass(frozen=True)
+class ParticipantCoverageView:
+    rank: int
+    participant_id: str
+    roles: tuple[str, ...]
+    role_coverage: float
+    unique_run_count: int
+    average_score: float
+    coverage_adjusted_score: float
+    balanced_average_score: float | None
+
+
+@dataclass(frozen=True)
+class LeaderboardSummaryView:
+    schema_version: str
+    run_count: int
+    participant_summaries: tuple[ParticipantCoverageView, ...]
+    runs: tuple[LeaderboardRunView, ...]
+
+
 def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
     """Write a static HTML dashboard for a small benchmark artifact directory."""
 
@@ -91,6 +126,7 @@ def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
     battle_reports = load_battle_reports(input_dir)
     strategy_candidates = load_strategy_candidates(input_dir)
     strategy_profiles = load_strategy_profiles()
+    leaderboard_summary = load_leaderboard_summary(input_dir)
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     html_text = render_demo_report(
@@ -99,6 +135,7 @@ def write_demo_report(input_dir: str | Path, output_file: str | Path) -> Path:
         battle_reports=battle_reports,
         strategy_candidates=strategy_candidates,
         strategy_profiles=strategy_profiles,
+        leaderboard_summary=leaderboard_summary,
     )
     output_path.write_text(
         _strip_trailing_whitespace(html_text),
@@ -191,6 +228,40 @@ def load_strategy_profiles(
         return ()
 
 
+def load_leaderboard_summary(input_dir: str | Path) -> LeaderboardSummaryView | None:
+    path = Path(input_dir) / "leaderboard_summary.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, Mapping) or data.get("schema_version") != LEADERBOARD_SCHEMA_VERSION:
+        return None
+    raw_runs = data.get("runs")
+    raw_participants = data.get("participant_summaries")
+    if not isinstance(raw_runs, list) or not isinstance(raw_participants, list):
+        return None
+    runs = tuple(
+        _leaderboard_run_from_mapping(item)
+        for item in raw_runs
+        if isinstance(item, Mapping)
+    )
+    participants = tuple(
+        _participant_coverage_from_mapping(item)
+        for item in raw_participants
+        if isinstance(item, Mapping)
+    )
+    if not runs:
+        return None
+    return LeaderboardSummaryView(
+        schema_version=LEADERBOARD_SCHEMA_VERSION,
+        run_count=_int_value(data.get("run_count"), len(runs)),
+        participant_summaries=participants,
+        runs=runs,
+    )
+
+
 def render_demo_report(
     runs: Sequence[DemoRun],
     *,
@@ -198,6 +269,7 @@ def render_demo_report(
     battle_reports: Sequence[BattleReportView] = (),
     strategy_candidates: Sequence[StrategyCandidateView] = (),
     strategy_profiles: Sequence[StrategyProfile] = (),
+    leaderboard_summary: LeaderboardSummaryView | None = None,
 ) -> str:
     primary = runs[0]
     leaderboard = sorted(runs, key=_demo_score, reverse=True)
@@ -435,6 +507,7 @@ def render_demo_report(
     <section id="leaderboard" class="section">
       <h2>Leaderboard Preview</h2>
       <p class="section-copy">The full benchmark should use scorecard tracks as the primary ranking surface. Arena/Elo can be a smaller secondary track.</p>
+      {_leaderboard_source_pill(leaderboard_summary)}
       <div class="tabs">
         <span class="tab active">Overall</span>
         <span class="tab">Buyer Track</span>
@@ -457,10 +530,11 @@ def render_demo_report(
             </tr>
           </thead>
           <tbody>
-            {_leaderboard_rows(leaderboard)}
+            {_leaderboard_rows_from_summary(leaderboard_summary) if leaderboard_summary else _leaderboard_rows(leaderboard)}
           </tbody>
         </table>
       </div>
+      {_participant_coverage_table(leaderboard_summary)}
     </section>
 
     {_attempt_status_section(attempts)}
@@ -671,6 +745,97 @@ def _attempt_rows(attempts: Sequence[ModelAttempt]) -> str:
     return "\n".join(rows)
 
 
+def _leaderboard_source_pill(summary: LeaderboardSummaryView | None) -> str:
+    if summary is None:
+        return '<p class="muted" style="margin:10px 0;">Leaderboard source: run artifacts fallback.</p>'
+    return (
+        '<p class="muted" style="margin:10px 0;">'
+        f"Leaderboard artifact {_escape(summary.schema_version)} "
+        f"with {summary.run_count} scored runs."
+        "</p>"
+    )
+
+
+def _leaderboard_rows_from_summary(summary: LeaderboardSummaryView | None) -> str:
+    if summary is None:
+        return ""
+    rows = []
+    for row in summary.runs:
+        metrics = row.metrics
+        gap = metrics.get("normalized_market_gap", 0.0)
+        gap_width = max(0, min(100, 100 - gap * 50))
+        rows.append(
+            "<tr>"
+            f"<td>{row.rank}</td>"
+            f"<td>{_participant_matchup_label(row)}</td>"
+            f"<td>{_escape(row.tool_regime_id)}</td>"
+            f"<td><span class=\"score\">{row.score:.1f}</span></td>"
+            f"<td>{_escape(row.outcome)} at {_money_or_empty(row.deal_price)}</td>"
+            f"<td>{gap:.2f}<div class=\"bar-track\"><div class=\"bar-fill\" style=\"width:{gap_width:.0f}%\"></div></div></td>"
+            f"<td>{metrics.get('tool_call_count', 0.0):.0f} calls, {metrics.get('tool_failure_count', 0.0):.0f} failures</td>"
+            f"<td>{metrics.get('transaction_completed_rate', 0.0):.0f}</td>"
+            "</tr>"
+        )
+    return "\n".join(rows)
+
+
+def _participant_coverage_table(summary: LeaderboardSummaryView | None) -> str:
+    if summary is None or not summary.participant_summaries:
+        return ""
+    return f"""
+      <h3 style="margin-top:22px;">Participant Coverage</h3>
+      <p class="section-copy">Coverage shows whether the same model or agent has been evaluated as buyer, seller, or both before comparing balanced performance.</p>
+      <div class="table-scroll" style="margin-top:10px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Participant</th>
+              <th>Roles</th>
+              <th>Coverage</th>
+              <th>Avg Score</th>
+              <th>Coverage Adj.</th>
+              <th>Balanced</th>
+              <th>Runs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {_participant_coverage_rows(summary.participant_summaries)}
+          </tbody>
+        </table>
+      </div>
+"""
+
+
+def _participant_coverage_rows(participants: Sequence[ParticipantCoverageView]) -> str:
+    rows = []
+    for participant in participants:
+        rows.append(
+            "<tr>"
+            f"<td>{participant.rank}</td>"
+            f"<td>{_escape(_shorten_model(participant.participant_id))}</td>"
+            f"<td>{_escape(', '.join(participant.roles))}</td>"
+            f"<td>{participant.role_coverage:.2f}</td>"
+            f"<td><span class=\"score\">{participant.average_score:.1f}</span></td>"
+            f"<td>{participant.coverage_adjusted_score:.1f}</td>"
+            f"<td>{_score_or_empty(participant.balanced_average_score)}</td>"
+            f"<td>{participant.unique_run_count}</td>"
+            "</tr>"
+        )
+    return "\n".join(rows)
+
+
+def _participant_matchup_label(row: LeaderboardRunView) -> str:
+    buyer = _escape(_shorten_model(row.buyer_participant_id))
+    seller = _escape(_shorten_model(row.seller_participant_id))
+    run_id = _escape(_truncate(row.run_id, 72))
+    return (
+        f"<strong>{buyer}</strong>"
+        f"<div class=\"muted\">vs {seller}</div>"
+        f"<div class=\"muted\">{run_id}</div>"
+    )
+
+
 def _leaderboard_rows(runs: Sequence[DemoRun]) -> str:
     rows = []
     for index, run in enumerate(runs, start=1):
@@ -818,6 +983,40 @@ def _strategy_candidate_from_mapping(data: Mapping[str, Any]) -> StrategyCandida
     )
 
 
+def _leaderboard_run_from_mapping(data: Mapping[str, Any]) -> LeaderboardRunView:
+    metrics = data.get("metrics")
+    return LeaderboardRunView(
+        rank=_int_value(data.get("rank"), 0),
+        run_id=str(data.get("run_id", "")),
+        scenario_id=str(data.get("scenario_id", "")),
+        tool_regime_id=str(data.get("tool_regime_id", "unknown")),
+        score=_float_value(data.get("score"), 0.0),
+        outcome=str(data.get("outcome", "unknown")),
+        deal_price=_optional_float(data.get("deal_price")),
+        buyer_participant_id=str(data.get("buyer_participant_id", "unknown_buyer")),
+        seller_participant_id=str(data.get("seller_participant_id", "unknown_seller")),
+        metrics=_float_mapping(metrics if isinstance(metrics, Mapping) else {}),
+    )
+
+
+def _participant_coverage_from_mapping(
+    data: Mapping[str, Any],
+) -> ParticipantCoverageView:
+    return ParticipantCoverageView(
+        rank=_int_value(data.get("rank"), 0),
+        participant_id=str(data.get("participant_id", "")),
+        roles=_string_tuple(data.get("roles")),
+        role_coverage=_float_value(data.get("role_coverage"), 0.0),
+        unique_run_count=_int_value(data.get("unique_run_count"), 0),
+        average_score=_float_value(data.get("average_score"), 0.0),
+        coverage_adjusted_score=_float_value(
+            data.get("coverage_adjusted_score"),
+            0.0,
+        ),
+        balanced_average_score=_optional_float(data.get("balanced_average_score")),
+    )
+
+
 def _lesson_from_mapping(data: Mapping[str, Any]) -> BattleLessonView:
     evidence = data.get("evidence", ())
     return BattleLessonView(
@@ -840,6 +1039,10 @@ def _evidence_label(item: Mapping[str, Any]) -> str:
 
 def _money_or_empty(value: float | None) -> str:
     return "n/a" if value is None else _money(value)
+
+
+def _score_or_empty(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.1f}"
 
 
 def _money(value: float, currency: str = "USD") -> str:
@@ -867,10 +1070,38 @@ def _optional_int(value: object) -> int | None:
     return int(value)
 
 
+def _int_value(value: object, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def _optional_float(value: object) -> float | None:
     if value is None:
         return None
     return float(value)
+
+
+def _float_value(value: object, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _float_mapping(values: Mapping[str, Any]) -> Mapping[str, float]:
+    return {
+        str(key): float(value)
+        for key, value in values.items()
+        if isinstance(value, (int, float))
+    }
+
+
+def _string_tuple(values: object) -> tuple[str, ...]:
+    if not isinstance(values, list):
+        return ()
+    return tuple(str(value) for value in values)
 
 
 def _truncate(value: str, limit: int) -> str:

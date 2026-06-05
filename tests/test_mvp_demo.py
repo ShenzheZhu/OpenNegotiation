@@ -34,6 +34,8 @@ def test_run_mvp_demo_generates_benchmark_learning_and_report(tmp_path):
     lesson_ids = {lesson["id"] for lesson in battle_report["lessons"]}
     assert "buyer_overpaid_market" in lesson_ids
     assert "Leaderboard Preview" in html
+    assert f"Leaderboard artifact {LEADERBOARD_SCHEMA_VERSION}" in html
+    assert "Participant Coverage" in html
     assert "Training / Prompt Optimization" in html
     assert "Strategy Marketplace" in html
     assert "Hardline Anchor Seller" in html
