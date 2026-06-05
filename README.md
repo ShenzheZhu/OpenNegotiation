@@ -38,6 +38,7 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 python -m opennego.cli --products-file examples/data/products.json --market-comps-file examples/data/market_comps.json
+opennego run --config configs/no_key_smoke.yaml
 pytest
 ```
 
@@ -112,7 +113,9 @@ and [docs/benchmark_contract.md](docs/benchmark_contract.md) for the current
 artifact contract. See
 [docs/magentic_marketplace_architecture_notes.md](docs/magentic_marketplace_architecture_notes.md)
 for architecture lessons from recent agentic marketplace work and how those
-lessons translate into OpenNego-specific design choices.
+lessons translate into OpenNego-specific design choices. See
+[docs/experiment_runner.md](docs/experiment_runner.md) for config-driven
+benchmark execution.
 
 ## Status
 

@@ -1,0 +1,597 @@
+"""Config-driven experiment runner for OpenNego."""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass, replace
+from pathlib import Path
+from typing import Any, Mapping, Sequence
+
+from opennego.agents import ScriptedSeller, ToolAwareBuyer
+from opennego.artifacts import (
+    ArtifactValidationError,
+    load_manifest,
+    load_metric_report,
+    load_scenario_artifact,
+    load_trace,
+    write_run_artifacts,
+)
+from opennego.environment import NegotiationEnvironment
+from opennego.ports import AgentPort, ToolPort
+from opennego.schema import Product, Scenario
+from opennego.tools import MarketPriceTool
+
+EXPERIMENT_CONFIG_VERSION = "opennego.experiment.v1"
+
+
+class ConfigValidationError(ValueError):
+    """Raised when an experiment config is malformed."""
+
+
+@dataclass(frozen=True)
+class AgentPairConfig:
+    buyer_kind: str
+    seller_kind: str
+
+
+@dataclass(frozen=True)
+class ScenarioConfig:
+    id: str | None
+    products_file: Path
+    product_id: str | None = None
+    product_index: int = 0
+    buyer_budget: float | None = None
+    seller_reservation_price: float | None = None
+    max_turns: int = 8
+    metadata: Mapping[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class ToolSpec:
+    name: str
+    kind: str
+    source: Path | None = None
+    visibility: str = "buyer_private"
+    enabled: bool = True
+    metadata: Mapping[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class ToolRegimeConfig:
+    id: str
+    tools: tuple[ToolSpec, ...] = ()
+    metadata: Mapping[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class ExperimentConfig:
+    name: str
+    output_dir: Path
+    scenarios: tuple[ScenarioConfig, ...]
+    tool_regimes: tuple[ToolRegimeConfig, ...]
+    agents: AgentPairConfig
+    seeds: tuple[int | None, ...] = (None,)
+    resume: bool = False
+    fail_fast: bool = True
+    metadata: Mapping[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class PreparedRun:
+    run_id: str
+    output_dir: Path
+    scenario_id: str
+    scenario: Scenario
+    tool_regime: ToolRegimeConfig
+    tools: tuple[ToolPort, ...]
+    seed: int | None
+
+
+@dataclass(frozen=True)
+class RunRecord:
+    run_id: str
+    status: str
+    output_dir: str
+    outcome: str | None = None
+    deal_price: float | None = None
+    completed_turns: int | None = None
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class ExperimentSummary:
+    name: str
+    output_dir: str
+    total_runs: int
+    completed: int
+    skipped: int
+    failed: int
+    runs: tuple[RunRecord, ...]
+
+
+def load_experiment_config(path: str | Path) -> ExperimentConfig:
+    """Load and validate an experiment config.
+
+    JSON is always supported. YAML files are supported when PyYAML is installed.
+    JSON-compatible YAML also works through the standard JSON parser, which keeps
+    the no-key smoke config dependency-free.
+    """
+
+    config_path = Path(path)
+    data = _read_config_mapping(config_path)
+    version = data.get("schema_version")
+    if version != EXPERIMENT_CONFIG_VERSION:
+        raise ConfigValidationError(
+            f"schema_version: expected {EXPERIMENT_CONFIG_VERSION!r}, got {version!r}"
+        )
+
+    name = _required_str(data, "name")
+    output_dir = Path(_required_str(data, "output_dir"))
+    scenarios = tuple(
+        _parse_scenario(item, index)
+        for index, item in enumerate(_required_list(data, "scenarios"))
+    )
+    if not scenarios:
+        raise ConfigValidationError("scenarios: expected at least one scenario")
+
+    tool_regime_items = data.get("tool_regimes", [{"id": "no_tools", "tools": []}])
+    if not isinstance(tool_regime_items, list):
+        raise ConfigValidationError("tool_regimes: expected list")
+    tool_regimes = tuple(
+        _parse_tool_regime(item, index)
+        for index, item in enumerate(tool_regime_items)
+    )
+    if not tool_regimes:
+        raise ConfigValidationError("tool_regimes: expected at least one regime")
+
+    seeds = _parse_seeds(data.get("seeds", [None]))
+    agents = _parse_agents(_required_mapping(data, "agents"))
+    _validate_agent_kinds(agents)
+
+    resume = _optional_bool(data, "resume", False)
+    fail_fast = _optional_bool(data, "fail_fast", True)
+    metadata = _optional_mapping(data, "metadata")
+    return ExperimentConfig(
+        name=name,
+        output_dir=output_dir,
+        scenarios=scenarios,
+        tool_regimes=tool_regimes,
+        agents=agents,
+        seeds=seeds,
+        resume=resume,
+        fail_fast=fail_fast,
+        metadata=metadata,
+    )
+
+
+def run_experiment_config(
+    path: str | Path,
+    *,
+    resume: bool | None = None,
+    output_dir: str | Path | None = None,
+) -> ExperimentSummary:
+    """Run all jobs declared by an experiment config."""
+
+    config = load_experiment_config(path)
+    if resume is not None:
+        config = replace(config, resume=resume)
+    if output_dir is not None:
+        config = replace(config, output_dir=Path(output_dir))
+
+    prepared_runs = prepare_runs(config)
+    records: list[RunRecord] = []
+    for prepared_run in prepared_runs:
+        if config.resume and _is_completed_run(
+            prepared_run.output_dir,
+            prepared_run.run_id,
+        ):
+            records.append(
+                RunRecord(
+                    run_id=prepared_run.run_id,
+                    status="skipped",
+                    output_dir=str(prepared_run.output_dir),
+                )
+            )
+            continue
+
+        try:
+            result = _execute_prepared_run(prepared_run, config)
+        except Exception as exc:  # pragma: no cover - exercised via CLI failure paths
+            records.append(
+                RunRecord(
+                    run_id=prepared_run.run_id,
+                    status="failed",
+                    output_dir=str(prepared_run.output_dir),
+                    error=str(exc),
+                )
+            )
+            if config.fail_fast:
+                break
+            continue
+
+        records.append(
+            RunRecord(
+                run_id=prepared_run.run_id,
+                status="completed",
+                output_dir=str(prepared_run.output_dir),
+                outcome=result.outcome,
+                deal_price=result.deal_price,
+                completed_turns=result.completed_turns,
+            )
+        )
+
+    return ExperimentSummary(
+        name=config.name,
+        output_dir=str(config.output_dir),
+        total_runs=len(prepared_runs),
+        completed=sum(1 for record in records if record.status == "completed"),
+        skipped=sum(1 for record in records if record.status == "skipped"),
+        failed=sum(1 for record in records if record.status == "failed"),
+        runs=tuple(records),
+    )
+
+
+def prepare_runs(config: ExperimentConfig) -> tuple[PreparedRun, ...]:
+    """Validate inputs and build all runs before starting execution."""
+
+    prepared_runs: list[PreparedRun] = []
+    for scenario_config in config.scenarios:
+        scenario = _build_scenario(scenario_config)
+        scenario_id = scenario_config.id or scenario.product.id
+        for tool_regime in config.tool_regimes:
+            tools = _build_tools(tool_regime)
+            for seed in config.seeds:
+                run_id = _run_id(config.name, scenario_id, tool_regime.id, seed)
+                prepared_runs.append(
+                    PreparedRun(
+                        run_id=run_id,
+                        output_dir=config.output_dir / run_id,
+                        scenario_id=scenario_id,
+                        scenario=scenario,
+                        tool_regime=tool_regime,
+                        tools=tools,
+                        seed=seed,
+                    )
+                )
+    _validate_run_ids(prepared_runs)
+    return tuple(prepared_runs)
+
+
+def _execute_prepared_run(prepared_run: PreparedRun, config: ExperimentConfig):
+    buyer, seller = _build_agents(config.agents)
+    env = NegotiationEnvironment(
+        scenario=prepared_run.scenario,
+        buyer=buyer,
+        seller=seller,
+        tools=prepared_run.tools,
+    )
+    result = env.run()
+    write_run_artifacts(
+        result=result,
+        output_dir=prepared_run.output_dir,
+        run_id=prepared_run.run_id,
+        scenario_id=prepared_run.scenario_id,
+        seed=prepared_run.seed,
+        agents={
+            "buyer": {"name": buyer.name, "kind": config.agents.buyer_kind},
+            "seller": {"name": seller.name, "kind": config.agents.seller_kind},
+        },
+        tool_regime=_tool_regime_metadata(prepared_run.tool_regime),
+        metadata={
+            "experiment_name": config.name,
+            **dict(config.metadata or {}),
+        },
+    )
+    return result
+
+
+def _build_agents(config: AgentPairConfig) -> tuple[AgentPort, AgentPort]:
+    return ToolAwareBuyer(), ScriptedSeller()
+
+
+def _validate_agent_kinds(config: AgentPairConfig) -> None:
+    if config.buyer_kind != "tool_aware_buyer":
+        raise ConfigValidationError(
+            f"agents.buyer.kind: unsupported kind {config.buyer_kind!r}"
+        )
+    if config.seller_kind != "scripted_seller":
+        raise ConfigValidationError(
+            f"agents.seller.kind: unsupported kind {config.seller_kind!r}"
+        )
+
+
+def _build_scenario(config: ScenarioConfig) -> Scenario:
+    product = _select_product(
+        config.products_file,
+        config.product_id,
+        config.product_index,
+    )
+    buyer_budget = config.buyer_budget
+    if buyer_budget is None:
+        buyer_budget = float(
+            product.attributes.get("buyer_budget", product.list_price * 0.85)
+        )
+    seller_reservation_price = config.seller_reservation_price
+    if seller_reservation_price is None:
+        seller_reservation_price = product.wholesale_price
+    return Scenario(
+        product=product,
+        buyer_budget=buyer_budget,
+        seller_reservation_price=seller_reservation_price,
+        max_turns=config.max_turns,
+        metadata={
+            "scenario_config_id": config.id,
+            **dict(config.metadata or {}),
+        },
+    )
+
+
+def _select_product(path: Path, product_id: str | None, product_index: int) -> Product:
+    products = _load_products(path)
+    if product_id is not None:
+        for product in products:
+            if product.id == product_id:
+                return product
+        raise ConfigValidationError(f"{path}: product_id {product_id!r} not found")
+    if product_index < 0 or product_index >= len(products):
+        raise ConfigValidationError(
+            f"{path}: product_index {product_index} out of range for {len(products)} products"
+        )
+    return products[product_index]
+
+
+def _load_products(path: Path) -> list[Product]:
+    if not path.exists():
+        raise ConfigValidationError(f"{path}: products_file does not exist")
+    try:
+        records = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        raise ConfigValidationError(f"{path}: expected JSON product list") from exc
+    if not isinstance(records, list) or not records:
+        raise ConfigValidationError(f"{path}: expected non-empty product list")
+    try:
+        return [Product.from_mapping(record) for record in records]
+    except (TypeError, ValueError) as exc:
+        raise ConfigValidationError(f"{path}: invalid product record: {exc}") from exc
+
+
+def _build_tools(tool_regime: ToolRegimeConfig) -> tuple[ToolPort, ...]:
+    tools: list[ToolPort] = []
+    for spec in tool_regime.tools:
+        if not spec.enabled:
+            continue
+        if spec.kind != "market_price":
+            raise ConfigValidationError(
+                f"tool_regimes[{tool_regime.id}].tools[{spec.name}].kind: "
+                f"unsupported kind {spec.kind!r}"
+            )
+        if spec.name != "market_price_search":
+            raise ConfigValidationError(
+                f"tool_regimes[{tool_regime.id}].tools[{spec.name}].name: "
+                "only 'market_price_search' is supported in this runner slice"
+            )
+        if spec.source is None:
+            raise ConfigValidationError(f"tool {spec.name}: source is required")
+        if not spec.source.exists():
+            raise ConfigValidationError(f"{spec.source}: tool source does not exist")
+        tools.append(MarketPriceTool.from_json(spec.source))
+    return tuple(tools)
+
+
+def _tool_regime_metadata(tool_regime: ToolRegimeConfig) -> Mapping[str, Any]:
+    return {
+        "id": tool_regime.id,
+        "tools": [
+            {
+                "name": spec.name,
+                "kind": spec.kind,
+                "source": str(spec.source) if spec.source else None,
+                "visibility": spec.visibility,
+                "enabled": spec.enabled,
+                "metadata": dict(spec.metadata or {}),
+            }
+            for spec in tool_regime.tools
+        ],
+        "metadata": dict(tool_regime.metadata or {}),
+    }
+
+
+def _is_completed_run(output_dir: Path, run_id: str) -> bool:
+    try:
+        manifest = load_manifest(output_dir / "manifest.json")
+        load_scenario_artifact(output_dir / "scenario.json")
+        load_trace(output_dir / "trace.jsonl")
+        load_metric_report(output_dir / "metrics.json")
+    except (OSError, ArtifactValidationError, json.JSONDecodeError):
+        return False
+    return manifest.run_id == run_id
+
+
+def _run_id(
+    experiment_name: str,
+    scenario_id: str,
+    tool_regime_id: str,
+    seed: int | None,
+) -> str:
+    seed_part = "seed-none" if seed is None else f"seed-{seed}"
+    return _slug(f"{experiment_name}-{scenario_id}-{tool_regime_id}-{seed_part}")
+
+
+def _slug(value: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", value).strip("-._")
+    if not slug:
+        raise ConfigValidationError("run_id: generated empty id")
+    return slug
+
+
+def _validate_run_ids(prepared_runs: Sequence[PreparedRun]) -> None:
+    seen: set[str] = set()
+    for prepared_run in prepared_runs:
+        if prepared_run.run_id in seen:
+            raise ConfigValidationError(f"run_id collision: {prepared_run.run_id}")
+        seen.add(prepared_run.run_id)
+
+
+def _read_config_mapping(path: Path) -> Mapping[str, Any]:
+    if not path.exists():
+        raise ConfigValidationError(f"{path}: config file does not exist")
+    text = path.read_text()
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as json_exc:
+        if path.suffix.lower() not in {".yaml", ".yml"}:
+            raise ConfigValidationError(f"{path}: expected JSON object") from json_exc
+        try:
+            import yaml  # type: ignore[import-untyped]
+        except ModuleNotFoundError as exc:
+            raise ConfigValidationError(
+                f"{path}: YAML syntax requires PyYAML; use JSON-compatible YAML "
+                "or install the optional parser"
+            ) from exc
+        data = yaml.safe_load(text)
+    if not isinstance(data, Mapping):
+        raise ConfigValidationError(f"{path}: expected config object")
+    return data
+
+
+def _parse_scenario(data: Any, index: int) -> ScenarioConfig:
+    if not isinstance(data, Mapping):
+        raise ConfigValidationError(f"scenarios[{index}]: expected object")
+    products_file = Path(_required_str(data, "products_file"))
+    product_id = _optional_str(data, "product_id")
+    product_index = _optional_int(data, "product_index", 0)
+    buyer_budget = _optional_float(data, "buyer_budget")
+    seller_reservation_price = _optional_float(data, "seller_reservation_price")
+    max_turns = _optional_int(data, "max_turns", 8)
+    if max_turns <= 0:
+        raise ConfigValidationError(
+            f"scenarios[{index}].max_turns: expected positive integer"
+        )
+    return ScenarioConfig(
+        id=_optional_str(data, "id"),
+        products_file=products_file,
+        product_id=product_id,
+        product_index=product_index,
+        buyer_budget=buyer_budget,
+        seller_reservation_price=seller_reservation_price,
+        max_turns=max_turns,
+        metadata=_optional_mapping(data, "metadata"),
+    )
+
+
+def _parse_tool_regime(data: Any, index: int) -> ToolRegimeConfig:
+    if not isinstance(data, Mapping):
+        raise ConfigValidationError(f"tool_regimes[{index}]: expected object")
+    tools = data.get("tools", [])
+    if not isinstance(tools, list):
+        raise ConfigValidationError(f"tool_regimes[{index}].tools: expected list")
+    return ToolRegimeConfig(
+        id=_required_str(data, "id"),
+        tools=tuple(
+            _parse_tool_spec(item, index, tool_index)
+            for tool_index, item in enumerate(tools)
+        ),
+        metadata=_optional_mapping(data, "metadata"),
+    )
+
+
+def _parse_tool_spec(data: Any, regime_index: int, tool_index: int) -> ToolSpec:
+    if not isinstance(data, Mapping):
+        raise ConfigValidationError(
+            f"tool_regimes[{regime_index}].tools[{tool_index}]: expected object"
+        )
+    source = _optional_str(data, "source")
+    return ToolSpec(
+        name=_required_str(data, "name"),
+        kind=_required_str(data, "kind"),
+        source=Path(source) if source else None,
+        visibility=_optional_str(data, "visibility") or "buyer_private",
+        enabled=_optional_bool(data, "enabled", True),
+        metadata=_optional_mapping(data, "metadata"),
+    )
+
+
+def _parse_agents(data: Mapping[str, Any]) -> AgentPairConfig:
+    buyer = _required_mapping(data, "buyer")
+    seller = _required_mapping(data, "seller")
+    return AgentPairConfig(
+        buyer_kind=_required_str(buyer, "kind"),
+        seller_kind=_required_str(seller, "kind"),
+    )
+
+
+def _parse_seeds(value: Any) -> tuple[int | None, ...]:
+    if not isinstance(value, list) or not value:
+        raise ConfigValidationError("seeds: expected non-empty list")
+    seeds: list[int | None] = []
+    for index, seed in enumerate(value):
+        if seed is None:
+            seeds.append(None)
+        elif isinstance(seed, int):
+            seeds.append(seed)
+        else:
+            raise ConfigValidationError(f"seeds[{index}]: expected integer or null")
+    return tuple(seeds)
+
+
+def _required_list(data: Mapping[str, Any], key: str) -> list[Any]:
+    value = data.get(key)
+    if not isinstance(value, list):
+        raise ConfigValidationError(f"{key}: expected list")
+    return value
+
+
+def _required_mapping(data: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+    value = data.get(key)
+    if not isinstance(value, Mapping):
+        raise ConfigValidationError(f"{key}: expected object")
+    return value
+
+
+def _required_str(data: Mapping[str, Any], key: str) -> str:
+    value = data.get(key)
+    if not isinstance(value, str) or not value:
+        raise ConfigValidationError(f"{key}: expected non-empty string")
+    return value
+
+
+def _optional_mapping(data: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+    value = data.get(key, {})
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise ConfigValidationError(f"{key}: expected object")
+    return value
+
+
+def _optional_str(data: Mapping[str, Any], key: str) -> str | None:
+    value = data.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ConfigValidationError(f"{key}: expected string")
+    return value
+
+
+def _optional_bool(data: Mapping[str, Any], key: str, default: bool) -> bool:
+    value = data.get(key, default)
+    if not isinstance(value, bool):
+        raise ConfigValidationError(f"{key}: expected boolean")
+    return value
+
+
+def _optional_int(data: Mapping[str, Any], key: str, default: int) -> int:
+    value = data.get(key, default)
+    if not isinstance(value, int):
+        raise ConfigValidationError(f"{key}: expected integer")
+    return value
+
+
+def _optional_float(data: Mapping[str, Any], key: str) -> float | None:
+    value = data.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, (int, float)):
+        raise ConfigValidationError(f"{key}: expected number")
+    return float(value)
