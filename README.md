@@ -175,6 +175,9 @@ opennego marketplace-export \
   --output /tmp/opennego-mvp-demo/marketplace_profile.json \
   --profile-id shared_buyer_guard_v1 \
   --install-registry /tmp/opennego-local-marketplace.json
+opennego validate-marketplace \
+  --registry /tmp/opennego-local-marketplace.json \
+  --profile /tmp/opennego-mvp-demo/marketplace_profile.json
 ```
 
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
@@ -222,6 +225,9 @@ for curated sample artifacts.
   lessons and prompt optimization patches from completed benchmark artifacts.
 - `Strategy marketplace`: curated NPC profiles with fixed base protocol prompts
   and editable strategy prompts for sparring and curriculum design.
+- `Marketplace validation`: no-key checks for profile schema versions, fixed
+  base-prompt metadata, editable strategy-layer metadata, and local registry
+  consistency.
 
 ## Project Layout
 

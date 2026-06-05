@@ -18,6 +18,8 @@ from opennego.learning import (
 from opennego.schema import Role
 
 MARKETPLACE_PROFILE_SCHEMA_VERSION = "opennego.strategy_marketplace_profile.v1"
+MARKETPLACE_VALIDATION_SCHEMA_VERSION = "opennego.strategy_marketplace_validation.v1"
+STRATEGY_CONFIG_SCHEMA_VERSION = "opennego.strategy_config.v1"
 
 
 class MarketplaceError(ValueError):
@@ -29,6 +31,17 @@ class MarketplaceExportResult:
     profile_path: str
     profile_id: str
     installed_registry: str | None = None
+
+
+@dataclass(frozen=True)
+class MarketplaceValidationResult:
+    schema_version: str
+    status: str
+    registry_file: str | None
+    profile_files: tuple[str, ...]
+    profile_count: int
+    errors: tuple[str, ...]
+    warnings: tuple[str, ...]
 
 
 def generate_marketplace_profile(
@@ -68,6 +81,9 @@ def generate_marketplace_profile(
         "metadata": {
             "base_prompt_fixed": True,
             "strategy_prompt_editable": True,
+            "strategy_config_version": STRATEGY_CONFIG_SCHEMA_VERSION,
+            "marketplace_profile_schema_version": MARKETPLACE_PROFILE_SCHEMA_VERSION,
+            "prompt_layers": _prompt_layers(),
             "source_type": "strategy_candidate",
             "source_schema_version": candidate.schema_version,
             "candidate_id": candidate.candidate_id,
@@ -142,6 +158,42 @@ def load_marketplace_profile(path: str | Path) -> StrategyProfile:
     return StrategyProfile.from_mapping(data)
 
 
+def validate_marketplace_configs(
+    *,
+    registry_path: str | Path | None = None,
+    profile_paths: Sequence[str | Path] = (),
+) -> MarketplaceValidationResult:
+    """Validate local strategy marketplace registries and profile artifacts."""
+
+    errors: list[str] = []
+    warnings: list[str] = []
+    profile_count = 0
+    if registry_path is not None:
+        profile_count += _validate_registry_file(
+            Path(registry_path),
+            errors=errors,
+            warnings=warnings,
+        )
+    for profile_path in profile_paths:
+        profile_count += _validate_standalone_profile_file(
+            Path(profile_path),
+            errors=errors,
+            warnings=warnings,
+        )
+    if registry_path is None and not profile_paths:
+        errors.append("marketplace: provide a registry or at least one profile file")
+
+    return MarketplaceValidationResult(
+        schema_version=MARKETPLACE_VALIDATION_SCHEMA_VERSION,
+        status="passed" if not errors else "failed",
+        registry_file=str(registry_path) if registry_path is not None else None,
+        profile_files=tuple(str(path) for path in profile_paths),
+        profile_count=profile_count,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+    )
+
+
 def install_marketplace_profile(
     profile: Mapping[str, Any] | StrategyProfile,
     registry_path: str | Path,
@@ -183,7 +235,7 @@ def install_marketplace_profile(
 
 def _profile_payload(profile: Mapping[str, Any] | StrategyProfile) -> Mapping[str, Any]:
     if isinstance(profile, StrategyProfile):
-        return {
+        payload: dict[str, Any] = {
             "id": profile.id,
             "name": profile.name,
             "role": profile.role.value,
@@ -197,9 +249,11 @@ def _profile_payload(profile: Mapping[str, Any] | StrategyProfile) -> Mapping[st
             "tags": list(profile.tags),
             "metadata": dict(profile.metadata),
         }
-    payload = dict(profile)
-    payload.pop("schema_version", None)
-    return payload
+        profile_schema = profile.metadata.get("marketplace_profile_schema_version")
+        if profile_schema:
+            payload["schema_version"] = profile_schema
+        return payload
+    return dict(profile)
 
 
 def _registry_payload(path: Path) -> dict[str, Any]:
@@ -238,6 +292,197 @@ def _base_prompt(role: Role) -> str:
         "respect role constraints, never alter tool permissions, and keep the "
         "base sandbox rules fixed."
     )
+
+
+def _prompt_layers() -> Mapping[str, Mapping[str, object]]:
+    return {
+        "base_prompt": {
+            "field": "base_prompt",
+            "editable": False,
+            "scope": "sandbox_protocol",
+        },
+        "strategy_prompt": {
+            "field": "strategy_prompt",
+            "editable": True,
+            "scope": "strategy_policy",
+        },
+    }
+
+
+def _validate_registry_file(
+    path: Path,
+    *,
+    errors: list[str],
+    warnings: list[str],
+) -> int:
+    registry = _load_json_object(path, "registry", errors)
+    if not registry:
+        return 0
+    version = registry.get("schema_version")
+    if version != POLICY_LEARNING_SCHEMA_VERSION:
+        errors.append(
+            f"{path}: schema_version expected {POLICY_LEARNING_SCHEMA_VERSION!r}, "
+            f"got {version!r}"
+        )
+    profiles = registry.get("profiles")
+    if not isinstance(profiles, list):
+        errors.append(f"{path}: profiles must be a list")
+        return 0
+    seen: set[str] = set()
+    for index, profile in enumerate(profiles):
+        label = f"{path}:profiles[{index}]"
+        if not isinstance(profile, Mapping):
+            errors.append(f"{label}: expected object")
+            continue
+        profile_id = str(profile.get("id", ""))
+        if profile_id in seen:
+            errors.append(f"{label}.id: duplicate profile id {profile_id!r}")
+        seen.add(profile_id)
+        _validate_profile_contract(
+            profile,
+            label=label,
+            require_profile_schema=False,
+            errors=errors,
+            warnings=warnings,
+        )
+    try:
+        load_strategy_registry(path)
+    except (OSError, ValueError, KeyError) as exc:
+        errors.append(f"{path}: cannot load as StrategyRegistry: {exc}")
+    return len(profiles)
+
+
+def _validate_standalone_profile_file(
+    path: Path,
+    *,
+    errors: list[str],
+    warnings: list[str],
+) -> int:
+    profile = _load_json_object(path, "profile", errors)
+    if not profile:
+        return 0
+    _validate_profile_contract(
+        profile,
+        label=str(path),
+        require_profile_schema=True,
+        errors=errors,
+        warnings=warnings,
+    )
+    try:
+        load_marketplace_profile(path)
+    except (OSError, ValueError, KeyError) as exc:
+        errors.append(f"{path}: cannot load as marketplace profile: {exc}")
+    return 1
+
+
+def _validate_profile_contract(
+    profile: Mapping[str, Any],
+    *,
+    label: str,
+    require_profile_schema: bool,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    profile_schema = profile.get("schema_version")
+    if require_profile_schema and profile_schema != MARKETPLACE_PROFILE_SCHEMA_VERSION:
+        errors.append(
+            f"{label}.schema_version: expected {MARKETPLACE_PROFILE_SCHEMA_VERSION!r}, "
+            f"got {profile_schema!r}"
+        )
+    if profile_schema is not None and profile_schema != MARKETPLACE_PROFILE_SCHEMA_VERSION:
+        errors.append(
+            f"{label}.schema_version: expected {MARKETPLACE_PROFILE_SCHEMA_VERSION!r}, "
+            f"got {profile_schema!r}"
+        )
+
+    profile_id = profile.get("id")
+    if not isinstance(profile_id, str):
+        errors.append(f"{label}.id: expected non-empty string")
+    else:
+        try:
+            _validate_profile_id(profile_id)
+        except MarketplaceError as exc:
+            errors.append(f"{label}.id: {exc}")
+
+    base_prompt = profile.get("base_prompt")
+    strategy_prompt = profile.get("strategy_prompt")
+    if not isinstance(base_prompt, str) or not base_prompt.strip():
+        errors.append(f"{label}.base_prompt: expected non-empty string")
+    if not isinstance(strategy_prompt, str) or not strategy_prompt.strip():
+        errors.append(f"{label}.strategy_prompt: expected non-empty string")
+    if isinstance(base_prompt, str) and base_prompt == strategy_prompt:
+        errors.append(f"{label}: base_prompt and strategy_prompt must be distinct")
+
+    metadata = profile.get("metadata")
+    if not isinstance(metadata, Mapping):
+        errors.append(f"{label}.metadata: expected object")
+        metadata = {}
+    if metadata.get("base_prompt_fixed") is not True:
+        errors.append(f"{label}.metadata.base_prompt_fixed must be true")
+    if metadata.get("strategy_prompt_editable") is not True:
+        errors.append(f"{label}.metadata.strategy_prompt_editable must be true")
+    strategy_version = metadata.get("strategy_config_version")
+    if strategy_version != STRATEGY_CONFIG_SCHEMA_VERSION:
+        errors.append(
+            f"{label}.metadata.strategy_config_version: expected "
+            f"{STRATEGY_CONFIG_SCHEMA_VERSION!r}, got {strategy_version!r}"
+        )
+    _validate_prompt_layers(metadata, label=label, errors=errors)
+    if (
+        metadata.get("source_type") == "strategy_candidate"
+        and profile_schema != MARKETPLACE_PROFILE_SCHEMA_VERSION
+    ):
+        errors.append(
+            f"{label}: shared strategy_candidate profiles must carry "
+            f"{MARKETPLACE_PROFILE_SCHEMA_VERSION}"
+        )
+
+    try:
+        StrategyProfile.from_mapping(profile)
+    except (ValueError, KeyError) as exc:
+        errors.append(f"{label}: cannot parse as StrategyProfile: {exc}")
+    if not profile_schema and metadata.get("source_type") not in {None, "curated_npc"}:
+        warnings.append(f"{label}.schema_version: absent for registry profile")
+
+
+def _validate_prompt_layers(
+    metadata: Mapping[str, Any],
+    *,
+    label: str,
+    errors: list[str],
+) -> None:
+    layers = metadata.get("prompt_layers")
+    if not isinstance(layers, Mapping):
+        errors.append(f"{label}.metadata.prompt_layers: expected object")
+        return
+    expected = _prompt_layers()
+    for layer_name, contract in expected.items():
+        layer = layers.get(layer_name)
+        if not isinstance(layer, Mapping):
+            errors.append(f"{label}.metadata.prompt_layers.{layer_name}: expected object")
+            continue
+        for key, expected_value in contract.items():
+            if layer.get(key) != expected_value:
+                errors.append(
+                    f"{label}.metadata.prompt_layers.{layer_name}.{key}: expected "
+                    f"{expected_value!r}, got {layer.get(key)!r}"
+                )
+
+
+def _load_json_object(
+    path: Path,
+    label: str,
+    errors: list[str],
+) -> Mapping[str, Any]:
+    try:
+        data = read_json(path)
+    except (OSError, ValueError) as exc:
+        errors.append(f"{path}: cannot read {label} JSON object: {exc}")
+        return {}
+    if not isinstance(data, Mapping):
+        errors.append(f"{path}: expected {label} JSON object")
+        return {}
+    return data
 
 
 def _expected_traps(candidate: StrategyCandidate) -> tuple[str, ...]:

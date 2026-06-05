@@ -69,7 +69,8 @@ Implemented:
   comparison artifacts.
 - One-command no-key training loop that runs sparring, extracts a strategy
   candidate, reruns the same profile, and compares before/after reports.
-- Local strategy marketplace profile export and registry installation.
+- Local strategy marketplace profile export, registry installation, and no-key
+  marketplace config validation.
 - Config-runner custom `AgentPort` registration through Python API and explicit
   CLI local factory loading.
 - Config-runner `llm_buyer` and `llm_seller` kinds behind injected `LLMPort`
@@ -132,16 +133,19 @@ opennego run-models --output-dir /tmp/opennego-live-five-fixed-20260605 --max-tu
 opennego mvp-demo --output-dir "$tmpdir/mvp" --report "$tmpdir/mvp.html"
 opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
 opennego train --output-dir "$tmpdir/training" --opponent-profile seller_hardline_anchor_v1 --parent-strategy-id buyer_baseline
+opennego validate-marketplace --registry examples/data/npc_strategies.json
 secret-pattern scan for common provider key prefixes
 ```
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 121 passed.
+- `pytest -q`: 124 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - MVP demo bundle validation smoke: passed with no errors or warnings.
 - Training loop smoke: passed and wrote `opennego.training_loop.v1`.
+- Marketplace validation smoke: curated registry and exported profile registry
+  passed with no errors or warnings.
 - Secret-pattern scan: no matches.
 
 Historical live provider status:

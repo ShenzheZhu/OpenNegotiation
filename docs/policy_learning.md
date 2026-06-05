@@ -78,19 +78,28 @@ opennego marketplace-export \
   --profile-id shared_buyer_guard_v1 \
   --name "Shared Buyer Guard" \
   --install-registry /tmp/opennego-local-marketplace.json
+opennego validate-marketplace \
+  --registry /tmp/opennego-local-marketplace.json \
+  --profile /tmp/opennego-real-market-demo/marketplace_profile.json
 ```
 
 The exported profile uses schema version
 `opennego.strategy_marketplace_profile.v1`, but its top-level fields are also
-compatible with `StrategyProfile`. Installing the profile writes or updates a
-local `opennego.policy_learning.v1` registry, so existing commands can list it:
+compatible with `StrategyProfile`. Shared profiles carry
+`opennego.strategy_config.v1` metadata that marks the sandbox `base_prompt` as
+fixed and the `strategy_prompt` as the editable strategy layer. Installing the
+profile writes or updates a local `opennego.policy_learning.v1` registry, so
+existing commands can list it:
 
 ```bash
 opennego strategies --registry /tmp/opennego-local-marketplace.json --role buyer
 ```
 
 Duplicate profile ids are rejected by default. Pass `--overwrite` only when
-intentionally replacing a local shared strategy profile.
+intentionally replacing a local shared strategy profile. The validation command
+returns `opennego.strategy_marketplace_validation.v1` JSON and exits nonzero
+when profile versioning, prompt-layer metadata, registry schema, or duplicate
+ids are malformed.
 
 ## Strategy Sparring Suite
 

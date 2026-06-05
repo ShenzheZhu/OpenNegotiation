@@ -79,6 +79,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   selection and no-key fake-gateway tests.
 - Added `opennego train` as a one-command no-key training loop for baseline
   sparring, strategy extraction, candidate rerun, and before/after comparison.
+- Added `opennego validate-marketplace` for local strategy registry and shared
+  marketplace profile release checks.
 
 ### Current Live-Run State
 
@@ -101,11 +103,13 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 121 passed after adding the no-key training loop.
+- `pytest -q`: 124 passed after adding marketplace validation.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
 - `opennego train` no-key training loop: passing.
+- `opennego validate-marketplace`: passing for the curated registry and an
+  exported shared strategy profile.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next
