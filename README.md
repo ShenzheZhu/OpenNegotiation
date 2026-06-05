@@ -147,6 +147,20 @@ validation JSON, and a small role-swapped benchmark track. The manifest uses
 schema `opennego.external_handoff.v1` and records whether the no-key handoff
 passed its bundle, market fixture, marketplace, and role-coverage checks.
 
+For real-market data sources, generate a source policy gate before normalizing
+exports or wiring future live adapters:
+
+```bash
+opennego market-source-policy \
+  --output /tmp/ebay-source-policy.json \
+  --source-id ebay_offline_export
+opennego validate-market-source --policy /tmp/ebay-source-policy.json
+```
+
+The source policy records data rights, collection mode, privacy fields,
+credential policy, and anti-scraping boundaries. `opennego ingest-market` can
+attach a validated policy to the dataset manifest with `--source-policy`.
+
 You can also inspect the local NPC strategy marketplace directly:
 
 ```bash

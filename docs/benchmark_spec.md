@@ -34,6 +34,11 @@ distribution as the external reference. Seller reservation remains a private
 simulation constraint, not an observed human cost label. See
 [Real-Market Benchmark Design](real_market_benchmark_design.md).
 
+Real-market source adapters should be gated by
+`opennego.market_source_policy.v1` artifacts. Those policies declare collection
+mode, source/data rights, privacy fields, credential handling, and anti-scraping
+boundaries before normalized sold-comps data enters benchmark manifests.
+
 ## Agents
 
 Agents implement `AgentPort`:
