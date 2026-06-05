@@ -76,17 +76,20 @@ suite:
 ```bash
 opennego spar \
   --output-dir /tmp/opennego-sparring \
+  --report /tmp/opennego-sparring.html \
   --opponent-profile seller_hardline_anchor_v1 \
   --opponent-profile seller_hidden_fees_v1
 ```
 
 The command writes `sparring_suite.json` at the output root and one
-`battle_report.json` under each selected profile directory. Its first execution
-mode is `fixture_profile_diagnosis`: deterministic local agents produce
-benchmark artifacts, and the selected NPC profile drives the battle-report
-opponent archetype, expected traps, failure modes, and strategy patch. This is
-not yet a hosted marketplace or a live profile-backed model opponent, but it
-gives users a reproducible curriculum surface for prompt optimization.
+`battle_report.json` under each selected profile directory. When `--report` is
+provided, it also renders a compact static HTML summary for demos and review.
+Its first execution mode is `fixture_profile_diagnosis`: deterministic local
+agents produce benchmark artifacts, and the selected NPC profile drives the
+battle-report opponent archetype, expected traps, failure modes, and strategy
+patch. This is not yet a hosted marketplace or a live profile-backed model
+opponent, but it gives users a reproducible curriculum surface for prompt
+optimization.
 
 If no `--opponent-profile` is provided, the command selects every registry
 profile with the opposite role from `--user-role`. A buyer-owned user agent

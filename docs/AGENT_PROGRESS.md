@@ -35,6 +35,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   benchmark artifacts, battle report, and MVP HTML page.
 - Added `opennego spar` as a no-key strategy sparring suite that runs selected
   marketplace NPC profiles through fixture-backed battle-report diagnostics.
+- Added `opennego spar --report` for rendering a compact static HTML report
+  from `sparring_suite.json`.
 
 ### Current Live-Run State
 

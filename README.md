@@ -99,15 +99,17 @@ profiles:
 ```bash
 opennego spar \
   --output-dir /tmp/opennego-sparring \
+  --report /tmp/opennego-sparring.html \
   --opponent-profile seller_hardline_anchor_v1 \
   --opponent-profile seller_hidden_fees_v1
 ```
 
 This writes `/tmp/opennego-sparring/sparring_suite.json` plus one
-`battle_report.json` per selected profile. The current execution mode is
-fixture-backed profile diagnosis: deterministic local agents generate the
-benchmark artifacts, while marketplace profiles define the opponent archetype
-and lessons used for prompt optimization.
+`battle_report.json` per selected profile, then renders a compact HTML report
+when `--report` is provided. The current execution mode is fixture-backed
+profile diagnosis: deterministic local agents generate the benchmark artifacts,
+while marketplace profiles define the opponent archetype and lessons used for
+prompt optimization.
 
 Install the optional LiteLLM adapter when running custom LLM-backed agents:
 
