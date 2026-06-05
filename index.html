@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OpenNego | Real-Market Negotiation Gym for AI Agents</title>
+  <title>OpenNegotiation | Real-Market Negotiation Gym for AI Agents</title>
   <style>
     :root {
       --ink: #111827;
@@ -46,23 +46,20 @@
     .navlinks a.active { color: var(--accent-dark); font-weight: 750; }
     .shell { max-width: 1120px; margin: 0 auto; padding: 34px 22px 54px; }
     .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
-      gap: 28px;
-      align-items: end;
-      padding: 48px 0 32px;
+      padding: 54px 0 34px;
+      max-width: 940px;
     }
-    h1 { margin: 0 0 14px; max-width: 820px; font-size: 52px; line-height: 1.06; letter-spacing: 0; }
+    h1 { margin: 0 0 14px; max-width: 900px; font-size: 54px; line-height: 1.04; letter-spacing: 0; }
     h2 { margin: 0 0 14px; font-size: 25px; letter-spacing: 0; }
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p { margin: 0; }
-    .subtitle { max-width: 780px; color: var(--muted); font-size: 18px; }
-    .panel {
-      padding: 22px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, .04);
+    .subtitle { max-width: 840px; color: var(--muted); font-size: 18px; }
+    .eyebrow {
+      margin-bottom: 12px;
+      color: var(--accent-dark);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
     }
     .section {
       margin-top: 24px;
@@ -79,30 +76,24 @@
       gap: 18px;
       margin-bottom: 16px;
     }
-    .section-copy { max-width: 720px; color: var(--muted); }
-    .result-list { display: grid; gap: 12px; }
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      padding: 11px 0;
-      border-bottom: 1px solid var(--line);
-    }
-    .result-row:last-child { border-bottom: 0; padding-bottom: 0; }
-    .result-row span { color: var(--muted); }
-    .result-row strong { text-align: right; }
-    .module-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-    .module-card {
-      display: flex;
-      min-height: 150px;
-      flex-direction: column;
-      justify-content: space-between;
+    .section-copy { max-width: 780px; color: var(--muted); }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .card {
       padding: 17px;
       background: var(--soft);
       border: 1px solid var(--line);
       border-radius: 8px;
     }
-    .module-card strong { color: var(--accent-dark); }
+    .card strong { color: var(--accent-dark); }
+    .flow { display: grid; grid-template-columns: repeat(6, minmax(110px, 1fr)); gap: 10px; }
+    .step {
+      min-height: 108px;
+      padding: 12px;
+      background: #f9fbfc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .step strong { display: block; margin-bottom: 5px; }
     .muted { color: var(--muted); }
     .pill {
       display: inline-block;
@@ -114,39 +105,23 @@
       font-size: 12px;
       white-space: nowrap;
     }
-    .status-strip {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 18px;
-    }
-    .status-item {
-      padding-top: 12px;
-      border-top: 3px solid var(--accent);
-    }
-    .status-item:nth-child(2) { border-color: var(--blue); }
-    .status-item:nth-child(3) { border-color: var(--amber); }
-    .status-label { color: var(--muted); font-size: 12px; text-transform: uppercase; font-weight: 750; }
-    .status-value { margin-top: 2px; font-size: 20px; font-weight: 850; }
+    .pill.strong { color: var(--accent-dark); font-weight: 750; }
     footer { margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }
-    @media (max-width: 860px) {
-      .hero, .module-grid { grid-template-columns: 1fr; }
+    @media (max-width: 920px) {
+      .grid-3, .flow { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
       .nav { align-items: flex-start; flex-direction: column; }
       .navlinks { width: 100%; gap: 10px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; font-size: 13px; }
       h1 { font-size: 36px; }
       .section-head { align-items: flex-start; flex-direction: column; }
-    }
-    @media (max-width: 560px) {
-      .status-strip { grid-template-columns: 1fr; }
-      .result-row { align-items: flex-start; flex-direction: column; }
-      .result-row strong { text-align: left; }
     }
   </style>
 </head>
 <body>
   <header class="topbar">
     <nav class="nav">
-      <a class="brand" href="./">OpenNego</a>
+      <a class="brand" href="./">OpenNegotiation</a>
       <div class="navlinks">
         <a class="active" href="index.html">Overview</a>
         <a href="leaderboard.html">Leaderboard</a>
@@ -158,53 +133,74 @@
 
   <main class="shell">
     <section id="overview" class="hero">
-      <div>
-        <h1>OpenNego: Real-Market Negotiation Gym for AI Agents</h1>
-        <p class="subtitle">Benchmark, spar, and improve agent-to-agent negotiation policies against market-grounded scenarios, tool-aware opponents, and auditable deal traces.</p>
-      </div>
-      <div class="panel" aria-label="Latest demo result">
-        <h2>Latest Demo Snapshot</h2>
-        <div class="result-list">
-          <div class="result-row"><span>Live LLM smoke</span><strong>5 models completed</strong></div>
-          <div class="result-row"><span>Gateway</span><strong>LiteLLM via OpenRouter</strong></div>
-          <div class="result-row"><span>Best observed deal</span><strong>Grok 4.3 at $550</strong></div>
-          <div class="result-row"><span>Market reference</span><strong>$575.00</strong></div>
-          <div class="result-row"><span>Status</span><strong>demo smoke, not final ranking</strong></div>
+      <p class="eyebrow">OpenNegotiation, short name OpenNego</p>
+      <h1>A Real-Market Negotiation Gym for AI Agents</h1>
+      <p class="subtitle">OpenNegotiation is an evaluation and improvement framework for agent-to-agent negotiation. It moves negotiation benchmarks beyond static prompt roleplay by giving agents market evidence, tool access, private constraints, transaction rules, and traceable outcomes.</p>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>What OpenNegotiation Does</h2>
+          <p class="section-copy">OpenNegotiation turns each negotiation into a reproducible environment: a market-grounded scenario, two agents with role-specific constraints, optional tools, structured negotiation actions, transaction settlement, and versioned artifacts for evaluation or training.</p>
         </div>
+        <span class="pill strong">benchmark + training gym</span>
+      </div>
+      <div class="grid-3">
+        <div class="card"><h3>Benchmark models</h3><p class="muted">Compare buyer and seller agents on deal quality, market gap, utility, constraint violations, and transaction validity.</p></div>
+        <div class="card"><h3>Evaluate tool use</h3><p class="muted">Measure whether agents search at the right time, inspect provenance, resist stale comps, and convert evidence into offers.</p></div>
+        <div class="card"><h3>Improve policies</h3><p class="muted">Use NPC sparring and battle reports to extract strategy-layer prompt patches from failures.</p></div>
       </div>
     </section>
 
     <section class="section">
       <div class="section-head">
         <div>
-          <h2>Current Surface</h2>
-          <p class="section-copy">Overview stays intentionally lightweight. Detailed benchmark ranking, policy improvement, and NPC strategy browsing live in their own tabs.</p>
+          <h2>Why This Matters</h2>
+          <p class="section-copy">Real negotiation agents will not rely only on model priors. They will search market prices, compare recent transactions, reason about fees and shipping, probe counterpart constraints, and decide when a deal is worth closing. A realistic benchmark needs to evaluate that whole loop.</p>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card"><h3>Real market grounding</h3><p class="muted">Scenarios are anchored to comparable-sale distributions and all-in price assumptions instead of hidden toy cost variables.</p></div>
+        <div class="card"><h3>Agentic behavior</h3><p class="muted">The environment records tool calls, private evidence, structured offers, accept/reject actions, and negotiation traces.</p></div>
+        <div class="card"><h3>Reusable opponents</h3><p class="muted">Preset NPC strategies stress specific failure modes such as high anchors, stale evidence, hidden fees, and deadline pressure.</p></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Mechanism</h2>
+          <p class="section-copy">The core protocol stays fixed so runs are comparable. Users can change the agent strategy layer, tool regime, model gateway, and opponent profile without rewriting the environment.</p>
         </div>
         <span class="pill">fixed base protocol + editable strategy</span>
       </div>
-      <div class="module-grid">
-        <a class="module-card" href="leaderboard.html">
-          <span><strong>Leaderboard</strong><br><span class="muted">Model runs, live smoke table, and scorecard tracks.</span></span>
-          <span class="pill">open tab</span>
-        </a>
-        <a class="module-card" href="training.html">
-          <span><strong>Training</strong><br><span class="muted">Connect an agent, spar against NPC packs, and extract strategy patches.</span></span>
-          <span class="pill">open tab</span>
-        </a>
-        <a class="module-card" href="marketplace.html">
-          <span><strong>Marketplace</strong><br><span class="muted">Browse buyer and seller NPC strategies for stress testing.</span></span>
-          <span class="pill">open tab</span>
-        </a>
+      <div class="flow">
+        <div class="step"><strong>1. Scenario</strong><span class="muted">Product cluster, condition, private reservation, role goal, and market reference.</span></div>
+        <div class="step"><strong>2. Evidence</strong><span class="muted">Private or shared comparable search with provenance and timestamps.</span></div>
+        <div class="step"><strong>3. Negotiation</strong><span class="muted">Messages, offers, accepts, rejects, and tool calls through a structured action schema.</span></div>
+        <div class="step"><strong>4. Settlement</strong><span class="muted">Shipping, tax, platform fees, escrow, payment, and transaction-risk checks.</span></div>
+        <div class="step"><strong>5. Metrics</strong><span class="muted">Deal rate, market gap, utility, violations, tool quality, and validity.</span></div>
+        <div class="step"><strong>6. Learning</strong><span class="muted">Replay traces, diagnose failures, and generate strategy patches.</span></div>
       </div>
-      <div class="status-strip" aria-label="OpenNego module status">
-        <div class="status-item"><div class="status-label">Benchmark</div><div class="status-value">5-model smoke</div></div>
-        <div class="status-item"><div class="status-label">Training</div><div class="status-value">Toolkit sketch</div></div>
-        <div class="status-item"><div class="status-label">Marketplace</div><div class="status-value">8 NPC profiles</div></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>System Boundary</h2>
+          <p class="section-copy">OpenNegotiation separates the stable sandbox from user-editable strategy. The base defines actions, tools, settlement, traces, and metrics. The strategy layer defines how an agent negotiates inside that sandbox.</p>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card"><h3>Base protocol</h3><p class="muted">Environment rules, action schema, tool trace policy, transaction checks, and metric contracts remain fixed.</p></div>
+        <div class="card"><h3>Agent strategy</h3><p class="muted">Role policy, concession behavior, evidence policy, close-mode tactics, and prompt variations are editable.</p></div>
+        <div class="card"><h3>Provider gateway</h3><p class="muted">LiteLLM acts as the unified model gateway while core environment code stays provider-neutral.</p></div>
       </div>
     </section>
 
     <footer>
-      Generated from OpenNego benchmark and policy-learning artifacts. This is a no-key demo surface, not a live marketplace collection.
+      OpenNegotiation is the public-facing name. OpenNego remains the short name for the repository, package, and CLI.
     </footer>
   </main>
 </body>
