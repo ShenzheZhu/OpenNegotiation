@@ -1,0 +1,176 @@
+name: Market Ingestion
+
+"on":
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "eBay sold-comps query"
+        required: false
+        default: "Apple iPhone 14 Pro 128GB Unlocked"
+      marketplace_id:
+        description: "eBay marketplace id"
+        required: false
+        default: "EBAY_US"
+      limit:
+        description: "Maximum sold-comps records"
+        required: false
+        default: "50"
+  schedule:
+    # Weekly, conservative by default to avoid accidental API quota pressure.
+    - cron: "0 9 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: market-ingestion-ebay
+  cancel-in-progress: false
+
+jobs:
+  ebay-sold-comps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DEFAULT_QUERY: "Apple iPhone 14 Pro 128GB Unlocked"
+      DEFAULT_MARKETPLACE_ID: "EBAY_US"
+      DEFAULT_LIMIT: "50"
+      EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+      EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install OpenNegotiation
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Resolve ingestion parameters
+        id: params
+        shell: bash
+        run: |
+          set -euo pipefail
+          query='${{ inputs.query }}'
+          marketplace_id='${{ inputs.marketplace_id }}'
+          limit='${{ inputs.limit }}'
+          if [[ -z "$query" ]]; then query="$DEFAULT_QUERY"; fi
+          if [[ -z "$marketplace_id" ]]; then marketplace_id="$DEFAULT_MARKETPLACE_ID"; fi
+          if [[ -z "$limit" ]]; then limit="$DEFAULT_LIMIT"; fi
+          slug="$(printf '%s' "$query" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+          run_id="$(date -u +'%Y%m%dT%H%M%SZ')-${GITHUB_RUN_ID}"
+          out_dir="market-artifacts/ebay_marketplace_insights/${slug}/${run_id}"
+          {
+            echo "query=$query"
+            echo "marketplace_id=$marketplace_id"
+            echo "limit=$limit"
+            echo "slug=$slug"
+            echo "run_id=$run_id"
+            echo "out_dir=$out_dir"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check required eBay credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${EBAY_CLIENT_ID}" || -z "${EBAY_CLIENT_SECRET}" ]]; then
+            cat >&2 <<'MSG'
+          Missing required GitHub Actions secrets:
+          - EBAY_CLIENT_ID
+          - EBAY_CLIENT_SECRET
+
+          Add them under repository Settings > Secrets and variables > Actions.
+          The workflow intentionally fails closed instead of falling back to sample data.
+          MSG
+            exit 2
+          fi
+
+      - name: Create live source policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${{ steps.params.outputs.out_dir }}"
+          opennego market-source-policy \
+            --output "${{ steps.params.outputs.out_dir }}/ebay-live-source-policy.json" \
+            --source-id ebay_marketplace_insights \
+            --adapter-kind ebay_marketplace_insights \
+            --collection-mode official_api \
+            --data-rights official_ebay_api_with_marketplace_insights_access \
+            --terms-url https://developer.ebay.com/api-docs/buy/marketplace-insights/static/overview.html \
+            --privacy-classification official_api_sold_comps_without_account_pii \
+            --live-collection-enabled
+          opennego validate-market-source \
+            --policy "${{ steps.params.outputs.out_dir }}/ebay-live-source-policy.json"
+
+      - name: Fetch and normalize eBay sold comps
+        shell: bash
+        run: |
+          set -euo pipefail
+          opennego ingest-ebay \
+            --query "${{ steps.params.outputs.query }}" \
+            --source-policy "${{ steps.params.outputs.out_dir }}/ebay-live-source-policy.json" \
+            --snapshot-output "${{ steps.params.outputs.out_dir }}/ebay_sold_snapshot.json" \
+            --products-output "${{ steps.params.outputs.out_dir }}/products.json" \
+            --comps-output "${{ steps.params.outputs.out_dir }}/market_comps.json" \
+            --manifest-output "${{ steps.params.outputs.out_dir }}/market_manifest.json" \
+            --marketplace-id "${{ steps.params.outputs.marketplace_id }}" \
+            --limit "${{ steps.params.outputs.limit }}"
+
+      - name: Validate normalized market artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          opennego validate-market \
+            --products-file "${{ steps.params.outputs.out_dir }}/products.json" \
+            --market-comps-file "${{ steps.params.outputs.out_dir }}/market_comps.json" \
+            --manifest-file "${{ steps.params.outputs.out_dir }}/market_manifest.json" \
+            > "${{ steps.params.outputs.out_dir }}/market_validation.json"
+
+      - name: Write manifest pointer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          out_dir = Path("${{ steps.params.outputs.out_dir }}")
+          pointer = {
+              "schema_version": "opennego.github_market_ingestion_pointer.v1",
+              "source": "ebay_marketplace_insights",
+              "query": "${{ steps.params.outputs.query }}",
+              "marketplace_id": "${{ steps.params.outputs.marketplace_id }}",
+              "limit": int("${{ steps.params.outputs.limit }}"),
+              "run_id": "${{ steps.params.outputs.run_id }}",
+              "github": {
+                  "repository": os.environ["GITHUB_REPOSITORY"],
+                  "run_id": os.environ["GITHUB_RUN_ID"],
+                  "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+                  "sha": os.environ["GITHUB_SHA"],
+              },
+              "artifacts": {
+                  "source_policy": str(out_dir / "ebay-live-source-policy.json"),
+                  "snapshot": str(out_dir / "ebay_sold_snapshot.json"),
+                  "products": str(out_dir / "products.json"),
+                  "market_comps": str(out_dir / "market_comps.json"),
+                  "manifest": str(out_dir / "market_manifest.json"),
+                  "validation": str(out_dir / "market_validation.json"),
+              },
+          }
+          (out_dir / "manifest-pointer.json").write_text(
+              json.dumps(pointer, indent=2, sort_keys=True) + "\n"
+          )
+          PY
+
+      - name: Upload market artifact bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ebay-market-artifacts-${{ steps.params.outputs.slug }}-${{ steps.params.outputs.run_id }}
+          path: ${{ steps.params.outputs.out_dir }}
+          retention-days: 30
+          if-no-files-found: error

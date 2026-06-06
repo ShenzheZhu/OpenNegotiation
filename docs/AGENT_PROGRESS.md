@@ -69,6 +69,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added an eBay Marketplace Insights adapter contract and `opennego ingest-ebay`
   command. It supports no-key mock-response tests and live official-API
   ingestion when eBay credentials and Marketplace Insights access are available.
+- Added a scheduled/manual GitHub Actions market-ingestion workflow that reads
+  eBay credentials from repository secrets and publishes frozen validated market
+  artifact bundles as GitHub Actions artifacts.
 - Added `opennego validate-market` for no-key product, comparable, and dataset
   manifest consistency checks.
 - Added `opennego leaderboard` for machine-readable run rankings, participant
