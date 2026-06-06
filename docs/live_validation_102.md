@@ -2,24 +2,41 @@
 
 Date: 2026-06-05
 
-This note records the stricter live validation pass for issue `#102`. The goal
-was not another low-turn smoke run: model scope stayed small, while the data,
-tool access, transaction settings, role coverage, and post-processing path were
-kept realistic enough to exercise the current OpenNegotiation workflow.
+This note records the max-realism live validation pass for issue `#102`.
+It supersedes the earlier 8-turn / 512-token pass from PR `#112`, which was
+useful for finding a sparring provenance bug but was still too demo-like for
+acceptance.
+
+The target here is current-system max realism: small model scope, but the
+runtime budget, tool regimes, transaction terms, NPC set, and post-processing
+surface are not demo-reduced.
 
 ## Validation Standard
 
-- Models: two OpenRouter-backed models only, `openrouter/openai/gpt-4.1-mini`
-  and `openrouter/openai/gpt-4.1-nano`.
-- Turn budget: 8 turns per scenario.
-- Generation budget: 512 tokens per LLM call.
+- Models: two OpenRouter-backed models, `openrouter/openai/gpt-4.1-mini` and
+  `openrouter/openai/gpt-4.1-nano`.
+- Turn budget: 32 public turns per scenario. The environment still allows
+  private tool-call steps up to `max_turns * 4`, so each run can spend extra
+  private steps gathering evidence.
+- Generation budget: 8192 output tokens per LLM call.
 - Data: validated offline real-market sold-comps fixture for an iPhone 14 Pro
   C2C scenario.
-- Tool regimes:
+- Tool surface: every current `market_price_search` regime used by this pass:
   - `no_tools`
-  - `buyer_private_market_search`
-  - `seller_private_market_search`
-  - `buyer_seller_private_market_search`
+  - `buyer_private_clean_market_search`
+  - `seller_private_clean_market_search`
+  - `symmetric_private_clean_market_search`
+  - `symmetric_public_clean_market_search`
+  - `buyer_private_noisy_market_search`
+  - `symmetric_private_noisy_market_search`
+  - `buyer_private_stale_market_search`
+  - `symmetric_private_stale_market_search`
+  - `buyer_private_adversarial_market_search`
+  - `symmetric_private_adversarial_market_search`
+  - `symmetric_private_failure_market_search`
+- NPC surface: all seller-side NPC profiles in the current registry:
+  `seller_hardline_anchor_v1`, `seller_stale_comps_v1`, and
+  `seller_hidden_fees_v1`.
 - Transaction layer: fixture settlement with shipping, tax, escrow,
   payment fee, seller fee, return risk, reputation risk, dispute risk, buyer
   all-in cap, seller net-revenue floor, tracking, delivery SLA, returns,
@@ -38,11 +55,11 @@ opennego validate-market \
   --market-comps-file examples/data/real_market_comps.json
 
 opennego market-source-policy \
-  --output /tmp/opennegotiation-realistic-102/policies/ebay_offline_export_policy.json \
+  --output /tmp/opennegotiation-full-realism-102/policies/ebay_offline_export_policy.json \
   --source-id ebay_offline_export
 
 opennego validate-market-source \
-  --policy /tmp/opennegotiation-realistic-102/policies/ebay_offline_export_policy.json
+  --policy /tmp/opennegotiation-full-realism-102/policies/ebay_offline_export_policy.json
 ```
 
 Results:
@@ -57,111 +74,102 @@ Results:
 
 Two config-driven live A2A benchmark assignments were run:
 
-| Assignment | Buyer | Seller | Runs | Failed |
-| --- | --- | --- | --- | --- |
-| A | `gpt-4.1-mini` | `gpt-4.1-nano` | 4 | 0 |
-| B | `gpt-4.1-nano` | `gpt-4.1-mini` | 4 | 0 |
-
-Each assignment covered the four tool regimes listed above.
-
-Observed outcomes:
-
-| Assignment | Tool regime | Outcome | Deal price | Completed turns |
-| --- | --- | --- | --- | --- |
-| A | `no_tools` | deal, transaction failed seller-net guard | 520 | 5 |
-| A | `buyer_private_market_search` | deal | 607 | 8 |
-| A | `seller_private_market_search` | rejected | n/a | 6 |
-| A | `buyer_seller_private_market_search` | deal | 590 | 4 |
-| B | `no_tools` | deal | 610 | 3 |
-| B | `buyer_private_market_search` | deal | 540 | 3 |
-| B | `seller_private_market_search` | deal | 650 | 4 |
-| B | `buyer_seller_private_market_search` | deal | 575 | 5 |
+| Assignment | Buyer | Seller | Tool regimes | Runs | Failed |
+| --- | --- | --- | --- | --- | --- |
+| A | `gpt-4.1-mini` | `gpt-4.1-nano` | 12 | 12 | 0 |
+| B | `gpt-4.1-nano` | `gpt-4.1-mini` | 12 | 12 | 0 |
 
 Post-processing:
 
 ```bash
 opennego leaderboard \
-  --input-dir /tmp/opennegotiation-realistic-102/benchmark/combined \
-  --output /tmp/opennegotiation-realistic-102/benchmark/leaderboard_summary.json
+  --input-dir /tmp/opennegotiation-full-realism-102/benchmark/combined \
+  --output /tmp/opennegotiation-full-realism-102/benchmark/leaderboard_summary.json
 
 opennego report \
-  --input-dir /tmp/opennegotiation-realistic-102/benchmark/combined \
-  --output /tmp/opennegotiation-realistic-102/benchmark/realistic_live_benchmark_report.html
+  --input-dir /tmp/opennegotiation-full-realism-102/benchmark/combined \
+  --output /tmp/opennegotiation-full-realism-102/benchmark/full_realism_live_benchmark_report.html
 ```
 
 Results:
 
-- Leaderboard run count: 8.
+- Benchmark execution: 24 completed, 0 failed.
+- Leaderboard run count: 24.
 - Both models had buyer and seller role coverage `1.0`.
-- Participant summaries and buyer/seller role tracks were generated.
-- Report HTML was generated from the combined benchmark artifacts.
+- `gpt-4.1-mini` average score: `83.7375`.
+- `gpt-4.1-nano` average score: `83.7375`.
+- Buyer track deal rates:
+  - `gpt-4.1-nano`: `0.8333`
+  - `gpt-4.1-mini`: `0.9167`
+- Buyer track transaction completion rates:
+  - `gpt-4.1-nano`: `0.8333`
+  - `gpt-4.1-mini`: `0.5833`
+- Tool failure surfaced in the leaderboard: one role track had tool failure rate
+  `0.1`.
+- The 24-run benchmark report rendered successfully.
+
+This pass is materially different from the earlier smoke runs: it includes
+public tools, private tools, clean/noisy/stale/adversarial/failure tool modes,
+role swapping, transaction guard failures, and full leaderboard/report
+post-processing.
 
 ## Sparring / Evolution Mode
 
-The user-agent workflow used:
+Baseline setup:
 
 - User role: buyer.
 - Live user agent: `openrouter/openai/gpt-4.1-mini`.
-- NPC counterparty profile: `seller_stale_comps_v1`.
 - Live profile NPC model: `openrouter/openai/gpt-4.1-nano`.
-- Learning regime: `buyer_seller_private_market_search`.
+- Opponent profiles: all seller-side registry profiles.
+- Learning regime: `symmetric_private_adversarial_market_search`.
+- Runtime: 32 turns, 8192 output tokens per LLM call, 12 tool regimes per
+  profile.
 
-Baseline sparring:
+Baseline results:
 
-- Completed profiles: 1.
-- Failed profiles: 0.
-- Underlying benchmark slices: 4 completed, 0 failed.
-- Battle report outcome: rejected.
-- Policy score: 50.0.
-- Failure modes: `deal_failure`, `tool_use`.
-- Lessons: `no_deal_recovery`, `missed_market_tool`.
+| Profile | Benchmark slices | Failed | Outcome | Policy score | Lessons |
+| --- | --- | --- | --- | --- | --- |
+| `seller_hardline_anchor_v1` | 12 | 0 | rejected | 50.0 | `no_deal_recovery`, `missed_market_tool` |
+| `seller_stale_comps_v1` | 12 | 0 | invalid_accept | 50.0 | `no_deal_recovery`, `missed_market_tool` |
+| `seller_hidden_fees_v1` | 12 | 0 | rejected | 37.5 | `no_deal_recovery`, `missed_market_tool`, `opponent_trap_awareness` |
 
-Evolution and rerun:
+The strategy candidate was generated from the weakest baseline profile,
+`seller_hidden_fees_v1`, then applied to the live user agent for a rerun across
+all three seller NPC profiles.
 
-```bash
-opennego evolve \
-  --battle-report /tmp/opennegotiation-realistic-102/sparring_after_fix/baseline/profiles/seller_stale_comps_v1/battle_report.json \
-  --output /tmp/opennegotiation-realistic-102/sparring_after_fix/strategy_candidate.json \
-  --parent-strategy-id live_user_buyer_gpt41mini \
-  --iteration 1
+Applied lessons:
 
-opennego apply-strategy \
-  --candidate /tmp/opennegotiation-realistic-102/sparring_after_fix/strategy_candidate.json \
-  --output /tmp/opennegotiation-realistic-102/sparring_after_fix/strategy_config.json \
-  --strategy-id live_user_buyer_gpt41mini_v1
+- `no_deal_recovery`
+- `missed_market_tool`
+- `opponent_trap_awareness`
 
-opennego spar \
-  --config /tmp/opennegotiation-realistic-102/configs/realistic_user_agent_sparring.json \
-  --output-dir /tmp/opennegotiation-realistic-102/sparring_after_fix/rerun \
-  --report /tmp/opennegotiation-realistic-102/sparring_after_fix/rerun_sparring_report.html \
-  --opponent-profile seller_stale_comps_v1 \
-  --user-strategy /tmp/opennegotiation-realistic-102/sparring_after_fix/strategy_candidate.json \
-  --user-llm-model openrouter/openai/gpt-4.1-mini \
-  --user-llm-max-tokens 512 \
-  --opponent-llm-model openrouter/openai/gpt-4.1-nano \
-  --opponent-llm-max-tokens 512 \
-  --learning-tool-regime buyer_seller_private_market_search \
-  --no-fail-fast
+Applied strategy patches:
 
-opennego compare \
-  --before /tmp/opennegotiation-realistic-102/sparring_after_fix/baseline/profiles/seller_stale_comps_v1/battle_report.json \
-  --after /tmp/opennegotiation-realistic-102/sparring_after_fix/rerun/profiles/seller_stale_comps_v1/battle_report.json \
-  --output /tmp/opennegotiation-realistic-102/sparring_after_fix/strategy_comparison.json
-```
+- Switch from exploration to close mode near turn exhaustion.
+- Search recent sold comps before the first offer and use median/IQR anchors.
+- Classify the opponent tactic before responding and apply a named
+  countermeasure.
 
-Results:
+Rerun results:
 
-- Strategy candidate generated: `opennego.strategy_evolution.v1`.
-- Strategy config generated: `opennego.strategy_config.v1`.
-- Rerun completed: 1 profile, 4 benchmark slices, 0 failures.
-- Rerun manifest recorded `user_strategy.enabled=true`.
-- Rerun manifest recorded `transaction.enabled=true`.
-- Comparison result: score 50.0 -> 50.0, delta `0.0`, summary
-  `Strategy unchanged`.
+| Profile | Benchmark slices | Failed | Outcome | Deal price | Policy score |
+| --- | --- | --- | --- | --- | --- |
+| `seller_hardline_anchor_v1` | 12 | 0 | rejected | n/a | 62.5 |
+| `seller_stale_comps_v1` | 12 | 0 | deal | 610 | 85.0 |
+| `seller_hidden_fees_v1` | 12 | 0 | deal | 680 | 60.0 |
 
-The evolution path is therefore executable and traceable, but this single-step
-deterministic patch did not improve the live policy in this scenario. That is a
-product limitation, not an execution failure.
+Profile-by-profile comparisons:
+
+| Profile | Before | After | Delta |
+| --- | --- | --- | --- |
+| `seller_hardline_anchor_v1` | 50.0 | 62.5 | +12.5 |
+| `seller_stale_comps_v1` | 50.0 | 85.0 | +35.0 |
+| `seller_hidden_fees_v1` | 37.5 | 60.0 | +22.5 |
+
+The evolution loop is therefore executable and traceable under the full current
+surface, and this specific candidate improved all three seller-NPC comparison
+scores. It did not solve every case: hardline still ended rejected, and the
+hidden-fees rerun still surfaced price-discipline and transaction-risk lessons.
 
 ## Marketplace And Adapter
 
@@ -169,46 +177,51 @@ Validated commands:
 
 ```bash
 opennego marketplace-export \
-  --candidate /tmp/opennegotiation-realistic-102/sparring_after_fix/strategy_candidate.json \
-  --output /tmp/opennegotiation-realistic-102/sparring_after_fix/marketplace_profile.json \
-  --profile-id live_user_buyer_gpt41mini_iter1 \
-  --name "Live User Buyer GPT-4.1 Mini Iteration 1" \
-  --summary "Strategy candidate extracted from a strict live OpenNegotiation sparring pass against Stale Comps Seller." \
+  --candidate /tmp/opennegotiation-full-realism-102/sparring/strategy_candidate.json \
+  --output /tmp/opennegotiation-full-realism-102/sparring/marketplace_profile.json \
+  --profile-id full_realism_live_user_buyer_gpt41mini_iter1 \
+  --name "Full Realism Live User Buyer GPT-4.1 Mini Iteration 1" \
+  --summary "Strategy candidate extracted from the full-realism live OpenNegotiation pass across all seller NPC profiles." \
   --difficulty custom \
+  --tag full-realism \
   --tag live-validation \
   --tag buyer \
   --allowed-tool market_price_search \
-  --install-registry /tmp/opennegotiation-realistic-102/sparring_after_fix/local_marketplace_registry.json \
+  --install-registry /tmp/opennegotiation-full-realism-102/sparring/local_marketplace_registry.json \
   --overwrite
 
 opennego validate-marketplace \
-  --registry /tmp/opennegotiation-realistic-102/sparring_after_fix/local_marketplace_registry.json \
-  --profile /tmp/opennegotiation-realistic-102/sparring_after_fix/marketplace_profile.json
+  --registry /tmp/opennegotiation-full-realism-102/sparring/local_marketplace_registry.json \
+  --profile /tmp/opennegotiation-full-realism-102/sparring/marketplace_profile.json
 
 opennego export-training-adapter \
-  --strategy-config /tmp/opennegotiation-realistic-102/sparring_after_fix/strategy_config.json \
-  --output /tmp/opennegotiation-realistic-102/sparring_after_fix/training_adapter.json \
+  --strategy-config /tmp/opennegotiation-full-realism-102/sparring/strategy_config.json \
+  --output /tmp/opennegotiation-full-realism-102/sparring/training_adapter.json \
   --agent-kind litellm_user_agent \
-  --adapter-id live_user_buyer_gpt41mini_adapter_v1
+  --adapter-id full_realism_live_user_buyer_gpt41mini_adapter_v1
 
 opennego validate-training-adapter \
-  --adapter /tmp/opennegotiation-realistic-102/sparring_after_fix/training_adapter.json
+  --adapter /tmp/opennegotiation-full-realism-102/sparring/training_adapter.json
 ```
 
 Results:
 
 - Marketplace validation: passed.
 - External training adapter validation: passed.
-- Sparring/evolution after-fix artifacts: 8 manifests, 8 metrics files, and
-  8 trace files.
+- Executed live slices: 96 total.
+  - 24 benchmark role-swap slices.
+  - 36 baseline sparring slices.
+  - 36 strategy-rerun sparring slices.
+- The temporary output tree contains 120 manifest/metrics/trace triplets because
+  the benchmark report aggregation also creates a 24-run combined copy.
 
-## Bug Found And Fixed
+## Bug Found In Previous Pass
 
-The live artifact audit found that benchmark manifests recorded transaction
-metadata, but sparring manifests did not, even though sparring used the same
-transaction simulator and metrics included transaction fields.
+The previous 8-turn / 512-token pass found that benchmark manifests recorded
+transaction metadata, but sparring manifests did not, even though sparring used
+the same transaction simulator and metrics included transaction fields.
 
-Fix:
+Fix shipped in PR `#112`:
 
 - Added a reusable transaction metadata helper in `opennego.runner`.
 - Updated `opennego.sparring` so sparring run manifests include both config
@@ -216,15 +229,19 @@ Fix:
 - Added a workflow contract regression assertion that sparring manifests retain
   transaction provenance.
 
+The full-realism pass above was run after that fix.
+
 ## Current Limits
 
 - Real-market evidence is still fixture/offline-export backed. Live eBay or
   C2C marketplace ingestion is not implemented.
-- The current training loop extracts deterministic strategy patches and reruns
-  the agent, but it does not yet run a multi-iteration optimizer, versioned
-  strategy selection, or automatic model-policy improvement.
+- The current tool surface is still one provider-neutral market search tool with
+  multiple modes. Search, provenance, escrow, payment, shipping, dispute, and
+  marketplace providers are not separate live integrations yet.
 - The local marketplace is a JSON registry and validator, not a hosted
   account-backed marketplace.
 - Transaction simulation is deterministic fixture settlement, not an integration
   with real payment, shipping, warranty, compliance, or dispute providers.
-- This is a strict small-scope validation pass, not a large-batch benchmark.
+- This is max-realism coverage of the current implementation, not a large-batch
+  leaderboard benchmark and not a claim that real-world marketplace integrations
+  already exist.

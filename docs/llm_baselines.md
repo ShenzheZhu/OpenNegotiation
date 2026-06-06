@@ -155,9 +155,13 @@ opennego run-models --output-dir /tmp/opennego-five-model-demo --max-turns 4 --m
 ```
 
 For acceptance-style live validation, use config-driven LLM buyer/seller runs
-with role swapping, 8-turn scenarios, transaction guards, market-source gates,
-and full post-processing. The strict issue `#102` pass is documented in
-[live_validation_102.md](live_validation_102.md).
+with role swapping, high turn/token budgets, transaction guards, market-source
+gates, the full current tool-regime surface, sparring/evolution reruns,
+marketplace export, adapter validation, and full post-processing. Start from
+`configs/full_realism_live.example.yaml`, duplicate it with buyer/seller models
+swapped for reciprocal role coverage, and then run the same config through
+`opennego spar` for user-agent evolution. The issue `#102` max-realism pass is
+documented in [live_validation_102.md](live_validation_102.md).
 
 The command writes `/tmp/opennego-five-model-demo/summary.json` for the full
 attempt. Completed model directories contain the normal benchmark artifacts.

@@ -24,12 +24,13 @@ with participant role-coverage summaries and buyer/seller role-track summaries.
 One-command MVP demo bundles can be validated independently with
 `opennego validate-demo-bundle`.
 
-A strict small-scope OpenRouter validation was run on 2026-06-05 for issue
-`#102`. Live provider execution remains optional and requires local
+A max-realism current-system OpenRouter validation was run on 2026-06-05 for
+issue `#102`. Live provider execution remains optional and requires local
 credentials, but both product modes were exercised with Keychain-supplied
-credentials, 8-turn scenarios, 512-token LLM calls, validated real-market
-fixtures, tool regimes, transaction guards, and full post-processing. Details
-are recorded in `docs/live_validation_102.md`.
+credentials, 32-turn scenarios, 8192-token LLM calls, every current
+`market_price_search` mode/visibility regime, all seller-side NPC profiles,
+transaction guards, and full post-processing. Details are recorded in
+`docs/live_validation_102.md`.
 
 ## Website / Demo Surfaces
 
@@ -154,15 +155,21 @@ git diff --check
 opennego validate-market --products-file examples/data/real_market_products.json --market-comps-file examples/data/real_market_comps.json
 opennego market-source-policy --output "$tmpdir/source_policy.json" --source-id ebay_offline_export
 opennego validate-market-source --policy "$tmpdir/source_policy.json"
-opennego run --config "$tmpdir/realistic_pair_gpt41mini_buyer_gpt41nano_seller.json"
-opennego run --config "$tmpdir/realistic_pair_gpt41nano_buyer_gpt41mini_seller.json"
+opennego run --config "$tmpdir/full_realism_pair_gpt41mini_buyer_gpt41nano_seller.json"
+opennego run --config "$tmpdir/full_realism_pair_gpt41nano_buyer_gpt41mini_seller.json"
 opennego leaderboard --input-dir "$tmpdir/benchmark/combined" --output "$tmpdir/benchmark/leaderboard_summary.json"
-opennego report --input-dir "$tmpdir/benchmark/combined" --output "$tmpdir/benchmark/realistic_live_benchmark_report.html"
-opennego spar --config "$tmpdir/realistic_user_agent_sparring.json" --output-dir "$tmpdir/sparring_after_fix/baseline" --opponent-profile seller_stale_comps_v1 --user-llm-model openrouter/openai/gpt-4.1-mini --user-llm-max-tokens 512 --opponent-llm-model openrouter/openai/gpt-4.1-nano --opponent-llm-max-tokens 512 --learning-tool-regime buyer_seller_private_market_search --no-fail-fast
-opennego evolve --battle-report "$tmpdir/sparring_after_fix/baseline/profiles/seller_stale_comps_v1/battle_report.json" --output "$tmpdir/sparring_after_fix/strategy_candidate.json" --parent-strategy-id live_user_buyer_gpt41mini --iteration 1
-opennego apply-strategy --candidate "$tmpdir/sparring_after_fix/strategy_candidate.json" --output "$tmpdir/sparring_after_fix/strategy_config.json" --strategy-id live_user_buyer_gpt41mini_v1
-opennego spar --config "$tmpdir/realistic_user_agent_sparring.json" --output-dir "$tmpdir/sparring_after_fix/rerun" --opponent-profile seller_stale_comps_v1 --user-strategy "$tmpdir/sparring_after_fix/strategy_candidate.json" --user-llm-model openrouter/openai/gpt-4.1-mini --user-llm-max-tokens 512 --opponent-llm-model openrouter/openai/gpt-4.1-nano --opponent-llm-max-tokens 512 --learning-tool-regime buyer_seller_private_market_search --no-fail-fast
-opennego compare --before "$tmpdir/sparring_after_fix/baseline/profiles/seller_stale_comps_v1/battle_report.json" --after "$tmpdir/sparring_after_fix/rerun/profiles/seller_stale_comps_v1/battle_report.json" --output "$tmpdir/sparring_after_fix/strategy_comparison.json"
+opennego report --input-dir "$tmpdir/benchmark/combined" --output "$tmpdir/benchmark/full_realism_live_benchmark_report.html"
+opennego spar --config "$tmpdir/full_realism_user_agent_sparring.json" --output-dir "$tmpdir/sparring/baseline" --opponent-profile seller_hardline_anchor_v1 --opponent-profile seller_stale_comps_v1 --opponent-profile seller_hidden_fees_v1 --user-llm-model openrouter/openai/gpt-4.1-mini --user-llm-max-tokens 8192 --opponent-llm-model openrouter/openai/gpt-4.1-nano --opponent-llm-max-tokens 8192 --learning-tool-regime symmetric_private_adversarial_market_search --no-fail-fast
+opennego evolve --battle-report "$tmpdir/sparring/baseline/profiles/seller_hidden_fees_v1/battle_report.json" --output "$tmpdir/sparring/strategy_candidate.json" --parent-strategy-id full_realism_live_user_buyer_gpt41mini --iteration 1
+opennego apply-strategy --candidate "$tmpdir/sparring/strategy_candidate.json" --output "$tmpdir/sparring/strategy_config.json" --strategy-id full_realism_live_user_buyer_gpt41mini_v1
+opennego spar --config "$tmpdir/full_realism_user_agent_sparring.json" --output-dir "$tmpdir/sparring/rerun" --opponent-profile seller_hardline_anchor_v1 --opponent-profile seller_stale_comps_v1 --opponent-profile seller_hidden_fees_v1 --user-strategy "$tmpdir/sparring/strategy_candidate.json" --user-llm-model openrouter/openai/gpt-4.1-mini --user-llm-max-tokens 8192 --opponent-llm-model openrouter/openai/gpt-4.1-nano --opponent-llm-max-tokens 8192 --learning-tool-regime symmetric_private_adversarial_market_search --no-fail-fast
+opennego compare --before "$tmpdir/sparring/baseline/profiles/seller_hardline_anchor_v1/battle_report.json" --after "$tmpdir/sparring/rerun/profiles/seller_hardline_anchor_v1/battle_report.json" --output "$tmpdir/sparring/comparison_seller_hardline_anchor_v1.json"
+opennego compare --before "$tmpdir/sparring/baseline/profiles/seller_stale_comps_v1/battle_report.json" --after "$tmpdir/sparring/rerun/profiles/seller_stale_comps_v1/battle_report.json" --output "$tmpdir/sparring/comparison_seller_stale_comps_v1.json"
+opennego compare --before "$tmpdir/sparring/baseline/profiles/seller_hidden_fees_v1/battle_report.json" --after "$tmpdir/sparring/rerun/profiles/seller_hidden_fees_v1/battle_report.json" --output "$tmpdir/sparring/comparison_seller_hidden_fees_v1.json"
+opennego marketplace-export --candidate "$tmpdir/sparring/strategy_candidate.json" --output "$tmpdir/sparring/marketplace_profile.json" --profile-id full_realism_live_user_buyer_gpt41mini_iter1 --name "Full Realism Live User Buyer GPT-4.1 Mini Iteration 1" --summary "Strategy candidate extracted from the full-realism live OpenNegotiation pass across all seller NPC profiles." --difficulty custom --tag full-realism --tag live-validation --tag buyer --allowed-tool market_price_search --install-registry "$tmpdir/sparring/local_marketplace_registry.json" --overwrite
+opennego validate-marketplace --registry "$tmpdir/sparring/local_marketplace_registry.json" --profile "$tmpdir/sparring/marketplace_profile.json"
+opennego export-training-adapter --strategy-config "$tmpdir/sparring/strategy_config.json" --output "$tmpdir/sparring/training_adapter.json" --agent-kind litellm_user_agent --adapter-id full_realism_live_user_buyer_gpt41mini_adapter_v1
+opennego validate-training-adapter --adapter "$tmpdir/sparring/training_adapter.json"
 opennego mvp-demo --output-dir "$tmpdir/mvp" --report "$tmpdir/mvp.html"
 opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
 opennego handoff --output-dir "$tmpdir/handoff"
@@ -211,15 +218,15 @@ Current live provider status:
 - OpenRouter model catalog access succeeded; the validation used currently
   available low-cost model IDs.
 
-Fresh strict live run summary for issue `#102`:
+Fresh max-realism live run summary for issue `#102`:
 
 | Path | Models / profile | Result | Artifact evidence |
 | --- | --- | --- | --- |
 | Market gates | validated iPhone 14 Pro sold-comps fixture plus offline source policy | market and source-policy validation passed | `opennego.market_validation.v1`, `opennego.market_source_policy.v1`, `opennego.market_source_validation.v1` |
-| Benchmark `opennego run --config` role-pair A/B | `gpt-4.1-mini` and `gpt-4.1-nano` swapped across buyer/seller roles | 8 completed, 0 failed across 4 tool regimes and 8-turn scenarios | per-run `manifest.json`, `scenario.json`, `trace.jsonl`, `metrics.json` |
-| `opennego leaderboard` + `opennego report` | 8 live role-swapped runs | 8-run leaderboard generated; both participants have buyer/seller role coverage 1.0 | `leaderboard_summary.json`, HTML report |
-| Baseline `opennego spar` | live user buyer `gpt-4.1-mini` vs live profile NPC seller `gpt-4.1-nano` on `seller_stale_comps_v1` | 1 profile completed, 0 failed; 4 benchmark slices completed | `sparring_suite.json`, `battle_report.json`, HTML report |
-| Strategy evolution rerun | baseline battle report -> candidate -> strategy config -> live user rerun with `--user-strategy` | candidate/config/rerun/comparison generated; score 50.0 -> 50.0, delta 0.0 | `opennego.strategy_evolution.v1`, `opennego.strategy_config.v1`, `opennego.strategy_comparison.v1` |
+| Benchmark `opennego run --config` role-pair A/B | `gpt-4.1-mini` and `gpt-4.1-nano` swapped across buyer/seller roles | 24 completed, 0 failed across 12 tool regimes and 32-turn scenarios | per-run `manifest.json`, `scenario.json`, `trace.jsonl`, `metrics.json` |
+| `opennego leaderboard` + `opennego report` | 24 live role-swapped runs | 24-run leaderboard generated; both participants have buyer/seller role coverage 1.0 | `leaderboard_summary.json`, HTML report |
+| Baseline `opennego spar` | live user buyer `gpt-4.1-mini` vs live profile NPC seller `gpt-4.1-nano` across all seller NPC profiles | 3 profiles completed, 0 failed; 36 benchmark slices completed | `sparring_suite.json`, `battle_report.json`, HTML report |
+| Strategy evolution rerun | worst baseline battle report -> candidate -> strategy config -> live user rerun with `--user-strategy` | 3 profiles completed, 0 failed; 36 rerun slices completed; profile scores improved by +12.5, +35.0, and +22.5 | `opennego.strategy_evolution.v1`, `opennego.strategy_config.v1`, `opennego.strategy_comparison.v1` |
 | Marketplace / adapter | live-derived strategy candidate/config | marketplace validation and external adapter validation passed | `opennego.strategy_marketplace_profile.v1`, `opennego.external_training_adapter.v1` |
 
 ## Issue And PR Status
@@ -245,8 +252,9 @@ Readiness conclusion:
   verified.
 - Architecture: documented and guarded by tests.
 - Tests: passing locally.
-- Live provider validation: freshly verified with a strict small-scope
-  OpenRouter pass on issue `#102`; this is realistic workflow evidence, not a
-  large-batch benchmark.
+- Live provider validation: freshly verified with a max-realism current-system
+  OpenRouter pass on issue `#102`; this is full workflow evidence for the
+  current implementation, not a large-batch benchmark or a claim that live
+  marketplace/payment/shipping integrations already exist.
 - Hosted/public site: not complete until the GitHub Pages/private-repo blocker
   is resolved or another hosting target is selected.
