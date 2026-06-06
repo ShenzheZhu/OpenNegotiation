@@ -371,7 +371,7 @@ python -m pip install -e ".[dev,llm]"
 export OPENROUTER_API_KEY=...
 ```
 
-Run a tiny live-model demo:
+Run a tiny live-model latency demo:
 
 ```bash
 opennego run-models \
@@ -379,6 +379,11 @@ opennego run-models \
   --max-turns 4 \
   --max-tokens 256
 ```
+
+`run-models` is intentionally cheap and buyer-only against a scripted seller.
+For realistic live validation, use config-driven buyer/seller LLM runs with role
+swapping, 8-turn scenarios, tool regimes, transaction guards, and full
+post-processing; see [Issue #102 Live Validation](docs/live_validation_102.md).
 
 Use provider-backed NPC profiles:
 

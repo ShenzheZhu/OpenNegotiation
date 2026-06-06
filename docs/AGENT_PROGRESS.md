@@ -114,13 +114,13 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - OpenRouter and OpenAI credentials are available from local Keychain under the
   OpenNegotiation service names; live commands inject them into child-process
   environment variables at execution time.
-- Issue `#102` ran a fresh bounded OpenRouter validation on 2026-06-05:
-  three-model `opennego run-models`, two live buyer/seller role-pair config
-  runs, a five-run leaderboard/report aggregation, live user-agent sparring
-  against a live profile NPC, strategy evolution, strategy-candidate rerun,
-  before/after comparison, marketplace validation, and external training
-  adapter validation all completed without writing credentials to the
-  repository.
+- Issue `#102` now uses a strict small-scope OpenRouter validation standard:
+  two live models, buyer/seller role swapping, 8-turn scenarios, 512-token LLM
+  calls, validated real-market fixture data, four tool regimes, transaction
+  guards, leaderboard/report generation, live user-agent sparring against a
+  live profile NPC, strategy evolution, strategy-candidate rerun, before/after
+  comparison, marketplace validation, and external training adapter validation.
+  Details are recorded in `docs/live_validation_102.md`.
 
 ### Issue And PR State
 
@@ -152,17 +152,19 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - `opennego role-swap`: passing with buyer/seller role coverage 1.0.
 - `opennego arena-plan`: passing with reciprocal buyer/seller matchups and
   `opennego.arena_plan.v1`.
-- Bounded live OpenRouter validation for issue `#102`: passing across
-  `run-models`, config runner LLM agents, five-run leaderboard/report
-  aggregation, live user-agent/profile-NPC sparring, strategy evolution rerun,
-  before/after comparison, local marketplace validation, and external training
-  adapter validation.
+- Strict small-scope live OpenRouter validation for issue `#102`: passing
+  across validated market/source gates, 8 role-swapped live A2A benchmark runs,
+  8-run leaderboard/report aggregation, live user-agent/profile-NPC sparring,
+  strategy evolution rerun, before/after comparison, local marketplace
+  validation, and external training adapter validation. The pass also exposed
+  and fixed a sparring manifest provenance gap for transaction metadata.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next
 
-- Keep live provider demos small and label them as smoke runs, not batch
-  benchmark evidence.
+- Keep live provider demos small but realistic: bounded model scope is fine,
+  but acceptance runs should preserve realistic turn budgets, transaction
+  settings, market-source gates, tool regimes, and post-processing evidence.
 - Keep expanding transaction realism through provider-neutral fixture contracts
   first; add real payment, logistics, warranty, legal/compliance, and platform
   dispute integrations only when those boundaries are decided.

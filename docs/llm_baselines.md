@@ -146,12 +146,18 @@ seller on the real-market fixture. It writes the same benchmark artifacts as the
 main runner, so `opennego report` can render the results as a leaderboard
 preview.
 
-This is intentionally a small demo path, not a batch benchmark. For cost and
-latency control, prefer a low turn/token budget during live demos:
+This is intentionally a small latency demo path, not a realistic A2A validation
+or batch benchmark. For cost and latency control, prefer a low turn/token budget
+during live demos:
 
 ```bash
 opennego run-models --output-dir /tmp/opennego-five-model-demo --max-turns 4 --max-tokens 256
 ```
+
+For acceptance-style live validation, use config-driven LLM buyer/seller runs
+with role swapping, 8-turn scenarios, transaction guards, market-source gates,
+and full post-processing. The strict issue `#102` pass is documented in
+[live_validation_102.md](live_validation_102.md).
 
 The command writes `/tmp/opennego-five-model-demo/summary.json` for the full
 attempt. Completed model directories contain the normal benchmark artifacts.

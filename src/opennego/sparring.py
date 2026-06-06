@@ -27,6 +27,7 @@ from opennego.runner import (
     ToolSpec,
     load_experiment_config,
     prepare_runs,
+    transaction_config_metadata,
 )
 from opennego.ports import AgentPort
 from opennego.schema import Role
@@ -462,6 +463,8 @@ def _execute_profile_prepared_run(
         tool_regime=_tool_regime_manifest(prepared_run.tool_regime),
         metadata={
             "experiment_name": config.name,
+            "transaction": transaction_config_metadata(config.transaction),
+            **dict(config.metadata or {}),
             "sparring_execution_mode": SPARRING_EXECUTION_MODE,
             "user_role": user_role.value,
             "opponent_profile_id": profile.id,
