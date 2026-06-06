@@ -135,9 +135,11 @@ Known architecture limits:
   profile NPCs with explicit `--opponent-profile` selections.
 - Hosted marketplace backend, account-backed sharing, and provider-backed
   coaching are not implemented.
-- Real-market evidence remains fixture/offline-data backed. Offline sold-comps
-  normalization is implemented; live eBay or C2C marketplace collection is not
-  implemented.
+- Real-market evidence in the shipped demo remains fixture/offline-data backed.
+  Offline sold-comps normalization is implemented, and the eBay Marketplace
+  Insights adapter contract can write normalized fixtures with official API
+  access. We have not yet production-verified it with approved eBay credentials,
+  and non-eBay C2C marketplace collectors are not implemented.
 - Transaction simulation validates deterministic settlement fees, lifecycle
   guard failures, and structured fixture terms for payment, logistics, returns,
   warranty, compliance, and dispute policy. Real payment, logistics, warranty,

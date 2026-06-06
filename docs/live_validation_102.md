@@ -233,8 +233,10 @@ The full-realism pass above was run after that fix.
 
 ## Current Limits
 
-- Real-market evidence is still fixture/offline-export backed. Live eBay or
-  C2C marketplace ingestion is not implemented.
+- Real-market evidence in this validation run is still fixture/offline-export
+  backed. The eBay Marketplace Insights adapter contract now exists for
+  official sold-comps ingestion, but this run did not use approved eBay
+  production credentials and did not validate non-eBay C2C collectors.
 - The current tool surface is still one provider-neutral market search tool with
   multiple modes. Search, provenance, escrow, payment, shipping, dispute, and
   marketplace providers are not separate live integrations yet.

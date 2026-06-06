@@ -432,7 +432,12 @@ may contain private data.
 <h2 id="real-market-data">Real-Market Data</h2>
 
 OpenNegotiation supports offline sold-comps normalization and source-policy
-validation. It does not scrape live marketplaces by default.
+validation. It also includes an eBay Marketplace Insights adapter contract for
+licensed sold-comps ingestion. The live path uses official APIs only; it does
+not scrape marketplace pages and it still requires eBay API credentials plus
+Marketplace Insights production access. eBay's docs mark Marketplace Insights
+as Limited Release, so ordinary developer keys may not be enough for production
+sold-comps access.
 
 ```bash
 opennego market-source-policy \
@@ -457,6 +462,43 @@ opennego ingest-market \
 Source policies record data rights, collection mode, privacy fields,
 credential policy, and anti-scraping boundaries.
 
+For official eBay sold-comps ingestion, create a live source policy first:
+
+```bash
+opennego market-source-policy \
+  --output /tmp/ebay-live-source-policy.json \
+  --source-id ebay_marketplace_insights \
+  --adapter-kind ebay_marketplace_insights \
+  --collection-mode official_api \
+  --data-rights official_ebay_api_with_marketplace_insights_access \
+  --terms-url https://developer.ebay.com/api-docs/buy/marketplace-insights/static/overview.html \
+  --privacy-classification official_api_sold_comps_without_account_pii \
+  --live-collection-enabled
+```
+
+Then run a bounded ingestion. Credentials stay in the environment or your
+secret manager; never commit them.
+
+```bash
+export EBAY_CLIENT_ID=...
+export EBAY_CLIENT_SECRET=...
+
+opennego ingest-ebay \
+  --query "Apple iPhone 14 Pro 128GB Unlocked" \
+  --source-policy /tmp/ebay-live-source-policy.json \
+  --snapshot-output /tmp/ebay_sold_snapshot.json \
+  --products-output /tmp/products.json \
+  --comps-output /tmp/market_comps.json \
+  --manifest-output /tmp/market_manifest.json \
+  --limit 50
+```
+
+The adapter writes a sanitized sold-comps snapshot, then reuses the same
+normalization path as offline data. CI and local no-key checks can exercise the
+contract with `--mock-response`. A GCP deployment is useful for Cloud Run jobs,
+Secret Manager, scheduler/rate-limit control, and GCS-hosted frozen artifacts,
+but eBay access still depends on official API approval and credentials.
+
 <h2 id="current-scope">Current Scope</h2>
 
 ### Implemented
@@ -473,13 +515,16 @@ credential policy, and anti-scraping boundaries.
 - Local strategy marketplace export and validation.
 - External training adapter packages.
 - No-key external handoff bundles.
+- eBay Marketplace Insights adapter contract with no-key mock-response tests.
 - Optional LiteLLM-backed live model demos.
 
 ### Not Implemented Yet
 
 - Hosted strategy marketplace backend.
 - Account-backed sharing or installable remote profiles.
-- Live eBay or C2C marketplace collection.
+- Production-verified live eBay ingestion with approved Marketplace Insights
+  credentials.
+- Non-eBay live C2C marketplace adapters.
 - Real payment, logistics, warranty, legal, or dispute provider integrations.
 - Production-scale Elo or Bradley-Terry leaderboard fitting.
 

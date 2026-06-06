@@ -114,9 +114,13 @@ should use careful naming:
 The framework should use a `MarketDataPort` and frozen benchmark artifacts. It
 should not assume that live marketplace data is always available during eval.
 
-Official or licensed data sources can be adapted later. The no-key demo uses
-fixture-backed sold comps only. Live collection, marketplace API credentials,
-and scraping are out of scope for the initial benchmark slice.
+Official or licensed data sources should enter the gym through source adapters
+that emit frozen benchmark artifacts. The no-key demo uses fixture-backed sold
+comps only. The eBay Marketplace Insights adapter contract supports an official
+API path for sold-comps ingestion, but production use still requires eBay
+Marketplace Insights access and credentials. eBay's docs mark Marketplace
+Insights as Limited Release, so ordinary developer keys may not be enough for
+production sold-comps access. Scraping marketplace web pages is out of scope.
 
 Before adding any live or official source adapter, create and validate a source
 policy artifact:
@@ -174,6 +178,55 @@ This is an offline normalization path only. It does not scrape websites, call
 marketplace APIs, bypass marketplace terms, or store live credentials. The
 dataset manifest intentionally stores aggregate quality statistics and does not
 copy raw listing titles.
+
+## eBay Marketplace Insights Adapter
+
+The eBay adapter fetches a bounded sold-comps snapshot from the official
+Marketplace Insights API and then feeds the sanitized records into the offline
+normalizer above. This keeps the benchmark core independent from eBay and makes
+the data snapshot reproducible.
+
+Create a live source policy:
+
+```bash
+opennego market-source-policy \
+  --output /tmp/ebay-live-source-policy.json \
+  --source-id ebay_marketplace_insights \
+  --adapter-kind ebay_marketplace_insights \
+  --collection-mode official_api \
+  --data-rights official_ebay_api_with_marketplace_insights_access \
+  --terms-url https://developer.ebay.com/api-docs/buy/marketplace-insights/static/overview.html \
+  --privacy-classification official_api_sold_comps_without_account_pii \
+  --live-collection-enabled
+```
+
+Run with live credentials:
+
+```bash
+export EBAY_CLIENT_ID=...
+export EBAY_CLIENT_SECRET=...
+
+opennego ingest-ebay \
+  --query "Apple iPhone 14 Pro 128GB Unlocked" \
+  --source-policy /tmp/ebay-live-source-policy.json \
+  --snapshot-output /tmp/ebay_sold_snapshot.json \
+  --products-output /tmp/opennegotiation-products.json \
+  --comps-output /tmp/opennegotiation-market-comps.json \
+  --manifest-output /tmp/opennegotiation-market-dataset.json \
+  --marketplace-id EBAY_US \
+  --limit 50
+```
+
+For CI or local contract tests, pass `--mock-response` with a saved
+Marketplace Insights JSON object. That path skips OAuth/network calls but still
+requires a live source policy, parses the same response shape, and writes the
+same normalized artifacts.
+
+GCP is useful once we want hosted ingestion: Cloud Run or Cloud Scheduler for
+bounded refresh jobs, Secret Manager for eBay credentials, GCS for sanitized
+snapshots/manifests, and monitoring around quota failures. It is not a
+substitute for eBay Marketplace Insights approval, and we should not deploy a
+collector that bypasses official API or license boundaries.
 
 Validate normalized fixtures before running a benchmark:
 
