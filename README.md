@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="OpenNegotiation - real-market negotiation gym for AI agents" src="./docs/assets/opennegotiation-logo.svg" width="900">
+  <img alt="OpenNegotiation - A Real-Market Negotiation Gym for Agent-to-Agent Evaluation and Evolution" src="./docs/assets/opennegotiation-logo.svg" width="900">
 </p>
 
 <p align="center">
@@ -22,10 +22,10 @@
 
 <h2 id="overview">Overview</h2>
 
-OpenNegotiation is a real-market negotiation gym for AI agents. It lets you
-benchmark, spar, and improve buyer/seller agents in transaction-aware scenarios
-where market evidence, private constraints, tool use, and deal outcomes are all
-recorded as inspectable artifacts.
+OpenNegotiation is a real-market negotiation gym for agent-to-agent evaluation
+and evolution. It lets you benchmark, spar, and improve buyer/seller agents in
+transaction-aware scenarios where market evidence, private constraints, tool
+use, and deal outcomes are all recorded as inspectable artifacts.
 
 Give OpenNegotiation a product scenario, market references, agent strategies,
 and transaction rules. It runs the negotiation loop, preserves every message,
