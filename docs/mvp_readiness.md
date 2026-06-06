@@ -24,10 +24,11 @@ with participant role-coverage summaries and buyer/seller role-track summaries.
 One-command MVP demo bundles can be validated independently with
 `opennego validate-demo-bundle`.
 
-A fresh bounded OpenRouter validation was run on 2026-06-05 for issue `#100`.
+A fresh bounded OpenRouter validation was run on 2026-06-05 for issue `#102`.
 Live provider execution remains an optional demo path that requires local
-credentials, but the current LiteLLM/OpenRouter paths were exercised with
-Keychain-supplied credentials and low turn/token budgets.
+credentials, but both product modes were exercised with Keychain-supplied
+credentials and low turn/token budgets: benchmark/leaderboard mode and
+sparring/evolution mode.
 
 ## Website / Demo Surfaces
 
@@ -82,6 +83,11 @@ Implemented:
   factories or CLI LiteLLM preflight.
 - Profile-backed LLM NPC factory support through `LLMPort` for Python API
   sparring.
+- CLI sparring support for LiteLLM-backed user agents through
+  `--user-llm-model`; when paired with `--user-strategy`, the live user agent
+  consumes the generated strategy candidate as additional strategy instructions.
+- CLI LiteLLM profile NPC sparring through `--opponent-llm-model`, with
+  explicit `--opponent-profile` selection required to bound live provider calls.
 - Fixture transaction settlement guards for buyer all-in cost caps, seller
   net-revenue floors, shipping failure, item mismatch, return-window policy,
   and dispute-risk caps.
@@ -122,9 +128,9 @@ Known architecture limits:
 - CLI local agent loading is explicit only: no automatic module discovery,
   remote plugin installation, or hosted strategy execution.
 - Strategy sparring defaults to deterministic fixture counterparties. Python API
-  callers can supply profile-backed provider agents behind `LLMPort`, and CLI
-  users can opt into LiteLLM-backed profile NPCs with explicit
-  `--opponent-profile` selections.
+  callers can supply custom user agents and profile-backed provider agents
+  behind `LLMPort`; CLI users can opt into LiteLLM-backed user agents and
+  profile NPCs with explicit `--opponent-profile` selections.
 - Hosted marketplace backend, account-backed sharing, and provider-backed
   coaching are not implemented.
 - Real-market evidence remains fixture/offline-data backed. Offline sold-comps
@@ -145,6 +151,9 @@ pytest -q
 PYTHONPYCACHEPREFIX=/tmp/opennego-pycache PYTHONPATH=src python3 -m compileall -q src tests
 git diff --check
 opennego run-models --output-dir /tmp/opennego-live-five-fixed-20260605 --max-turns 3 --max-tokens 220
+opennego spar --config "$tmpdir/live_sparring.json" --output-dir "$tmpdir/baseline" --opponent-profile seller_hardline_anchor_v1 --user-llm-model openrouter/openai/gpt-4.1-nano --opponent-llm-model openrouter/openai/gpt-4.1-mini --learning-tool-regime buyer_private_market_search --no-fail-fast
+opennego evolve --battle-report "$tmpdir/baseline/profiles/seller_hardline_anchor_v1/battle_report.json" --output "$tmpdir/strategy_candidate.json" --parent-strategy-id live_llm_user_buyer --iteration 1
+opennego spar --config "$tmpdir/live_sparring.json" --output-dir "$tmpdir/rerun" --opponent-profile seller_hardline_anchor_v1 --user-strategy "$tmpdir/strategy_candidate.json" --user-llm-model openrouter/openai/gpt-4.1-nano --opponent-llm-model openrouter/openai/gpt-4.1-mini --learning-tool-regime buyer_private_market_search --no-fail-fast
 opennego mvp-demo --output-dir "$tmpdir/mvp" --report "$tmpdir/mvp.html"
 opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
 opennego handoff --output-dir "$tmpdir/handoff"
@@ -162,7 +171,7 @@ secret-pattern scan for common provider key prefixes
 
 Latest local result on this readiness branch:
 
-- `pytest -q`: 138 passed.
+- `pytest -q`: 154 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - MVP demo bundle validation smoke: passed with no errors or warnings.
@@ -172,6 +181,8 @@ Latest local result on this readiness branch:
   `opennego` remains only for package, CLI, schema, and generated-path
   compatibility contexts.
 - Arena plan smoke: passed and wrote `opennego.arena_plan.v1`.
+- Leaderboard duplicate-run regression: covered by tests; duplicate
+  `manifest.run_id` values are rejected instead of being silently aggregated.
 - Training loop smoke: passed and wrote `opennego.training_loop.v1` plus
   `opennego.strategy_config.v1`.
 - Strategy application smoke: passed and wrote `opennego.strategy_config.v1`.
@@ -193,14 +204,15 @@ Current live provider status:
 - OpenRouter model catalog access succeeded; the validation used currently
   available low-cost model IDs.
 
-Fresh live run summary for issue `#100`:
+Fresh live run summary for issue `#102`:
 
 | Path | Models / profile | Result | Artifact evidence |
 | --- | --- | --- | --- |
-| `opennego run-models` | `openrouter/openai/gpt-4.1-nano`, `openrouter/openai/gpt-4.1-mini` | 2 completed, 0 failed; both reached deals | `summary.json`, per-run `manifest.json`, `scenario.json`, `trace.jsonl`, `metrics.json`, leaderboard JSON, HTML report |
-| `opennego run --config` | live `llm_buyer` + live `llm_seller` using `openrouter/openai/gpt-4.1-nano` | 1 completed, 0 failed; timeout outcome after 2 turns | benchmark artifacts plus HTML report |
-| `opennego spar` | `seller_hardline_anchor_v1` as `litellm_profile_npc:openrouter/openai/gpt-4.1-nano` | 1 profile completed, 0 failed; 3 benchmark slices completed | `sparring_suite.json`, `battle_report.json`, HTML report |
-| Strategy evolution | live sparring `battle_report.json` | candidate and strategy config generated | `opennego.strategy_evolution.v1`, `opennego.strategy_config.v1` |
+| `opennego run-models` | `openrouter/openai/gpt-4.1-nano`, `openrouter/openai/gpt-4.1-mini`, `openrouter/anthropic/claude-3.5-haiku` | 3 completed, 0 failed; two deals and one timeout | `summary.json`, per-run `manifest.json`, `scenario.json`, `trace.jsonl`, `metrics.json` |
+| `opennego run --config` role-pair A/B | `gpt-4.1-nano` and `gpt-4.1-mini` swapped across buyer/seller roles | 2 completed, 0 failed; both timeout after bounded turn loops | benchmark artifacts for both role assignments |
+| `opennego leaderboard` + `opennego report` | 3 model-demo runs plus 2 live role-pair runs | 5-run leaderboard generated; 4 participant summaries and 6 role tracks | `leaderboard_summary.json`, HTML report |
+| Baseline `opennego spar` | live `--user-llm-model openrouter/openai/gpt-4.1-nano` vs live profile NPC `openrouter/openai/gpt-4.1-mini` on `seller_hardline_anchor_v1` | 1 profile completed, 0 failed; 2 benchmark slices completed | `sparring_suite.json`, `battle_report.json`, HTML report |
+| Strategy evolution rerun | baseline battle report -> candidate -> strategy config -> live user rerun with `--user-strategy` | candidate/config/rerun/comparison generated; comparison status `unchanged` | `opennego.strategy_evolution.v1`, `opennego.strategy_config.v1`, `opennego.strategy_comparison.v1` |
 | Marketplace / adapter | live-derived strategy candidate/config | marketplace validation and external adapter validation passed | `opennego.strategy_marketplace_profile.v1`, `opennego.external_training_adapter.v1` |
 
 ## Issue And PR Status
@@ -210,6 +222,8 @@ Current state:
 - Current `main` includes the local backend workflow slices for benchmark,
   training, external strategy handoff, marketplace export, transaction guards,
   market source policy gates, offline data, and leaderboard artifacts.
+- Open issue `#102` tracks the current full live workflow validation and web
+  refresh.
 - Open issue `#29` tracks remaining backend/product loop scale-up work.
 - Open issue `#28` tracks public GitHub Pages hosting and remains blocked by
   repository/private-plan support for Pages.
@@ -225,6 +239,6 @@ Readiness conclusion:
 - Architecture: documented and guarded by tests.
 - Tests: passing locally.
 - Live provider smoke: freshly verified with bounded OpenRouter runs on issue
-  `#100`; this is smoke evidence, not a batch benchmark.
+  `#102`; this is smoke evidence, not a batch benchmark.
 - Hosted/public site: not complete until the GitHub Pages/private-repo blocker
   is resolved or another hosting target is selected.

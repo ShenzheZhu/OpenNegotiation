@@ -159,6 +159,7 @@ def make_llm_buyer(
     tool_policy: str = "none",
     temperature: float = 0.0,
     max_tokens: int | None = 512,
+    system_instructions: str | None = None,
 ) -> LLMNegotiationAgent:
     return LLMNegotiationAgent(
         llm=llm,
@@ -168,6 +169,7 @@ def make_llm_buyer(
         tool_policy=tool_policy,
         temperature=temperature,
         max_tokens=max_tokens,
+        system_instructions=system_instructions,
     )
 
 
@@ -179,6 +181,7 @@ def make_llm_seller(
     tool_policy: str = "none",
     temperature: float = 0.0,
     max_tokens: int | None = 512,
+    system_instructions: str | None = None,
 ) -> LLMNegotiationAgent:
     return LLMNegotiationAgent(
         llm=llm,
@@ -188,6 +191,7 @@ def make_llm_seller(
         tool_policy=tool_policy,
         temperature=temperature,
         max_tokens=max_tokens,
+        system_instructions=system_instructions,
     )
 
 
@@ -305,7 +309,7 @@ def _system_prompt(
         f"{tool_instruction}"
     )
     if system_instructions:
-        prompt += f"\n\nMarketplace strategy profile:\n{system_instructions}"
+        prompt += f"\n\nAdditional strategy instructions:\n{system_instructions}"
     return prompt
 
 

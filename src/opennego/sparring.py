@@ -91,6 +91,7 @@ def run_sparring_suite(
     user_strategy_path: str | Path | None = None,
     user_agent_factory: UserAgentFactory | None = None,
     user_agent_kind: str | None = None,
+    user_strategy_consumed_by_factory: bool = False,
     opponent_agent_factory: OpponentAgentFactory | None = None,
     opponent_agent_kind: str | None = None,
     learning_tool_regime: str = "no_tools",
@@ -102,8 +103,13 @@ def run_sparring_suite(
     registry = load_strategy_registry(registry_path)
     normalized_user_role = Role(user_role)
     if user_strategy_path is not None and user_agent_factory is not None:
+        if not user_strategy_consumed_by_factory:
+            raise ValueError(
+                "user_strategy_path and user_agent_factory cannot both be provided"
+            )
+    if user_strategy_consumed_by_factory and user_agent_factory is None:
         raise ValueError(
-            "user_strategy_path and user_agent_factory cannot both be provided"
+            "user_strategy_consumed_by_factory requires user_agent_factory"
         )
     normalized_user_agent_kind = None
     if user_agent_factory is not None:
@@ -156,6 +162,7 @@ def run_sparring_suite(
                     user_strategy=user_strategy,
                     user_agent_factory=user_agent_factory,
                     user_agent_kind=normalized_user_agent_kind,
+                    user_strategy_consumed_by_factory=user_strategy_consumed_by_factory,
                     opponent_agent_factory=opponent_agent_factory,
                     opponent_agent_kind=normalized_opponent_agent_kind,
                     learning_tool_regime=learning_tool_regime,
@@ -216,6 +223,7 @@ def _run_profile_sparring(
     user_strategy: StrategyCandidate | None,
     user_agent_factory: UserAgentFactory | None,
     user_agent_kind: str | None,
+    user_strategy_consumed_by_factory: bool,
     opponent_agent_factory: OpponentAgentFactory | None,
     opponent_agent_kind: str | None,
     learning_tool_regime: str,
@@ -228,6 +236,7 @@ def _run_profile_sparring(
         user_strategy=user_strategy,
         user_agent_factory=user_agent_factory,
         user_agent_kind=user_agent_kind,
+        user_strategy_consumed_by_factory=user_strategy_consumed_by_factory,
         opponent_agent_factory=opponent_agent_factory,
         opponent_agent_kind=opponent_agent_kind,
     )
@@ -337,6 +346,7 @@ def _run_profile_benchmark(
     user_strategy: StrategyCandidate | None,
     user_agent_factory: UserAgentFactory | None,
     user_agent_kind: str | None,
+    user_strategy_consumed_by_factory: bool,
     opponent_agent_factory: OpponentAgentFactory | None,
     opponent_agent_kind: str | None,
 ) -> ExperimentSummary:
@@ -357,6 +367,7 @@ def _run_profile_benchmark(
                 user_strategy=user_strategy,
                 user_agent_factory=user_agent_factory,
                 user_agent_kind=user_agent_kind,
+                user_strategy_consumed_by_factory=user_strategy_consumed_by_factory,
                 opponent_agent_factory=opponent_agent_factory,
                 opponent_agent_kind=opponent_agent_kind,
             )
@@ -404,13 +415,14 @@ def _execute_profile_prepared_run(
     user_strategy: StrategyCandidate | None,
     user_agent_factory: UserAgentFactory | None,
     user_agent_kind: str | None,
+    user_strategy_consumed_by_factory: bool,
     opponent_agent_factory: OpponentAgentFactory | None,
     opponent_agent_kind: str | None,
 ):
     buyer, seller = _profile_agent_pair(
         profile=profile,
         user_role=user_role,
-        user_strategy=user_strategy,
+        user_strategy=None if user_strategy_consumed_by_factory else user_strategy,
         user_agent_factory=user_agent_factory,
         user_agent_kind=user_agent_kind,
         opponent_agent_factory=opponent_agent_factory,

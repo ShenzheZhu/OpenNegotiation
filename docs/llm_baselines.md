@@ -19,6 +19,8 @@ Important fields:
 - `role`: `buyer` or `seller`.
 - `temperature`: sampling temperature.
 - `tool_policy`: `none` or `available`.
+- `system_instructions`: optional strategy-layer guidance appended to the fixed
+  OpenNegotiation action-schema prompt.
 
 `tool_policy="none"` prevents tool calls even when the environment has tools.
 `tool_policy="available"` permits only tools listed in the current
@@ -45,6 +47,34 @@ agent = make_profile_llm_agent(
 The factory injects the profile id, summary, base prompt, strategy prompt,
 expected traps, and declared tools into the LLM system prompt. It does not
 import LiteLLM or provider SDKs; live providers remain adapter concerns.
+
+## Strategy-Aware User Agents
+
+`make_llm_buyer` and `make_llm_seller` can receive strategy instructions
+without changing the base action schema:
+
+```python
+buyer = make_llm_buyer(
+    llm=LiteLLMGateway(),
+    model="openrouter/openai/gpt-4.1-nano",
+    tool_policy="available",
+    system_instructions="Use market evidence before conceding.",
+)
+```
+
+The CLI uses the same mechanism for live sparring reruns:
+
+```bash
+OPENROUTER_API_KEY=... opennego spar \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-strategy /tmp/opennego-live/strategy_candidate.json \
+  --user-llm-model openrouter/openai/gpt-4.1-nano \
+  --opponent-llm-model openrouter/openai/gpt-4.1-mini
+```
+
+The strategy candidate becomes additional strategy instructions for the live
+user agent. The environment, structured action schema, tool visibility, and
+transaction rules remain fixed.
 
 ## Structured Action Contract
 

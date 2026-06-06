@@ -5,6 +5,7 @@ from pathlib import Path
 import opennego.cli as cli_module
 from opennego.artifacts import load_manifest
 from opennego.cli import main
+from opennego.evolution import STRATEGY_EVOLUTION_SCHEMA_VERSION
 from opennego.ports import LLMRequest, LLMResponse
 
 
@@ -215,6 +216,73 @@ def test_spar_cli_runs_profile_llm_opponent_with_fake_gateway(
     assert fake_llm.requests[0].metadata["agent_role"] == "seller"
 
 
+def test_spar_cli_runs_user_llm_with_strategy_and_fake_gateway(
+    tmp_path,
+    monkeypatch,
+):
+    output_dir = tmp_path / "sparring"
+    config_path = _write_sparring_config(tmp_path, output_dir)
+    candidate_path = _write_strategy_candidate(tmp_path)
+    fake_llm = FakeLLM(
+        [
+            '{"type": "offer", "price": 610, "note": "Strategy-aware buyer offer."}',
+            '{"type": "accept", "note": "Profile seller accepts."}',
+        ]
+    )
+    _pretend_litellm_is_installed(monkeypatch)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+    monkeypatch.setattr(cli_module, "make_litellm_gateway", lambda: fake_llm)
+
+    exit_code = main(
+        [
+            "spar",
+            "--output-dir",
+            str(output_dir),
+            "--config",
+            str(config_path),
+            "--opponent-profile",
+            "seller_hardline_anchor_v1",
+            "--user-strategy",
+            str(candidate_path),
+            "--user-llm-model",
+            "openrouter/fake/user-buyer",
+            "--user-llm-max-tokens",
+            "128",
+            "--opponent-llm-model",
+            "openrouter/fake/profile-seller",
+            "--opponent-llm-max-tokens",
+            "128",
+        ]
+    )
+    summary = json.loads((output_dir / "sparring_suite.json").read_text())
+    learning_dir = Path(summary["results"][0]["learning_input_dir"])
+    manifest = load_manifest(learning_dir / "manifest.json")
+    user_system_prompt = fake_llm.requests[0].messages[0]["content"]
+
+    assert exit_code == 0
+    assert summary["completed"] == 1
+    assert summary["user_strategy_candidate_id"] == "buyer_candidate-iter-1"
+    assert summary["user_agent_kind"] == (
+        "litellm_user_agent:openrouter/fake/user-buyer"
+    )
+    assert manifest.agents["buyer"]["kind"] == (
+        "litellm_user_agent:openrouter/fake/user-buyer"
+    )
+    assert manifest.agents["seller"]["kind"] == (
+        "litellm_profile_npc:openrouter/fake/profile-seller"
+    )
+    assert manifest.metadata["user_strategy"]["enabled"] is True
+    assert manifest.metadata["user_strategy"]["candidate_id"] == (
+        "buyer_candidate-iter-1"
+    )
+    assert fake_llm.requests[0].model == "openrouter/fake/user-buyer"
+    assert fake_llm.requests[0].metadata["agent_role"] == "buyer"
+    assert fake_llm.requests[1].model == "openrouter/fake/profile-seller"
+    assert "Additional strategy instructions" in user_system_prompt
+    assert "User strategy candidate id: buyer_candidate-iter-1" in user_system_prompt
+    assert "Use market evidence before conceding." in user_system_prompt
+
+
 def _write_runner_config(tmp_path: Path, output_dir: Path) -> Path:
     config = {
         "schema_version": "opennego.experiment.v1",
@@ -269,6 +337,29 @@ def _write_sparring_config(tmp_path: Path, output_dir: Path) -> Path:
     }
     path = tmp_path / "sparring_config.json"
     path.write_text(json.dumps(config, indent=2) + "\n")
+    return path
+
+
+def _write_strategy_candidate(tmp_path: Path) -> Path:
+    candidate = {
+        "schema_version": STRATEGY_EVOLUTION_SCHEMA_VERSION,
+        "candidate_id": "buyer_candidate-iter-1",
+        "parent_strategy_id": "buyer_candidate",
+        "iteration": 1,
+        "user_role": "buyer",
+        "source_battle_report": "battle_report.json",
+        "source_run_id": "baseline-run",
+        "scenario_id": "camera_001",
+        "opponent_profile_id": "seller_hardline_anchor_v1",
+        "strategy_prompt": "Use market evidence before conceding.",
+        "applied_lesson_ids": ["buyer_overpaid_market"],
+        "applied_patches": ["Anchor near the market reference before conceding."],
+        "expected_improvements": ["lower purchase price"],
+        "evaluation_plan": {},
+        "metadata": {},
+    }
+    path = tmp_path / "strategy_candidate.json"
+    path.write_text(json.dumps(candidate, indent=2) + "\n")
     return path
 
 

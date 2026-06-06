@@ -367,6 +367,32 @@ opennego spar \
   --opponent-llm-max-tokens 256
 ```
 
+Run a live user-agent sparring/evolution loop:
+
+```bash
+opennego spar \
+  --output-dir /tmp/opennegotiation-live-baseline \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-llm-model openrouter/openai/gpt-4.1-nano \
+  --opponent-llm-model openrouter/openai/gpt-4.1-mini \
+  --learning-tool-regime buyer_private_market_search \
+  --no-fail-fast
+
+opennego evolve \
+  --battle-report /tmp/opennegotiation-live-baseline/profiles/seller_hardline_anchor_v1/battle_report.json \
+  --output /tmp/opennegotiation-live-strategy.json \
+  --parent-strategy-id my_live_buyer
+
+opennego spar \
+  --output-dir /tmp/opennegotiation-live-rerun \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-strategy /tmp/opennegotiation-live-strategy.json \
+  --user-llm-model openrouter/openai/gpt-4.1-nano \
+  --opponent-llm-model openrouter/openai/gpt-4.1-mini \
+  --learning-tool-regime buyer_private_market_search \
+  --no-fail-fast
+```
+
 Keep API keys in environment variables, a LiteLLM proxy config, Keychain, or
 another local secret manager. Do not commit credentials or raw live traces that
 may contain private data.

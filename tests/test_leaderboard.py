@@ -1,4 +1,5 @@
 import json
+import shutil
 
 import pytest
 
@@ -144,6 +145,18 @@ def test_leaderboard_cli_fails_on_empty_input(tmp_path, capsys):
 
     assert exit_code == 2
     assert "no benchmark run artifacts found" in payload["error"]
+
+
+def test_build_leaderboard_rejects_duplicate_run_ids(tmp_path):
+    output_dir = tmp_path / "runs"
+    run_experiment_config("configs/real_market_demo.yaml", output_dir=output_dir)
+    source = next(
+        path for path in output_dir.iterdir() if (path / "manifest.json").exists()
+    )
+    shutil.copytree(source, output_dir / "duplicate_run_copy")
+
+    with pytest.raises(ValueError, match="duplicate benchmark run_id"):
+        build_leaderboard(output_dir)
 
 
 def _track(summary, role, participant_id):
