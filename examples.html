@@ -241,12 +241,12 @@
     <section class="hero">
       <div>
         <h1>Examples</h1>
-        <p class="subtitle">A visual entry point for the curated no-key artifacts shipped with OpenNegotiation: demo reports, benchmark summaries, and private tool-use metrics that can be inspected without provider credentials.</p>
+        <p class="subtitle">A visual entry point for curated OpenNegotiation artifacts: demo reports, benchmark summaries, and private tool-use metrics ready for quick inspection.</p>
       </div>
       <div class="summary-panel" aria-label="Example artifact summary">
         <div class="summary-item"><div class="summary-label">Artifacts</div><div class="summary-value">4</div></div>
         <div class="summary-item"><div class="summary-label">Reports</div><div class="summary-value">2</div></div>
-        <div class="summary-item"><div class="summary-label">Smoke runs</div><div class="summary-value">5 / 5</div></div>
+        <div class="summary-item"><div class="summary-label">Demo cases</div><div class="summary-value">5 / 5</div></div>
         <div class="summary-item"><div class="summary-label">Tool failures</div><div class="summary-value">1</div></div>
       </div>
     </section>
@@ -257,20 +257,20 @@
           <h2>Artifact Gallery</h2>
           <p class="section-copy">These examples are small, deterministic, and committed for quick inspection. The HTML reports are visual summaries; the JSON files expose the underlying benchmark outputs used by the cards.</p>
         </div>
-        <span class="pill strong">no-key artifacts</span>
+        <span class="pill strong">curated artifacts</span>
       </div>
       <div class="artifact-grid">
         <article class="artifact-card report">
           <div class="card-top"><span class="icon">R</span><span class="pill">HTML report</span></div>
-          <h3>Full MVP Demo Report</h3>
-          <p class="muted">End-to-end demo surface covering benchmark results, policy learning, and strategy marketplace concepts.</p>
+          <h3>Full Demo Report</h3>
+          <p class="muted">End-to-end report surface covering benchmark results, policy learning, and strategy marketplace concepts.</p>
           <div class="metric-strip">
             <div class="metric-row"><span>Mode</span><strong>benchmark + evolution</strong></div>
             <div class="metric-row"><span>Use</span><strong>demo walkthrough</strong></div>
           </div>
           <div class="card-actions">
-            <a class="button primary" href="examples/reports/opennego_mvp_demo.html">Open report</a>
-            <a class="button" href="reports/negotiation_mvp_demo.html">Site report</a>
+            <a class="button primary" href="examples/reports/full_demo.html">Open report</a>
+            <a class="button" href="reports/negotiation_demo.html">Site report</a>
           </div>
         </article>
 
@@ -280,31 +280,31 @@
           <p class="muted">Market-grounded leaderboard preview with deal quality, tool-aware behavior, and transaction-aware score surfaces.</p>
           <div class="metric-strip">
             <div class="metric-row"><span>Reference</span><strong>$575</strong></div>
-            <div class="metric-row"><span>Best deal</span><strong>$520</strong></div>
+            <div class="metric-row"><span>Best deal</span><strong>$550</strong></div>
           </div>
           <div class="card-actions">
-            <a class="button primary" href="examples/reports/opennego_demo.html">Open report</a>
+            <a class="button primary" href="examples/reports/benchmark_demo.html">Open report</a>
             <a class="button" href="reports/real_market_benchmark.html">Site report</a>
           </div>
         </article>
 
         <article class="artifact-card data">
           <div class="card-top"><span class="icon blue">J</span><span class="pill">JSON output</span></div>
-          <h3>No-Key Smoke Summary</h3>
-          <p class="muted">Config-runner summary for the deterministic smoke benchmark across five tool-regime runs.</p>
+          <h3>Demo Suite Summary</h3>
+          <p class="muted">Config-runner summary for the deterministic benchmark across five tool-regime runs.</p>
           <div class="metric-strip">
             <div class="metric-row"><span>Completed</span><strong>5 / 5</strong></div>
             <div class="metric-row"><span>Failed</span><strong>0</strong></div>
           </div>
           <div class="card-actions">
-            <a class="button primary" href="examples/outputs/no_key_smoke_summary.json">Open JSON</a>
+            <a class="button primary" href="examples/outputs/demo_run_summary.json">Open JSON</a>
           </div>
         </article>
 
         <article class="artifact-card data">
           <div class="card-top"><span class="icon red">M</span><span class="pill">JSON output</span></div>
           <h3>Private Market-Search Metrics</h3>
-          <p class="muted">Run-level metrics showing private buyer-side market search, transaction cost, fees, and settlement outcome.</p>
+          <p class="muted">Scenario metrics showing private buyer-side market search, transaction cost, fees, and settlement outcome.</p>
           <div class="metric-strip">
             <div class="metric-row"><span>Deal price</span><strong>$760</strong></div>
             <div class="metric-row"><span>Private tool calls</span><strong>1</strong></div>
@@ -325,12 +325,12 @@
       </div>
       <div class="preview-grid">
         <div class="preview">
-          <div class="preview-head"><h3>Full MVP Demo</h3><a class="button" href="examples/reports/opennego_mvp_demo.html">Open full page</a></div>
-          <iframe title="Full MVP demo report preview" src="examples/reports/opennego_mvp_demo.html" loading="lazy"></iframe>
+          <div class="preview-head"><h3>Full Demo</h3><a class="button" href="examples/reports/full_demo.html">Open full page</a></div>
+          <iframe title="Full demo report preview" src="examples/reports/full_demo.html" loading="lazy"></iframe>
         </div>
         <div class="preview">
-          <div class="preview-head"><h3>Benchmark Report</h3><a class="button" href="examples/reports/opennego_demo.html">Open full page</a></div>
-          <iframe title="Benchmark report preview" src="examples/reports/opennego_demo.html" loading="lazy"></iframe>
+          <div class="preview-head"><h3>Benchmark Report</h3><a class="button" href="examples/reports/benchmark_demo.html">Open full page</a></div>
+          <iframe title="Benchmark report preview" src="examples/reports/benchmark_demo.html" loading="lazy"></iframe>
         </div>
       </div>
     </section>
@@ -344,14 +344,14 @@
       </div>
       <div class="json-grid">
         <div class="json-panel">
-          <h3>No-Key Smoke Summary</h3>
+          <h3>Demo Suite Summary</h3>
           <div class="metric-strip">
             <div class="metric-row"><span>Total runs</span><strong>5</strong></div>
             <div class="metric-row"><span>Completed</span><strong>5</strong></div>
             <div class="metric-row"><span>Deal prices</span><strong>$760-$800</strong></div>
           </div>
           <pre>{
-  "name": "no_key_smoke",
+  "name": "demo_suite",
   "total_runs": 5,
   "completed": 5,
   "failed": 0
@@ -375,7 +375,7 @@
     </section>
 
     <footer>
-      Generated from committed OpenNegotiation no-key artifacts. Reports and JSON outputs are deterministic local examples, not live marketplace data.
+      Generated from committed OpenNegotiation artifacts. Reports and JSON outputs are deterministic demo examples.
     </footer>
   </main>
 </body>

@@ -248,7 +248,7 @@
       <div class="market-strip" aria-label="Marketplace summary">
         <div class="strip-item"><div class="strip-label">Profiles</div><div class="strip-value">8</div></div>
         <div class="strip-item"><div class="strip-label">Stress Packs</div><div class="strip-value">4</div></div>
-        <div class="strip-item"><div class="strip-label">Shared Configs</div><div class="strip-value">Local</div></div>
+        <div class="strip-item"><div class="strip-label">Shared Configs</div><div class="strip-value">Reusable</div></div>
       </div>
     </section>
 
@@ -256,9 +256,9 @@
       <div class="section-head">
         <div>
           <h2>Catalog</h2>
-          <p class="section-copy">Each profile is an opponent archetype with a fixed sandbox contract and an editable strategy layer. Users can spar against profiles, inspect battle reports, patch their agent policies, and export improved strategies into a local registry.</p>
+          <p class="section-copy">Each profile is an opponent archetype with a fixed sandbox contract and an editable strategy layer. Users can spar against profiles, inspect battle reports, patch their agent policies, and export improved strategies into a reusable registry.</p>
         </div>
-        <span class="pill strong">local strategy catalog</span>
+        <span class="pill strong">strategy marketplace</span>
       </div>
 
       <div class="toolbar">
@@ -287,7 +287,7 @@
           <p class="muted">Anchors near listing price, concedes slowly, and tests whether buyers stay disciplined against high opening offers.</p>
           <div class="test-list">
             <p>High opening anchor can pull weak buyers above market reference.</p>
-            <p>Slow concessions can force timeout without close-mode policy.</p>
+            <p>Slow concessions can stall weak buyers without close-mode policy.</p>
           </div>
           <div class="tags"><span class="pill">anchor</span><span class="pill">baseline</span><span class="pill">price floor</span></div>
           <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>medium</span></a>
@@ -317,7 +317,7 @@
           <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>hard</span></a>
         </article>
 
-        <article class="strategy-card" data-role="seller" data-difficulty="hard" data-pack="baseline" data-search="seller deadline walk away pressure scarcity timeout hard">
+        <article class="strategy-card" data-role="seller" data-difficulty="hard" data-pack="baseline" data-search="seller deadline walk away pressure scarcity close timing hard">
           <div class="card-top"><span class="avatar seller-hard">WD</span><span class="pill">seller / hard</span></div>
           <div class="card-title"><h3>Walk-away Deadline Seller</h3><span class="card-id">seller_walkaway_deadline_v1</span></div>
           <p class="muted">Creates urgency with credible walk-away language and tests whether agents can close without overpaying.</p>
@@ -325,7 +325,7 @@
             <p>Deadline pressure can override price discipline.</p>
             <p>Weak agents may accept without extracting final concession evidence.</p>
           </div>
-          <div class="tags"><span class="pill">deadline</span><span class="pill">timeout</span><span class="pill">close policy</span></div>
+          <div class="tags"><span class="pill">deadline</span><span class="pill">close timing</span><span class="pill">close policy</span></div>
           <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>hard</span></a>
         </article>
 
@@ -353,15 +353,15 @@
           <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>medium</span></a>
         </article>
 
-        <article class="strategy-card" data-role="buyer" data-difficulty="easy" data-pack="tool" data-search="buyer tool overuse search timeout evidence offer policy easy tool aware">
+        <article class="strategy-card" data-role="buyer" data-difficulty="easy" data-pack="tool" data-search="buyer tool overuse search stalled negotiation evidence offer policy easy tool aware">
           <div class="card-top"><span class="avatar buyer">TO</span><span class="pill">buyer / easy</span></div>
           <div class="card-title"><h3>Tool Overuse Buyer</h3><span class="card-id">buyer_tool_overuse_v1</span></div>
           <p class="muted">Calls tools repeatedly but struggles to convert evidence into concrete offers, useful for testing tool-use discipline.</p>
           <div class="test-list">
             <p>Excessive search can burn negotiation turns.</p>
-            <p>Evidence collection without offer policy causes timeout.</p>
+            <p>Evidence collection without offer policy can stall negotiation.</p>
           </div>
-          <div class="tags"><span class="pill">tool-use</span><span class="pill">timeout</span><span class="pill">training</span></div>
+          <div class="tags"><span class="pill">tool-use</span><span class="pill">close timing</span><span class="pill">training</span></div>
           <a class="card-action" href="reports/strategy_sparring.html"><span>Open sparring report</span><span>easy</span></a>
         </article>
 
@@ -409,7 +409,7 @@
     </section>
 
     <footer>
-      Generated from OpenNegotiation benchmark and policy-learning artifacts. This is a local strategy catalog, not a hosted marketplace backend.
+      Generated from OpenNegotiation benchmark and policy-learning artifacts for the strategy marketplace demo.
     </footer>
   </main>
 

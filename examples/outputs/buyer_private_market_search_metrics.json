@@ -23,7 +23,7 @@
     "transaction_tax": 60.8
   },
   "outcome": "deal",
-  "run_id": "no_key_smoke-camera_001-buyer_private_market_search-seed-7",
+  "run_id": "demo_suite-camera_001-buyer_private_market_search-seed-7",
   "scenario_id": "camera_001",
   "schema_version": "opennego.benchmark.v1"
 }
