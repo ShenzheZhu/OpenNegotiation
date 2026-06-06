@@ -169,6 +169,36 @@ def test_sparring_suite_rejects_user_strategy_and_custom_agent_combo(tmp_path):
         )
 
 
+def test_sparring_suite_allows_strategy_consumed_by_custom_factory(tmp_path):
+    candidate_path = _write_buyer_strategy_candidate(tmp_path)
+    output_dir = tmp_path / "strategy_aware_custom_sparring"
+
+    summary = run_sparring_suite(
+        output_dir=output_dir,
+        opponent_profile_ids=("seller_hardline_anchor_v1",),
+        user_strategy_path=candidate_path,
+        user_agent_factory=custom_buyer_factory,
+        user_agent_kind="external_strategy_aware_buyer",
+        user_strategy_consumed_by_factory=True,
+    )
+    result = summary.results[0]
+    assert result.learning_input_dir is not None
+    manifest = json.loads(
+        (Path(result.learning_input_dir) / "manifest.json").read_text()
+    )
+
+    assert summary.completed == 1
+    assert summary.failed == 0
+    assert summary.user_strategy_candidate_id == "buyer_baseline-iter-1"
+    assert summary.user_agent_kind == "external_strategy_aware_buyer"
+    assert result.user_strategy_candidate_id == "buyer_baseline-iter-1"
+    assert manifest["agents"]["buyer"]["kind"] == "external_strategy_aware_buyer"
+    assert manifest["metadata"]["user_strategy"]["enabled"] is True
+    assert manifest["metadata"]["user_strategy"]["candidate_id"] == (
+        "buyer_baseline-iter-1"
+    )
+
+
 def test_sparring_suite_accepts_custom_opponent_agent_factory(tmp_path):
     output_dir = tmp_path / "custom_opponent_sparring"
 

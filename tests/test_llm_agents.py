@@ -264,10 +264,33 @@ def test_profile_llm_agent_injects_strategy_profile_prompt():
     assert action.type == ActionType.OFFER
     assert agent.role == Role.SELLER
     assert agent.name == "llm_profile_seller:seller_hardline_anchor_v1"
-    assert "Marketplace strategy profile" in system_prompt
+    assert "Additional strategy instructions" in system_prompt
     assert "seller_hardline_anchor_v1" in system_prompt
     assert profile.strategy_prompt in system_prompt
     assert fake_llm.requests[0].metadata["agent_role"] == "seller"
+
+
+def test_llm_buyer_injects_user_strategy_candidate_prompt():
+    fake_llm = FakeLLM(
+        ['{"type": "offer", "price": 760, "note": "Strategy-aware offer."}']
+    )
+    agent = make_llm_buyer(
+        llm=fake_llm,
+        model="fake/buyer",
+        system_instructions=(
+            "User strategy candidate id: buyer_baseline-iter-1\n"
+            "Strategy prompt:\nAnchor on market comps before conceding."
+        ),
+    )
+
+    action = agent.act(make_context())
+    system_prompt = fake_llm.requests[0].messages[0]["content"]
+
+    assert action.type == ActionType.OFFER
+    assert "Additional strategy instructions" in system_prompt
+    assert "buyer_baseline-iter-1" in system_prompt
+    assert "Anchor on market comps before conceding." in system_prompt
+    assert fake_llm.requests[0].metadata["agent_role"] == "buyer"
 
 
 def test_llm_agent_module_does_not_import_litellm():

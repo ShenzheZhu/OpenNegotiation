@@ -117,6 +117,7 @@ def write_leaderboard(input_dir: str | Path, output_path: str | Path) -> Path:
 def _load_runs(base: Path) -> list[dict]:
     candidates = [base] if (base / "metrics.json").exists() else sorted(base.iterdir())
     rows: list[dict] = []
+    seen_run_ids: dict[str, Path] = {}
     for candidate in candidates:
         if not candidate.is_dir():
             continue
@@ -125,6 +126,13 @@ def _load_runs(base: Path) -> list[dict]:
             metrics_report = load_metric_report(candidate / "metrics.json")
         except (OSError, ArtifactValidationError, ValueError):
             continue
+        previous = seen_run_ids.get(manifest.run_id)
+        if previous is not None:
+            raise ValueError(
+                f"{base}: duplicate benchmark run_id {manifest.run_id!r} in "
+                f"{previous} and {candidate}"
+            )
+        seen_run_ids[manifest.run_id] = candidate
         metrics = dict(metrics_report.metrics)
         rows.append(
             {

@@ -17,10 +17,17 @@ from opennego.agent_loader import (
 )
 from opennego.arena import ArenaPlanError, write_arena_plan
 from opennego.artifacts import to_jsonable, write_run_artifacts
-from opennego.agents import ScriptedSeller, ToolAwareBuyer, make_profile_llm_agent
+from opennego.agents import (
+    ScriptedSeller,
+    ToolAwareBuyer,
+    make_llm_buyer,
+    make_llm_seller,
+    make_profile_llm_agent,
+)
 from opennego.environment import NegotiationEnvironment
 from opennego.evolution import (
     StrategyEvolutionError,
+    load_strategy_candidate,
     write_strategy_candidate,
     write_strategy_comparison,
 )
@@ -57,7 +64,7 @@ from opennego.runner import (
     load_experiment_config,
     run_experiment_config,
 )
-from opennego.schema import Product, Scenario
+from opennego.schema import Product, Role, Scenario
 from opennego.sparring import run_sparring_suite
 from opennego.sparring_report import write_sparring_report
 from opennego.strategy_config import (
@@ -1173,8 +1180,7 @@ def _spar_main(argv: list[str] | None = None) -> int:
         "--user-agent-factory",
         metavar="PATH:CALLABLE",
         help=(
-            "Load a local (role, params) AgentPort factory for the user agent. "
-            "Cannot be combined with --user-strategy."
+            "Load a local (role, params) AgentPort factory for the user agent."
         ),
     )
     parser.add_argument(
@@ -1190,6 +1196,31 @@ def _spar_main(argv: list[str] | None = None) -> int:
             "Parameter passed to --user-agent-factory. Values use JSON scalar "
             "parsing when possible. May be provided multiple times."
         ),
+    )
+    parser.add_argument(
+        "--user-llm-model",
+        help=(
+            "Use a LiteLLM-backed user agent. Can consume --user-strategy as "
+            "strategy instructions for the live user policy."
+        ),
+    )
+    parser.add_argument(
+        "--user-llm-tool-policy",
+        default="available",
+        choices=("none", "available"),
+        help="Tool policy for --user-llm-model.",
+    )
+    parser.add_argument(
+        "--user-llm-temperature",
+        type=float,
+        default=0.0,
+        help="Temperature for --user-llm-model.",
+    )
+    parser.add_argument(
+        "--user-llm-max-tokens",
+        type=int,
+        default=512,
+        help="Max tokens for --user-llm-model calls.",
     )
     parser.add_argument(
         "--opponent-llm-model",
@@ -1231,12 +1262,43 @@ def _spar_main(argv: list[str] | None = None) -> int:
     try:
         user_agent_factory = None
         user_agent_kind = None
+        user_strategy_consumed_by_factory = False
+        if args.user_agent_factory and args.user_llm_model:
+            raise AgentLoadError(
+                "--user-agent-factory and --user-llm-model cannot both be provided"
+            )
         if args.user_agent_factory:
             user_agent_factory = load_sparring_user_agent_factory(
                 args.user_agent_factory,
                 params=parse_agent_params(args.user_agent_param),
             )
             user_agent_kind = args.user_agent_kind or "module_user_agent"
+        elif args.user_llm_model:
+            if not args.opponent_profiles:
+                raise AgentLoadError(
+                    "--user-llm-model requires at least one --opponent-profile "
+                    "to bound live provider calls"
+                )
+            if args.user_agent_param:
+                raise AgentLoadError(
+                    "--user-agent-param requires --user-agent-factory"
+                )
+            if args.user_agent_kind:
+                raise AgentLoadError(
+                    "--user-agent-kind requires --user-agent-factory"
+                )
+            preflight_error = _run_models_preflight_error((args.user_llm_model,))
+            if preflight_error is not None:
+                raise AgentLoadError(preflight_error)
+            user_agent_factory = _user_litellm_agent_factory(
+                model=args.user_llm_model,
+                tool_policy=args.user_llm_tool_policy,
+                temperature=args.user_llm_temperature,
+                max_tokens=args.user_llm_max_tokens,
+                strategy_path=args.user_strategy,
+            )
+            user_agent_kind = f"litellm_user_agent:{args.user_llm_model}"
+            user_strategy_consumed_by_factory = args.user_strategy is not None
         elif args.user_agent_param:
             raise AgentLoadError(
                 "--user-agent-param requires --user-agent-factory"
@@ -1272,6 +1334,7 @@ def _spar_main(argv: list[str] | None = None) -> int:
             user_strategy_path=args.user_strategy,
             user_agent_factory=user_agent_factory,
             user_agent_kind=user_agent_kind,
+            user_strategy_consumed_by_factory=user_strategy_consumed_by_factory,
             opponent_agent_factory=opponent_agent_factory,
             opponent_agent_kind=opponent_agent_kind,
             learning_tool_regime=args.learning_tool_regime,
@@ -1319,6 +1382,68 @@ def _profile_litellm_opponent_factory(
         )
 
     return factory
+
+
+def _user_litellm_agent_factory(
+    *,
+    model: str,
+    tool_policy: str,
+    temperature: float,
+    max_tokens: int | None,
+    strategy_path: str | Path | None,
+):
+    llm = make_litellm_gateway()
+    strategy = load_strategy_candidate(strategy_path) if strategy_path else None
+    strategy_instructions = (
+        _user_strategy_system_instructions(strategy) if strategy is not None else None
+    )
+
+    def factory(role: Role):
+        if strategy is not None and strategy.user_role != role:
+            raise ValueError(
+                f"user strategy role {strategy.user_role.value!r} does not "
+                f"match live user agent role {role.value!r}"
+            )
+        name = f"llm_user_{role.value}:{model}"
+        if role == Role.BUYER:
+            return make_llm_buyer(
+                llm=llm,
+                model=model,
+                name=name,
+                tool_policy=tool_policy,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                system_instructions=strategy_instructions,
+            )
+        if role == Role.SELLER:
+            return make_llm_seller(
+                llm=llm,
+                model=model,
+                name=name,
+                tool_policy=tool_policy,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                system_instructions=strategy_instructions,
+            )
+        raise ValueError(f"unsupported user role: {role.value}")
+
+    return factory
+
+
+def _user_strategy_system_instructions(strategy) -> str:
+    lesson_ids = ", ".join(strategy.applied_lesson_ids) or "none"
+    patches = "\n".join(f"- {patch}" for patch in strategy.applied_patches)
+    if not patches:
+        patches = "- none"
+    return (
+        f"User strategy candidate id: {strategy.candidate_id}\n"
+        f"Parent strategy id: {strategy.parent_strategy_id}\n"
+        f"Iteration: {strategy.iteration}\n"
+        f"User role: {strategy.user_role.value}\n"
+        f"Applied lesson ids: {lesson_ids}\n"
+        f"Strategy prompt:\n{strategy.strategy_prompt}\n"
+        f"Applied patches:\n{patches}"
+    )
 
 
 def _run_models_main(argv: list[str] | None = None) -> int:

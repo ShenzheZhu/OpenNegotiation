@@ -109,6 +109,7 @@ buyer = make_llm_buyer(
     llm=gateway,
     model="buyer",
     tool_policy="available",
+    system_instructions="Optional strategy instructions from your policy config.",
 )
 ```
 
@@ -147,6 +148,10 @@ Tool-aware agents can return:
 
 No-tool agents cannot call tools even when the environment has them. The parser
 rejects disallowed tool calls and triggers the repair prompt.
+
+`system_instructions` is reserved for strategy-layer guidance, such as a
+validated `opennego.strategy_config.v1` prompt or a generated strategy
+candidate. It should not change the fixed action schema or sandbox rules.
 
 ## Current Runner Boundary
 
@@ -210,8 +215,9 @@ summary = run_sparring_suite(
 
 The suite instantiates a fresh user agent for each profile-backed run and
 validates that the returned role matches `user_role`. Generated manifests record
-the custom `user_agent_kind` and runtime agent name. This path cannot be
-combined with `user_strategy_path`; use either a concrete custom agent or a
+the custom `user_agent_kind` and runtime agent name. Arbitrary custom factories
+are not combined with `user_strategy_path` unless the caller explicitly wires a
+strategy-aware factory; use either a concrete custom agent or a
 versioned strategy-candidate user agent in one run.
 
 For CLI sparring with a local user agent factory:
@@ -274,6 +280,41 @@ OPENROUTER_API_KEY=... opennego spar \
 `--opponent-llm-model` requires at least one explicit `--opponent-profile` so a
 live provider-backed run cannot accidentally expand across the whole NPC
 registry.
+
+The CLI can also instantiate a LiteLLM-backed user agent. This is the direct
+path for checking whether an evolved strategy candidate changes a live model's
+behavior:
+
+```bash
+OPENROUTER_API_KEY=... opennego spar \
+  --output-dir /tmp/team-a-live-user-sparring \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-llm-model openrouter/openai/gpt-4.1-nano \
+  --user-llm-max-tokens 220 \
+  --opponent-llm-model openrouter/openai/gpt-4.1-mini \
+  --opponent-llm-max-tokens 220 \
+  --learning-tool-regime buyer_private_market_search \
+  --no-fail-fast
+
+opennego evolve \
+  --battle-report /tmp/team-a-live-user-sparring/profiles/seller_hardline_anchor_v1/battle_report.json \
+  --output /tmp/team-a-live-user-sparring/strategy_candidate.json \
+  --parent-strategy-id team_a_live_buyer
+
+OPENROUTER_API_KEY=... opennego spar \
+  --output-dir /tmp/team-a-live-user-rerun \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-strategy /tmp/team-a-live-user-sparring/strategy_candidate.json \
+  --user-llm-model openrouter/openai/gpt-4.1-nano \
+  --opponent-llm-model openrouter/openai/gpt-4.1-mini \
+  --learning-tool-regime buyer_private_market_search \
+  --no-fail-fast
+```
+
+`--user-llm-model` also requires at least one explicit `--opponent-profile`.
+When paired with `--user-strategy`, the strategy candidate is injected as
+additional strategy instructions for the live user agent and is recorded in the
+sparring manifest metadata.
 
 CI tests this path with fake `LLMPort` implementations. Live provider calls
 require optional LLM dependencies and local credentials.

@@ -86,6 +86,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   export.
 - Added CLI LiteLLM profile NPC sparring with explicit opponent-profile
   selection and no-key fake-gateway tests.
+- Added CLI LiteLLM user-agent sparring with `--user-llm-model`; the live user
+  agent can consume a generated `--user-strategy` candidate during reruns.
 - Added `opennego train` as a one-command no-key training loop for baseline
   sparring, strategy extraction, candidate rerun, and before/after comparison.
 - Added `opennego apply-strategy` for applying strategy candidates into
@@ -100,6 +102,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   with combined leaderboard role coverage.
 - Added `opennego arena-plan` for reciprocal large-batch schedule planning and
   scorecard-vs-arena methodology boundaries.
+- Added leaderboard duplicate-run protection so repeated `manifest.run_id`
+  values fail fast instead of polluting aggregate rankings.
 
 ### Current Live-Run State
 
@@ -110,15 +114,19 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - OpenRouter and OpenAI credentials are available from local Keychain under the
   OpenNegotiation service names; live commands inject them into child-process
   environment variables at execution time.
-- Issue `#100` ran a fresh bounded OpenRouter validation on 2026-06-05:
-  two-model `opennego run-models`, live `llm_buyer` / `llm_seller` config
-  runner, live profile-backed NPC sparring, strategy evolution, marketplace
-  validation, and external training adapter validation all completed without
-  writing credentials to the repository.
+- Issue `#102` ran a fresh bounded OpenRouter validation on 2026-06-05:
+  three-model `opennego run-models`, two live buyer/seller role-pair config
+  runs, a five-run leaderboard/report aggregation, live user-agent sparring
+  against a live profile NPC, strategy evolution, strategy-candidate rerun,
+  before/after comparison, marketplace validation, and external training
+  adapter validation all completed without writing credentials to the
+  repository.
 
 ### Issue And PR State
 
 - Current backend workflow scope is tracked in GitHub issue `#29`.
+- Full live workflow validation and web refresh are tracked in GitHub issue
+  `#102`.
 - Public hosted website work is tracked in GitHub issue `#28` and currently
   depends on resolving GitHub Pages support for the private repository.
 - The earlier stacked MVP PR train has been superseded by merged mainline
@@ -128,7 +136,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 
 ### Verification
 
-- `pytest -q`: 138 passed after adding arena planning.
+- `pytest -q`: 154 passed after adding live user-strategy sparring and
+  duplicate leaderboard guards.
 - `compileall`: passing.
 - `git diff --check`: passing.
 - `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
@@ -143,9 +152,10 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - `opennego role-swap`: passing with buyer/seller role coverage 1.0.
 - `opennego arena-plan`: passing with reciprocal buyer/seller matchups and
   `opennego.arena_plan.v1`.
-- Bounded live OpenRouter validation for issue `#100`: passing across
-  `run-models`, config runner LLM agents, profile-backed LLM NPC sparring,
-  strategy evolution, local marketplace validation, and external training
+- Bounded live OpenRouter validation for issue `#102`: passing across
+  `run-models`, config runner LLM agents, five-run leaderboard/report
+  aggregation, live user-agent/profile-NPC sparring, strategy evolution rerun,
+  before/after comparison, local marketplace validation, and external training
   adapter validation.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 

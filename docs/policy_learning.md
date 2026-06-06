@@ -103,8 +103,8 @@ ids are malformed.
 
 ## Strategy Sparring Suite
 
-`opennego spar` turns marketplace profiles into a repeatable no-key training
-suite:
+`opennego spar` turns marketplace profiles into a repeatable training suite.
+The default path is no-key:
 
 ```bash
 opennego spar \
@@ -143,9 +143,10 @@ summary = run_sparring_suite(
 )
 ```
 
-The custom factory path and `--user-strategy` path are mutually exclusive in one
-run. Both use the same environment loop, traces, metrics, battle reports, and
-sparring summary contracts.
+For arbitrary custom factories, the custom factory path and `--user-strategy`
+path are mutually exclusive unless the caller explicitly wires a factory that
+consumes the strategy candidate. Both paths use the same environment loop,
+traces, metrics, battle reports, and sparring summary contracts.
 
 The profile counterparty can also be swapped from deterministic profile-backed
 logic to a provider-backed profile agent through the CLI:
@@ -175,6 +176,27 @@ summary = run_sparring_suite(
 
 This still uses the same artifacts and learning reports. Live provider calls
 remain optional and are not required for no-key CI.
+
+For live LLM user agents, the CLI can also instantiate the user policy directly
+through LiteLLM. This is the recommended live-provider path when you want to
+test the strategy-evolution loop without writing a local Python factory:
+
+```bash
+OPENROUTER_API_KEY=... opennego spar \
+  --output-dir /tmp/my-live-user-sparring \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-llm-model openrouter/openai/gpt-4.1-nano \
+  --user-llm-max-tokens 220 \
+  --opponent-llm-model openrouter/openai/gpt-4.1-mini \
+  --opponent-llm-max-tokens 220 \
+  --learning-tool-regime buyer_private_market_search \
+  --no-fail-fast
+```
+
+`--user-llm-model` also requires at least one explicit `--opponent-profile` to
+bound live provider calls. When it is combined with `--user-strategy`, the
+strategy candidate is injected into the live user agent as additional strategy
+instructions while the base action schema and environment rules remain fixed.
 
 ## Battle Report Schema
 
@@ -326,6 +348,23 @@ and seller candidates can tighten reservation or market-floor behavior. The
 sparring summary and per-run manifests record the candidate id, parent strategy
 id, source run id, and applied lesson ids so before/after runs remain
 auditable.
+
+For live LLM user agents, the same candidate can be supplied to the rerun:
+
+```bash
+OPENROUTER_API_KEY=... opennego spar \
+  --output-dir /tmp/opennego-live-rerun \
+  --opponent-profile seller_hardline_anchor_v1 \
+  --user-strategy /tmp/opennego-real-market-demo/strategy_candidate.json \
+  --user-llm-model openrouter/openai/gpt-4.1-nano \
+  --opponent-llm-model openrouter/openai/gpt-4.1-mini \
+  --learning-tool-regime buyer_private_market_search \
+  --no-fail-fast
+```
+
+The rerun manifest records the same `user_strategy` metadata as deterministic
+candidate-backed sparring, and the live user agent receives the candidate's
+strategy prompt plus applied lessons as additional system instructions.
 
 After the user reruns their agent with the candidate strategy, `opennego compare`
 can compare the before/after battle reports:
