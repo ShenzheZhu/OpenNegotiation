@@ -66,6 +66,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Added real-market source policy artifacts and validation gates for adapter
   readiness, including collection-mode, data-rights, privacy, credentials, and
   anti-scraping boundaries.
+- Added an eBay Marketplace Insights adapter contract and `opennego ingest-ebay`
+  command. It supports no-key mock-response tests and live official-API
+  ingestion when eBay credentials and Marketplace Insights access are available.
 - Added `opennego validate-market` for no-key product, comparable, and dataset
   manifest consistency checks.
 - Added `opennego leaderboard` for machine-readable run rankings, participant
@@ -170,7 +173,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Keep expanding transaction realism through provider-neutral fixture contracts
   first; add real payment, logistics, warranty, legal/compliance, and platform
   dispute integrations only when those boundaries are decided.
-- Expand market-data ingestion from offline normalization toward licensed/live
-  adapters only after API, scraping, and privacy boundaries are decided.
+- Production-verify eBay Marketplace Insights ingestion with approved
+  credentials, then add hosted refresh jobs and non-eBay licensed/live source
+  adapters.
 - Resolve public hosted site deployment for the `web` branch or choose another
   hosting target.

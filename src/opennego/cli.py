@@ -126,6 +126,8 @@ def main(argv: list[str] | None = None) -> int:
         return _validate_market_source_main(argv[1:])
     if argv and argv[0] == "ingest-market":
         return _ingest_market_main(argv[1:])
+    if argv and argv[0] == "ingest-ebay":
+        return _ingest_ebay_main(argv[1:])
     if argv and argv[0] == "validate-market":
         return _validate_market_main(argv[1:])
     if argv and argv[0] == "validate-demo-bundle":
@@ -907,6 +909,112 @@ def _ingest_market_main(argv: list[str] | None = None) -> int:
             source_policy_path=args.source_policy,
         )
     except (OSError, MarketIngestionError, MarketSourcePolicyError) as exc:
+        print(json.dumps({"error": str(exc)}, indent=2))
+        return 2
+
+    print(json.dumps(to_jsonable(result), indent=2))
+    return 0
+
+
+def _ingest_ebay_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Fetch eBay Marketplace Insights sold-comps data and normalize it "
+            "into OpenNegotiation fixtures."
+        )
+    )
+    parser.add_argument("--query", required=True, help="Sold-comps search query.")
+    parser.add_argument(
+        "--source-policy",
+        required=True,
+        help=(
+            "Validated live opennego.market_source_policy.v1 artifact. Must use "
+            "collection_mode=official_api and live_collection_enabled=true."
+        ),
+    )
+    parser.add_argument(
+        "--snapshot-output",
+        required=True,
+        help="Path to write the sanitized eBay sold-comps snapshot JSON.",
+    )
+    parser.add_argument(
+        "--products-output",
+        required=True,
+        help="Path to write normalized products.json.",
+    )
+    parser.add_argument(
+        "--comps-output",
+        required=True,
+        help="Path to write normalized market_comps.json.",
+    )
+    parser.add_argument(
+        "--manifest-output",
+        help="Optional path to write the aggregate market dataset manifest.",
+    )
+    parser.add_argument(
+        "--marketplace-id",
+        default="EBAY_US",
+        help="eBay marketplace header, e.g. EBAY_US or EBAY_GB.",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=50,
+        help="Maximum sold-comps records to ingest.",
+    )
+    parser.add_argument(
+        "--category-id",
+        action="append",
+        help="Optional eBay category id. Can be provided multiple times.",
+    )
+    parser.add_argument(
+        "--filter",
+        dest="item_filter",
+        action="append",
+        help="Optional Marketplace Insights filter expression.",
+    )
+    parser.add_argument(
+        "--environment",
+        default="production",
+        choices=("production", "sandbox"),
+        help="eBay API environment.",
+    )
+    parser.add_argument(
+        "--mock-response",
+        help=(
+            "Contract-test path to a saved Marketplace Insights JSON response. "
+            "Skips OAuth and network calls."
+        ),
+    )
+    parser.add_argument("--currency", default="USD")
+    parser.add_argument("--window-days", type=int, default=90)
+    parser.add_argument("--asking-multiplier", type=float, default=1.25)
+    parser.add_argument("--buyer-budget-multiplier", type=float, default=1.2)
+    args = parser.parse_args(argv)
+
+    try:
+        ebay_adapter = importlib.import_module(
+            "opennego.adapters.ebay_marketplace_insights"
+        )
+        result = ebay_adapter.ingest_ebay_marketplace_insights(
+            query=args.query,
+            source_policy_path=args.source_policy,
+            snapshot_output=args.snapshot_output,
+            products_output=args.products_output,
+            comps_output=args.comps_output,
+            manifest_output=args.manifest_output,
+            marketplace_id=args.marketplace_id,
+            limit=args.limit,
+            category_ids=tuple(args.category_id or ()),
+            item_filter=tuple(args.item_filter or ()),
+            environment=args.environment,
+            mock_response_path=args.mock_response,
+            currency=args.currency,
+            window_days=args.window_days,
+            asking_multiplier=args.asking_multiplier,
+            buyer_budget_multiplier=args.buyer_budget_multiplier,
+        )
+    except (OSError, RuntimeError, MarketSourcePolicyError) as exc:
         print(json.dumps({"error": str(exc)}, indent=2))
         return 2
 

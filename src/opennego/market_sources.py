@@ -207,6 +207,40 @@ def market_source_policy_summary(path: str | Path) -> Mapping[str, Any]:
     }
 
 
+def require_live_market_source_policy(
+    path: str | Path,
+    *,
+    expected_adapter_kind: str | None = None,
+) -> Mapping[str, Any]:
+    """Return a validated live-source policy summary or raise.
+
+    Live ingestion is deliberately stricter than offline normalization: a caller
+    must declare an official API or licensed dataset boundary, include terms,
+    and enable live collection explicitly before records can enter benchmark
+    fixtures.
+    """
+
+    summary = market_source_policy_summary(path)
+    collection_mode = summary["collection_mode"]
+    if collection_mode not in LIVE_COLLECTION_MODES:
+        raise MarketSourcePolicyError(
+            f"{path}: live ingestion requires collection_mode official_api "
+            "or licensed_dataset"
+        )
+    if not summary["live_collection_enabled"]:
+        raise MarketSourcePolicyError(
+            f"{path}: live ingestion requires live_collection_enabled=true"
+        )
+    if expected_adapter_kind is not None and (
+        summary["adapter_kind"] != expected_adapter_kind
+    ):
+        raise MarketSourcePolicyError(
+            f"{path}: expected adapter_kind {expected_adapter_kind!r}, "
+            f"got {summary['adapter_kind']!r}"
+        )
+    return summary
+
+
 def _validate_policy_mapping(
     data: Mapping[str, Any],
     errors: list[str],
