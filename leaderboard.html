@@ -149,9 +149,9 @@
         <p class="subtitle">A dedicated ranking surface for OpenNegotiation model runs, role tracks, tool-aware negotiation behavior, and market-grounded deal quality.</p>
       </div>
       <div class="score-strip" aria-label="Leaderboard summary">
-        <div class="strip-item"><div class="strip-label">LLM models</div><div class="strip-value">5</div></div>
-        <div class="strip-item"><div class="strip-label">Smoke result</div><div class="strip-value">5 / 5</div></div>
-        <div class="strip-item"><div class="strip-label">Best deal</div><div class="strip-value">$550</div></div>
+        <div class="strip-item"><div class="strip-label">Live runs</div><div class="strip-value">5</div></div>
+        <div class="strip-item"><div class="strip-label">Run failures</div><div class="strip-value">0</div></div>
+        <div class="strip-item"><div class="strip-label">Best deal</div><div class="strip-value">$520</div></div>
         <div class="strip-item"><div class="strip-label">Reference</div><div class="strip-value">$575</div></div>
       </div>
     </section>
@@ -159,8 +159,8 @@
     <section class="section">
       <div class="section-head">
         <div>
-          <h2>LLM Smoke Leaderboard</h2>
-          <p class="section-copy">This fixture shows five LLM buyer runs from an OpenRouter smoke test. The table demonstrates the LiteLLM gateway path; it is not yet the final benchmark ranking protocol.</p>
+          <h2>Live Validation Leaderboard</h2>
+          <p class="section-copy">This snapshot shows the bounded OpenRouter validation for the current workflow: three buyer-model runs plus two live buyer/seller role-pair runs, all routed through LiteLLM and scored from versioned artifacts.</p>
         </div>
         <span class="pill strong">LiteLLM gateway</span>
       </div>
@@ -176,21 +176,21 @@
           <thead>
             <tr>
               <th>Rank</th>
-              <th>LLM Model</th>
-              <th>Gateway</th>
-              <th>Status</th>
+              <th>Run</th>
+              <th>Buyer</th>
+              <th>Seller</th>
               <th>Outcome</th>
               <th>Deal Price</th>
-              <th>LLM Calls</th>
-              <th>Tokens / Cost</th>
+              <th>Score</th>
+              <th>Tool Regime</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>1</td><td>Grok 4.3</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>deal</td><td>$550.00</td><td>1</td><td>1,011 / $0.0015356</td></tr>
-            <tr><td>2</td><td>GPT-5.4 Pro</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>3,500 / $0.237</td></tr>
-            <tr><td>3</td><td>Claude Opus 4.8</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>2</td><td>2,937 / $0.019025</td></tr>
-            <tr><td>4</td><td>Gemini 3.1 Pro Preview</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>3,642 / $0.015924</td></tr>
-            <tr><td>5</td><td>Qwen3 235B A22B</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>7,220 / $0.009732</td></tr>
+            <tr><td>1</td><td>gpt-4.1-mini buyer smoke</td><td>openai/gpt-4.1-mini</td><td>scripted seller</td><td>deal</td><td>$540.00</td><td><span class="score">93.8</span></td><td>buyer private search</td></tr>
+            <tr><td>2</td><td>gpt-4.1-nano buyer smoke</td><td>openai/gpt-4.1-nano</td><td>scripted seller</td><td>deal</td><td>$520.00</td><td><span class="score">90.2</span></td><td>buyer private search</td></tr>
+            <tr><td>3</td><td>claude-3.5-haiku buyer smoke</td><td>anthropic/claude-3.5-haiku</td><td>scripted seller</td><td>timeout</td><td>-</td><td><span class="score">40.0</span></td><td>buyer private search</td></tr>
+            <tr><td>4</td><td>role-pair A</td><td>openai/gpt-4.1-nano</td><td>openai/gpt-4.1-mini</td><td>timeout</td><td>-</td><td><span class="score">40.0</span></td><td>buyer + seller private search</td></tr>
+            <tr><td>5</td><td>role-pair B</td><td>openai/gpt-4.1-mini</td><td>openai/gpt-4.1-nano</td><td>timeout</td><td>-</td><td><span class="score">40.0</span></td><td>buyer + seller private search</td></tr>
           </tbody>
         </table>
       </div>
@@ -200,7 +200,7 @@
       <div class="section-head">
         <div>
           <h2>Scoring Tracks</h2>
-          <p class="section-copy">The final benchmark should rank models across role-specific and tool-aware tracks instead of treating one buyer smoke run as the whole story.</p>
+          <p class="section-copy">The benchmark ranks both role-specific and tool-aware tracks instead of treating one buyer smoke run as the whole story. The current snapshot contains 4 participant summaries and 6 buyer/seller role tracks.</p>
         </div>
       </div>
       <div class="grid-3">
@@ -239,7 +239,7 @@
     </section>
 
     <footer>
-      Generated from OpenNegotiation benchmark artifacts. This is a no-key demo surface, not the final public ranking protocol.
+      Generated from OpenNegotiation benchmark artifacts. This snapshot is a bounded live validation, not a large public benchmark batch.
     </footer>
   </main>
 </body>

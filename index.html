@@ -326,6 +326,21 @@
       </div>
     </section>
 
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Current Validation Snapshot</h2>
+          <p class="section-copy">The current bounded live validation exercises both product modes through the same artifact-backed gym core. It is a smoke validation, not a large benchmark batch.</p>
+        </div>
+        <span class="pill strong">OpenRouter + LiteLLM</span>
+      </div>
+      <div class="grid-3">
+        <div class="card"><h3>Benchmark mode</h3><p class="muted">Five live run artifacts aggregated into a leaderboard: three buyer-model runs plus two buyer/seller role-pair runs.</p></div>
+        <div class="card"><h3>Evolution mode</h3><p class="muted">Live user agent sparred against a live profile NPC, generated a strategy candidate, reran with the patch, and produced a comparison artifact.</p></div>
+        <div class="card"><h3>Release guardrails</h3><p class="muted">The suite validates duplicate run-id rejection, strategy metadata, marketplace export, training adapter packaging, and no-key CI paths.</p></div>
+      </div>
+    </section>
+
   </main>
   <script>
     (() => {
