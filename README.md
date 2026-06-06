@@ -22,50 +22,73 @@
 
 <h2 id="overview">Overview</h2>
 
-Most negotiation benchmarks still look like static roleplay: one prompt says
-"you are the buyer", another prompt says "you are the seller", and the models
-negotiate from whatever they already know.
+OpenNegotiation is a real-market negotiation gym for AI agents. It lets you
+benchmark, spar, and improve buyer/seller agents in transaction-aware scenarios
+where market evidence, private constraints, tool use, and deal outcomes are all
+recorded as inspectable artifacts.
 
-OpenNegotiation treats negotiation as an agentic market workflow instead:
+Give OpenNegotiation a product scenario, market references, agent strategies,
+and transaction rules. It runs the negotiation loop, preserves every message,
+offer, tool call, and settlement event, then returns metrics, reports, and
+strategy-improvement artifacts.
 
-- agents can inspect market evidence before making offers
-- buyer and seller constraints can stay private
-- tool calls are tracked with provenance
-- offers, messages, and transaction events use a structured action schema
-- outcomes are scored from versioned traces, not from ad hoc chat logs
-- failed runs can produce strategy lessons and prompt-layer patches
+| You provide | OpenNegotiation returns |
+| --- | --- |
+| Product fixtures or real-market sold comps | Versioned scenarios, manifests, traces, and metrics |
+| Buyer, seller, model, or external agent configs | Benchmark runs, role-swapped scorecards, and leaderboard summaries |
+| A user agent plus curated NPC counterparties | Sparring battle reports, failure analysis, and strategy patch candidates |
+| Strategy configs ready to share or reuse | Local marketplace profiles and external training adapter packages |
+
+The core idea is simple: negotiation should be tested as an agentic workflow,
+not as two static prompts talking in a vacuum. Agents can inspect evidence
+before acting, keep private constraints private, call tools through typed ports,
+and produce traces that are useful for evaluation and policy improvement.
 
 The default path is deterministic and no-key. You can run the benchmark,
 training loop, local strategy marketplace, and external handoff package without
-provider credentials. Live LLM runs are optional and routed through LiteLLM.
-
-OpenNegotiation is a follow-up to
-[A2A-NT](https://github.com/ShenzheZhu/A2A-NT), but it is designed as a broader
-evaluation and improvement framework for realistic agent-to-agent negotiation.
+provider credentials. Live model runs use the LiteLLM adapter behind the same
+provider-neutral gateway.
 
 <h2 id="capabilities">Capabilities</h2>
 
-- **Market-grounded benchmark runs** with fixture-backed products, sold-comps
-  evidence, private constraints, transaction terms, and scorecard metrics.
-- **Traceable artifacts** for every run: `scenario.json`, `manifest.json`,
-  `trace.jsonl`, and `metrics.json`.
-- **Tool-aware agents** with private tool visibility during execution and full
-  provenance preserved in artifacts.
-- **Role-swapped evaluation** so the same participant identity can be measured
-  as both buyer and seller.
-- **Arena planning** for reciprocal buyer/seller schedules before large batches
-  are launched.
-- **Policy-learning reports** that summarize failures, extract lessons, and
-  suggest strategy-layer prompt patches from completed traces.
-- **Strategy sparring** against curated NPC buyer/seller profiles.
-- **Local strategy marketplace** for exporting, installing, and validating
-  profile configs.
-- **External training adapters** that package strategy configs for user-owned
-  agents without mutating their source code.
-- **Provider-neutral architecture**: core environment code depends on ports;
-  LiteLLM and provider SDKs live behind adapters.
+### Benchmark Real Negotiation Behavior
 
-### Demo Reports
+- Run market-grounded buyer/seller scenarios with product data, sold-comps
+  references, private budgets, seller targets, fees, and transaction terms.
+- Evaluate the same participant as both buyer and seller with role-swapped
+  artifacts and combined leaderboard summaries.
+- Plan reciprocal arena schedules before launching larger model-vs-model
+  batches.
+
+### Make Every Run Auditable
+
+- Write standard artifacts for every run: `scenario.json`, `manifest.json`,
+  `trace.jsonl`, and `metrics.json`.
+- Preserve tool-call provenance, arguments, results, and visibility boundaries
+  instead of flattening runs into plain chat logs.
+- Score outcomes from structured actions and transaction events, not from
+  informal transcript inspection.
+
+### Improve Agents After They Lose
+
+- Spar a user agent against curated NPC buyer/seller strategy profiles.
+- Convert failed runs into battle reports with traps, missed signals, and
+  concrete policy lessons.
+- Generate strategy-layer prompt patch candidates, apply them into versioned
+  strategy configs, and compare baseline versus patched runs.
+
+### Integrate Without Lock-In
+
+- Use provider-neutral `AgentPort`, `ToolPort`, and `LLMPort` contracts in the
+  core environment.
+- Route live model providers through the LiteLLM adapter without binding
+  provider SDKs into the run loop.
+- Export external training adapter packages for user-owned agents without
+  mutating their source code.
+- Validate local strategy marketplace profiles for sharing, installing, and
+  reusing negotiation strategies.
+
+### Start With The Demo Reports
 
 Curated static examples are committed for quick inspection:
 
