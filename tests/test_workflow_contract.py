@@ -137,6 +137,12 @@ def test_user_centric_workflow_contract_round_trips_artifacts(tmp_path):
     assert sparring_manifest.metadata["sparring_execution_mode"] == (
         SPARRING_EXECUTION_MODE
     )
+    assert sparring_manifest.metadata["purpose"] == (
+        "small fixture-backed demo for market-grounded scoring"
+    )
+    assert sparring_manifest.metadata["transaction"]["enabled"] is True
+    assert sparring_manifest.metadata["transaction"]["shipping_cost"] == 12.0
+    assert sparring_manifest.metadata["transaction"]["seller_fee_rate"] == 0.04
     assert sparring_manifest.metadata["user_strategy"]["enabled"] is True
     assert sparring_manifest.agents["buyer"]["kind"] == "strategy_candidate_buyer"
     assert sparring_manifest.agents["buyer"]["candidate_id"] == (

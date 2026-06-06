@@ -373,7 +373,7 @@ def _execute_prepared_run(
         tool_regime=_tool_regime_metadata(prepared_run.tool_regime),
         metadata={
             "experiment_name": config.name,
-            "transaction": _transaction_metadata(config.transaction),
+            "transaction": transaction_config_metadata(config.transaction),
             **dict(config.metadata or {}),
         },
     )
@@ -942,7 +942,7 @@ def _build_transaction_simulator(
     )
 
 
-def _transaction_metadata(config: TransactionConfig | None) -> Mapping[str, Any]:
+def transaction_config_metadata(config: TransactionConfig | None) -> Mapping[str, Any]:
     if config is None:
         return {"enabled": False}
     return {
