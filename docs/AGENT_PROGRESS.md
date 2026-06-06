@@ -23,17 +23,17 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - Selected a high-quality OpenRouter-backed five-model default set for the
   demo: GPT-5.4 Pro, Claude Opus 4.8, Gemini 3.1 Pro Preview, Grok 4.3, and
   Qwen3 235B A22B.
-- Added the first no-key policy-learning MVP slice: NPC strategy registry,
+- Added the first no-key policy-learning demo slice: NPC strategy registry,
   `opennego strategies`, `opennego learn`, battle-report JSON, and
   trace-grounded strategy prompt patches.
 - Integrated policy-learning reports and NPC strategy profiles into the static
   HTML demo report.
-- Added `examples/reports/opennego_mvp_demo.html` as the curated no-key MVP
+- Added `examples/reports/full_demo.html` as the curated local demo
   page covering benchmark, training/prompt optimization, and strategy
   marketplace.
-- Added `opennego mvp-demo` as the one-command no-key flow for generating the
+- Added `opennego demo` as the one-command no-key flow for generating the
   benchmark artifacts, leaderboard summary, bundle manifest, battle report, and
-  MVP HTML page.
+  demo HTML page.
 - Added `opennego spar` as a no-key strategy sparring suite that runs selected
   marketplace NPC profiles through fixture-backed battle-report diagnostics.
 - Added `opennego spar --report` for rendering a compact static HTML report
@@ -78,13 +78,13 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   role-coverage summaries, and buyer/seller role-track scorecard aggregation.
 - Added artifact-backed leaderboard rendering to `opennego report` when
   `leaderboard_summary.json` is present.
-- Added `opennego.mvp_demo_bundle.v1` as a durable manifest for one-command MVP
+- Added `opennego.demo_bundle.v1` as a durable manifest for one-command demo
   demo artifact handoff.
-- Added `opennego validate-demo-bundle` for no-key MVP bundle release checks
+- Added `opennego validate-demo` for no-key demo bundle release checks
   across manifest schema, artifact existence, workflow order, and artifact
   schema versions.
 - Added `opennego handoff` for a one-command external no-key package with
-  package README, MVP artifacts, validation JSON, role-swapped artifacts, and
+  package README, demo artifacts, validation JSON, role-swapped artifacts, and
   `opennego.external_handoff.v1` manifest.
 - Added a shared no-key workflow contract smoke for benchmark artifacts,
   leaderboard summaries, artifact-backed reports, battle reports, strategy
@@ -136,9 +136,9 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   `#102`.
 - Public hosted website work is tracked in GitHub issue `#28` and currently
   depends on resolving GitHub Pages support for the private repository.
-- The earlier stacked MVP PR train has been superseded by merged mainline
+- The earlier stacked demo PR train has been superseded by merged mainline
   slices.
-- No long-lived integration PR is required for the current local no-key MVP
+- No long-lived integration PR is required for the current local demo
   state.
 
 ### Verification
@@ -147,8 +147,8 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
   duplicate leaderboard guards.
 - `compileall`: passing.
 - `git diff --check`: passing.
-- `opennego mvp-demo` followed by `opennego validate-demo-bundle`: passing.
-- `opennego handoff`: passing with MVP, market, marketplace, and role-swap
+- `opennego demo` followed by `opennego validate-demo`: passing.
+- `opennego handoff`: passing with demo, market, marketplace, and role-swap
   validations.
 - Product naming guard: passing; public-facing copy uses OpenNegotiation while
   legacy handles remain only in technical compatibility contexts.

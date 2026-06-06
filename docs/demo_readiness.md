@@ -1,13 +1,13 @@
-# MVP Readiness Audit
+# Demo Readiness Audit
 
-Date: 2026-06-05
+Updated: 2026-06-06
 
 This audit answers the current readiness question for local demo surfaces,
 architecture, CLI integration, and tests on `main`.
 
 ## Summary
 
-The no-key local MVP and the main user-centric workflow slices are implemented
+The local fixture demo and the main user-centric workflow slices are implemented
 on `main`: benchmark runs, policy-learning battle reports, strategy candidate
 reruns, one-command training loops, local marketplace export, strategy
 sparring, transaction settlement guards, config-level LLM agents,
@@ -16,13 +16,13 @@ factories, plus offline sold-comps ingestion.
 Offline ingested datasets can optionally write an aggregate dataset manifest
 with input fingerprint and quality summaries, then validate those fixtures with
 `opennego validate-market`.
-The no-key test suite also includes a shared workflow contract smoke for the
+The local fixture test suite also includes a shared workflow contract smoke for the
 benchmark -> policy learning -> strategy candidate -> sparring rerun ->
 comparison -> marketplace export loop.
 Benchmark outputs can also be aggregated into a machine-readable leaderboard
 with participant role-coverage summaries and buyer/seller role-track summaries.
-One-command MVP demo bundles can be validated independently with
-`opennego validate-demo-bundle`.
+One-command demo bundles can be validated independently with
+`opennego validate-demo`.
 
 A max-realism current-system OpenRouter validation was run on 2026-06-05 for
 issue `#102`. Live provider execution remains optional and requires local
@@ -34,15 +34,15 @@ transaction guards, and full post-processing. Details are recorded in
 
 ## Website / Demo Surfaces
 
-Verified no-key surfaces:
+Verified local fixture surfaces:
 
-- `opennego mvp-demo --output-dir /tmp/opennego-readiness-mvp --report /tmp/opennego-readiness-mvp.html`
+- `opennego demo --output-dir /tmp/opennego-readiness-demo --report /tmp/opennego-readiness-demo.html`
 - `opennego spar --output-dir /tmp/opennego-readiness-sparring --report /tmp/opennego-readiness-sparring.html --opponent-profile seller_hardline_anchor_v1 --opponent-profile seller_hidden_fees_v1`
 - `opennego train --output-dir /tmp/opennego-readiness-training --opponent-profile seller_hardline_anchor_v1 --parent-strategy-id buyer_baseline`
 
 Browser smoke evidence:
 
-- MVP dashboard rendered Leaderboard Preview, Training / Prompt Optimization,
+- demo dashboard rendered Leaderboard Preview, Training / Prompt Optimization,
   Strategy Marketplace, Hardline Anchor Seller, and `buyer_overpaid_market`.
 - Sparring report rendered OpenNegotiation strategy sparring report,
   `profile_backed_fixture_sparring`, Hardline Anchor Seller, Hidden Fees
@@ -51,12 +51,11 @@ Browser smoke evidence:
 - No console errors were observed.
 - No body-level horizontal overflow was observed.
 
-Not complete:
+Public website status:
 
-- The public hosted website work lives on the `web` branch. GitHub Pages
-  configuration is blocked while the repository/private-plan combination does
-  not support Pages for this repo.
-- The generated local static reports are still the canonical no-key demo
+- The public hosted website lives on the `web` branch and deploys through
+  GitHub Pages at `https://kordi-ai.github.io/OpenNegotiation/`.
+- The generated local static reports are still the canonical local fixture demo
   artifacts on `main`.
 
 ## Architecture
@@ -68,17 +67,17 @@ Implemented:
 - LiteLLM isolated behind `opennego.adapters`.
 - Versioned benchmark artifacts for scenario, manifest, trace, and metrics.
 - Policy-learning battle reports that read benchmark artifacts.
-- Local NPC strategy registry and profile-backed no-key sparring suite.
+- Local NPC strategy registry and profile-backed local fixture sparring suite.
 - Versioned strategy candidate generation, sparring reruns, and before/after
   comparison artifacts.
-- One-command no-key training loop that runs sparring, extracts a strategy
+- One-command local fixture training loop that runs sparring, extracts a strategy
   candidate, applies it into a versioned strategy config, reruns the same
   profile, and compares before/after reports.
 - External training adapter export and validation for handing strategy configs
   to user-owned agents without mutating arbitrary source code.
-- Local strategy marketplace profile export, registry installation, and no-key
+- Local strategy marketplace profile export, registry installation, and local fixture
   marketplace config validation.
-- No-key role-swapped benchmark track with combined leaderboard role coverage.
+- Local fixture role-swapped benchmark track with combined leaderboard role coverage.
 - Config-runner custom `AgentPort` registration through Python API and explicit
   CLI local factory loading.
 - Config-runner `llm_buyer` and `llm_seller` kinds behind injected `LLMPort`
@@ -106,17 +105,17 @@ Implemented:
   optional future arena fitting.
 - Artifact-backed leaderboard rendering in the static demo report when
   `leaderboard_summary.json` is present.
-- Versioned `opennego.mvp_demo_bundle.v1` handoff manifest for one-command MVP
+- Versioned `opennego.demo_bundle.v1` handoff manifest for one-command demo
   demo outputs.
-- MVP demo bundle validation CLI with schema drift, artifact existence, and
+- demo bundle validation CLI with schema drift, artifact existence, and
   workflow-order checks.
 - One-command `opennego handoff` external package with package README,
-  `opennego.external_handoff.v1` manifest, MVP bundle validation, market fixture
+  `opennego.external_handoff.v1` manifest, demo bundle validation, market fixture
   validation, marketplace validation, and role-swapped coverage artifacts.
-- Shared no-key workflow contract smoke covering benchmark artifacts, learning
+- Shared local fixture workflow contract smoke covering benchmark artifacts, learning
   reports, strategy candidates, sparring reruns, comparison artifacts, and local
   marketplace export.
-- Static HTML report generators for benchmark/MVP and sparring surfaces.
+- Static HTML report generators for benchmark/demo and sparring surfaces.
 - Architecture overview in `docs/architecture.md`.
 - Python runtime declaration aligned to current syntax: Python 3.10+.
 
@@ -172,8 +171,8 @@ opennego marketplace-export --candidate "$tmpdir/sparring/strategy_candidate.jso
 opennego validate-marketplace --registry "$tmpdir/sparring/local_marketplace_registry.json" --profile "$tmpdir/sparring/marketplace_profile.json"
 opennego export-training-adapter --strategy-config "$tmpdir/sparring/strategy_config.json" --output "$tmpdir/sparring/training_adapter.json" --agent-kind litellm_user_agent --adapter-id full_realism_live_user_buyer_gpt41mini_adapter_v1
 opennego validate-training-adapter --adapter "$tmpdir/sparring/training_adapter.json"
-opennego mvp-demo --output-dir "$tmpdir/mvp" --report "$tmpdir/mvp.html"
-opennego validate-demo-bundle --manifest "$tmpdir/mvp/mvp_demo_manifest.json"
+opennego demo --output-dir "$tmpdir/demo" --report "$tmpdir/demo.html"
+opennego validate-demo --manifest "$tmpdir/demo/demo_manifest.json"
 opennego handoff --output-dir "$tmpdir/handoff"
 opennego train --output-dir "$tmpdir/training" --opponent-profile seller_hardline_anchor_v1 --parent-strategy-id buyer_baseline
 opennego apply-strategy --candidate "$tmpdir/training/strategy_candidate.json" --output "$tmpdir/training/manual_strategy_config.json" --strategy-id buyer_baseline_manual_v1
@@ -190,7 +189,7 @@ Latest local result on this readiness branch:
 - `pytest -q`: 154 passed.
 - `compileall`: passing.
 - `git diff --check`: passing.
-- MVP demo bundle validation smoke: passed with no errors or warnings.
+- demo bundle validation smoke: passed with no errors or warnings.
 - External handoff package smoke: passed and wrote
   `opennego.external_handoff.v1`.
 - Product naming scan: public-facing copy uses OpenNegotiation; lowercase
@@ -241,13 +240,13 @@ Current state:
 - Open issue `#102` tracks the current full live workflow validation and web
   refresh.
 - Open issue `#29` tracks remaining backend/product loop scale-up work.
-- Open issue `#28` tracks public GitHub Pages hosting and remains blocked by
-  repository/private-plan support for Pages.
-- There is no active stacked PR train for the current local MVP path.
+- Public GitHub Pages hosting is active from the `web` branch. Earlier
+  public-site polish work is superseded by the deployed OpenNegotiation site.
+- There is no active stacked PR train for the current local demo path.
 
 Readiness conclusion:
 
-- No-key local MVP: implemented and verified.
+- Local fixture demo: implemented and verified.
 - User-agent onboarding: Python API registration, CLI local factory loading,
   config LLM agents, and sparring custom user agents are implemented.
 - Website/demo surfaces on `main`: implemented as static local reports and

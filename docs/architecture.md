@@ -1,6 +1,6 @@
 # OpenNegotiation Architecture
 
-This document summarizes the current MVP architecture and the boundaries that
+This document summarizes the current demo architecture and the boundaries that
 should stay stable while the benchmark grows.
 
 ## Product Layers
@@ -58,7 +58,7 @@ parallel logs.
   editable-strategy prompt-layer contracts for user-agent evolution.
 - `marketplace.py`: local strategy candidate export, registry installation, and
   validation for shareable marketplace profiles.
-- `handoff.py`: no-key external package orchestration over MVP demo,
+- `handoff.py`: no-key external package orchestration over demo,
   validations, role-swap artifacts, README, and handoff manifest generation.
 - `sparring.py`: no-key strategy sparring suite orchestration, including
   optional application of versioned user strategy candidates.
@@ -107,7 +107,7 @@ the base sandbox protocol.
   CLI does not load arbitrary live NPC modules.
 - Local marketplace profile export and validation are supported, but hosted
   marketplace, account-backed sharing, live marketplace collection, and
-  provider-backed coaching are out of scope for the no-key MVP.
+  provider-backed coaching are out of scope for the local demo.
 - Live five-model demos require provider credentials supplied through
   environment variables, Keychain, or another local secret manager. Credentials
   must not be committed to the repository or generated artifacts.

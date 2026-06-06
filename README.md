@@ -13,9 +13,9 @@
 
 <p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-3776ab?style=flat-square">
-  <img alt="No-key demo" src="https://img.shields.io/badge/no--key-demo-2d7d46?style=flat-square">
+  <img alt="Local demo" src="https://img.shields.io/badge/local--demo-2d7d46?style=flat-square">
   <img alt="LLM gateway" src="https://img.shields.io/badge/LLM%20gateway-LiteLLM%20adapter-8f7f6b?style=flat-square">
-  <img alt="Status" src="https://img.shields.io/badge/status-MVP-0d3b66?style=flat-square">
+  <img alt="Status" src="https://img.shields.io/badge/status-research--preview-0d3b66?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-TBD-lightgrey?style=flat-square">
 </p>
 
@@ -52,7 +52,7 @@ versioned artifacts that can be audited or reused for policy improvement.
   strategy-layer prompt improvement.
 - Local strategy marketplace primitives for sharing, validating, and installing
   reusable negotiation profiles.
-- Deterministic no-key demo paths plus bounded live-validation hooks for model
+- Deterministic local demo paths plus full live-validation hooks for model
   providers and official real-market data adapters.
 
 <h2 id="start-here">Start Here</h2>
@@ -67,15 +67,15 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
 
-Run the complete no-key demo:
+Run the complete local demo:
 
 ```bash
-opennego mvp-demo \
-  --output-dir /tmp/opennegotiation-mvp \
-  --report /tmp/opennegotiation-mvp.html
+opennego demo \
+  --output-dir /tmp/opennegotiation-demo \
+  --report /tmp/opennegotiation-demo.html
 
-opennego validate-demo-bundle \
-  --manifest /tmp/opennegotiation-mvp/mvp_demo_manifest.json
+opennego validate-demo \
+  --manifest /tmp/opennegotiation-demo/demo_manifest.json
 ```
 
 Run the minimal smoke benchmark:
@@ -102,19 +102,19 @@ packages, use the documentation map below.
 | Inspect transaction simulation rules | [Transaction Simulator](docs/transaction_simulator.md) |
 | Design real-market C2C evaluation data | [Real-Market Benchmark Design](docs/real_market_benchmark_design.md) |
 | Validate source policy and live collection boundaries | [Live Validation Notes](docs/live_validation_102.md) |
-| Prepare an external demo or handoff bundle | [MVP Readiness](docs/mvp_readiness.md) and [Release Checklist](docs/release_checklist.md) |
+| Prepare an external demo or handoff bundle | [Demo Readiness](docs/demo_readiness.md) and [Release Checklist](docs/release_checklist.md) |
 | Debug setup, parser, or CLI issues | [Troubleshooting](docs/troubleshooting.md) |
 | Track research directions and open product gaps | [Research Agenda](docs/research_agenda.md) |
 
 <h2 id="examples">Examples</h2>
 
-Curated no-key artifacts are committed for quick inspection:
+Curated demo artifacts are committed for quick inspection:
 
 | Artifact | Link |
 | --- | --- |
-| Full MVP demo report | [examples/reports/opennego_mvp_demo.html](examples/reports/opennego_mvp_demo.html) |
-| Benchmark report | [examples/reports/opennego_demo.html](examples/reports/opennego_demo.html) |
-| No-key smoke summary | [examples/outputs/no_key_smoke_summary.json](examples/outputs/no_key_smoke_summary.json) |
+| Full demo report | [examples/reports/full_demo.html](examples/reports/full_demo.html) |
+| Benchmark report | [examples/reports/benchmark_demo.html](examples/reports/benchmark_demo.html) |
+| Demo run summary | [examples/outputs/demo_run_summary.json](examples/outputs/demo_run_summary.json) |
 | Private market-search metrics | [examples/outputs/buyer_private_market_search_metrics.json](examples/outputs/buyer_private_market_search_metrics.json) |
 
 <h2 id="repository-map">Repository Map</h2>
@@ -122,7 +122,7 @@ Curated no-key artifacts are committed for quick inspection:
 | Path | Purpose |
 | --- | --- |
 | [src/opennego/](src/opennego/) | core package, ports, adapters, agents, tools, transactions, metrics |
-| [configs/](configs/) | no-key and live-validation experiment configs |
+| [configs/](configs/) | local fixture and live-validation experiment configs |
 | [examples/data/](examples/data/) | small fixtures and NPC strategy registry |
 | [examples/reports/](examples/reports/) | curated static HTML reports |
 | [docs/](docs/) | implementation details, contracts, integration guides, release notes |

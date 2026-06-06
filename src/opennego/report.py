@@ -480,7 +480,7 @@ def render_demo_report(
           <div class="figure-node"><strong>Policy Learning</strong><span class="muted">Battle reports extract trace-grounded lessons and strategy prompt patches.</span></div>
           <div class="figure-node"><strong>Strategy Marketplace</strong><span class="muted">Preset NPC profiles expose anchors, stale evidence, hidden fees, and probing tactics.</span></div>
         </div>
-        <p class="figure-caption">The MVP loop is benchmark, diagnose, patch strategy, and spar against harder NPC profiles.</p>
+        <p class="figure-caption">The demo loop is benchmark, diagnose, patch strategy, and spar against harder NPC profiles.</p>
       </div>
     </section>
 
@@ -545,7 +545,7 @@ def render_demo_report(
     {_strategy_marketplace_section(strategy_profiles)}
 
     <section id="findings" class="section">
-      <h2>Key Findings From This MVP</h2>
+      <h2>Key Findings From This Demo</h2>
       <div class="grid-3">
         <div class="card"><h3>Benchmark is the evidence layer</h3><p class="muted">Scenario, manifest, trace, and metrics artifacts remain the source of truth for scoring and replay.</p></div>
         <div class="card"><h3>Training turns scores into edits</h3><p class="muted">Battle reports cite trace events before recommending strategy prompt patches.</p></div>
@@ -562,7 +562,7 @@ def render_demo_report(
     </section>
 
     <footer>
-      Generated from {PRODUCT_NAME} benchmark and policy-learning artifacts. This is a no-key demo surface, not a live marketplace collection.
+      Generated from {PRODUCT_NAME} benchmark and policy-learning artifacts. This is a fixture-backed demo surface, not a live marketplace collection.
     </footer>
   </main>
 </body>
