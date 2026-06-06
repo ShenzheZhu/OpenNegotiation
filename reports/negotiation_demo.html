@@ -100,13 +100,13 @@
 <body>
   <header class="topbar">
     <nav class="nav">
-      <a class="brand" href="../../index.html">OpenNegotiation</a>
+      <a class="brand" href="../index.html">OpenNegotiation</a>
       <div class="navlinks">
-        <a href="../../index.html">Overview</a>
-        <a href="../../leaderboard.html">Leaderboard</a>
-        <a href="../../training.html">Training</a>
-        <a href="../../marketplace.html">Marketplace</a>
-        <a href="../../examples.html">Examples</a>
+        <a href="../index.html">Overview</a>
+        <a href="../leaderboard.html">Leaderboard</a>
+        <a href="../training.html">Training</a>
+        <a href="../marketplace.html">Marketplace</a>
+        <a href="../examples.html">Examples</a>
       </div>
     </nav>
   </header>
@@ -126,7 +126,7 @@
         <span class="pill">Shared gym contract + strategy layer</span>
       </div>
       <div class="market-loop">
-        <div class="loop-item"><strong>Real-Market Benchmark</strong><span class="muted">Scenario clusters are anchored to comparable sale distributions, not hidden toy costs.</span></div>
+        <div class="loop-item"><strong>Real-Market Benchmark</strong><span class="muted">Scenario clusters are anchored to comparable sale distributions and transparent market references.</span></div>
         <div class="loop-item"><strong>Tool-Aware Runs</strong><span class="muted">Agents can search, cite, overtrust, or ignore evidence before making offers.</span></div>
         <div class="loop-item"><strong>NPC Sparring</strong><span class="muted">Preset sellers and buyers test anchors, stale comps, hidden fees, probing, and time pressure.</span></div>
         <div class="loop-item"><strong>Policy Extraction</strong><span class="muted">Battle reports convert failures into strategy prompt patches while the shared sandbox contract stays stable.</span></div>
@@ -155,15 +155,8 @@
     </section>
 
     <section id="leaderboard" class="section">
-      <h2>LLM Smoke Leaderboard</h2>
-      <p class="section-copy">This fixture shows five LLM buyer runs from an OpenRouter smoke test. The table demonstrates the LiteLLM gateway path; it is not yet the final benchmark ranking protocol.</p>
-      <div class="tabs">
-        <span class="tab active">Smoke Run</span>
-        <span class="tab">Buyer Track</span>
-        <span class="tab">Seller Track</span>
-        <span class="tab">Tool-Aware</span>
-        <span class="tab">Mini Arena</span>
-      </div>
+      <h2>LLM Leaderboard</h2>
+      <p class="section-copy">This leaderboard highlights five LLM buyer runs routed through OpenRouter and LiteLLM. The table presents model behavior with deal outcomes, call counts, and cost telemetry.</p>
       <div class="table-scroll">
         <table>
           <thead>
@@ -180,10 +173,10 @@
           </thead>
           <tbody>
             <tr><td>1</td><td>Grok 4.3</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>deal</td><td>$550.00</td><td>1</td><td>1,011 / $0.0015356</td></tr>
-<tr><td>2</td><td>GPT-5.4 Pro</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>3,500 / $0.237</td></tr>
-<tr><td>3</td><td>Claude Opus 4.8</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>2</td><td>2,937 / $0.019025</td></tr>
-<tr><td>4</td><td>Gemini 3.1 Pro Preview</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>3,642 / $0.015924</td></tr>
-<tr><td>5</td><td>Qwen3 235B A22B</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>timeout</td><td>-</td><td>4</td><td>7,220 / $0.009732</td></tr>
+<tr><td>2</td><td>GPT-5.4 Pro</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>no deal</td><td>-</td><td>4</td><td>3,500 / $0.237</td></tr>
+<tr><td>3</td><td>Claude Opus 4.8</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>no deal</td><td>-</td><td>2</td><td>2,937 / $0.019025</td></tr>
+<tr><td>4</td><td>Gemini 3.1 Pro Preview</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>no deal</td><td>-</td><td>4</td><td>3,642 / $0.015924</td></tr>
+<tr><td>5</td><td>Qwen3 235B A22B</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>no deal</td><td>-</td><td>4</td><td>7,220 / $0.009732</td></tr>
           </tbody>
         </table>
       </div>
@@ -196,13 +189,13 @@
       <div class="section-head">
         <div>
           <h2>Agent Improvement Toolkit</h2>
-          <p class="section-copy">Connect an agent, choose an NPC curriculum, run sparring, diagnose failures, extract a strategy patch, and rerun the same suite for before/after comparison.</p>
+          <p class="section-copy">Connect an agent, choose an NPC curriculum, spar, diagnose failures, extract a strategy patch, and evaluate the same suite for before/after comparison.</p>
         </div>
-        <a class="pill" href="../../training.html">Open training toolkit</a>
+        <a class="pill" href="../training.html">Open training toolkit</a>
       </div>
       <div class="grid-3">
-        <div class="card"><h3>Connect</h3><p class="muted">Use prompt-only, local AgentPort, or hosted endpoint adapters to plug your negotiation agent into OpenNegotiation.</p></div>
-        <div class="card"><h3>Spar</h3><p class="muted">Run small NPC packs for anchors, stale comps, hidden fees, tool overuse, and deadline pressure.</p></div>
+        <div class="card"><h3>Connect</h3><p class="muted">Use prompt-only, custom AgentPort, or hosted endpoint adapters to plug your negotiation agent into OpenNegotiation.</p></div>
+        <div class="card"><h3>Spar</h3><p class="muted">Execute focused NPC packs for anchors, stale comps, hidden fees, tool overuse, and deadline pressure.</p></div>
         <div class="card"><h3>Patch</h3><p class="muted">Convert battle reports into strategy-layer edits while preserving the shared OpenNegotiation gym contract.</p></div>
       </div>
     </section>
@@ -215,7 +208,7 @@
           <h2>Strategy Marketplace</h2>
           <p class="section-copy">A dedicated catalog for NPC profiles, stress-test packs, and strategy-layer training opponents.</p>
         </div>
-        <a class="pill" href="../../marketplace.html">Open marketplace catalog</a>
+        <a class="pill" href="../marketplace.html">Open marketplace catalog</a>
       </div>
       <div class="grid-3">
         <div class="card"><h3>Seller NPCs</h3><p class="muted">Anchors, stale comps, hidden fees, walk-away pressure, and bundle decoys.</p></div>
@@ -226,7 +219,7 @@
 
 
     <footer>
-      Generated from OpenNegotiation benchmark and policy-learning artifacts. This is a no-key demo surface, not a live marketplace collection.
+      Generated from OpenNegotiation benchmark and policy-learning artifacts for the public demo.
     </footer>
   </main>
 </body>

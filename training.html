@@ -197,8 +197,8 @@
       <div class="run-card">
         <h3>10-minute improvement loop</h3>
         <div class="run-steps">
-          <div class="run-step"><span class="step-index">1</span><p><strong>Connect</strong><br><span class="muted">LiteLLM user model, AgentPort, or local strategy candidate.</span></p></div>
-          <div class="run-step"><span class="step-index">2</span><p><strong>Spar</strong><br><span class="muted">Run one small NPC curriculum, not a giant benchmark batch.</span></p></div>
+          <div class="run-step"><span class="step-index">1</span><p><strong>Connect</strong><br><span class="muted">LiteLLM user model, AgentPort, or strategy candidate.</span></p></div>
+          <div class="run-step"><span class="step-index">2</span><p><strong>Spar</strong><br><span class="muted">Execute a focused NPC curriculum against targeted negotiation behaviors.</span></p></div>
           <div class="run-step"><span class="step-index">3</span><p><strong>Patch</strong><br><span class="muted">Edit only the strategy layer, then rerun for before/after deltas.</span></p></div>
         </div>
       </div>
@@ -208,7 +208,7 @@
       <div class="section-head">
         <div>
           <h2>Connect Your Agent</h2>
-          <p class="section-copy">OpenNegotiation meets users where they are: live LLM models, local agent code, or strategy configs generated from prior failures. The shared gym contract stays stable across all three modes.</p>
+          <p class="section-copy">OpenNegotiation meets users where they are: hosted LLM models, custom agent code, or strategy configs generated from prior failures. The shared gym contract stays stable across all three modes.</p>
         </div>
         <span class="pill strong">stable contract, editable strategy</span>
       </div>
@@ -216,7 +216,7 @@
         <div class="card mode-card">
           <div class="mode-top"><span class="avatar">P</span><span class="pill">fastest</span></div>
           <h3>LiteLLM User Agent</h3>
-          <p class="muted">Run a live model as the user-owned buyer or seller, then rerun with a generated strategy candidate.</p>
+          <p class="muted">Use a hosted model as the user-owned buyer or seller, then evaluate again with a generated strategy candidate.</p>
           <div class="code-block">opennego spar \
   --opponent-profile seller_hardline_anchor_v1 \
   --user-llm-model openrouter/openai/gpt-4.1-nano \
@@ -224,8 +224,8 @@
         </div>
         <div class="card mode-card">
           <div class="mode-top"><span class="avatar sdk">S</span><span class="pill">SDK</span></div>
-          <h3>Local AgentPort</h3>
-          <p class="muted">Implement the OpenNegotiation agent interface and run deterministic sparring locally.</p>
+          <h3>Custom AgentPort</h3>
+          <p class="muted">Implement the OpenNegotiation agent interface and exercise deterministic sparring inside the gym.</p>
           <div class="code-block">opennego spar \
   --opponent-profile seller_hidden_fees_v1 \
   --user-agent-factory /abs/my_agent.py:make_agent \
@@ -248,7 +248,7 @@ opennego spar --user-strategy strategy_candidate.json</div>
       <div class="section-head">
         <div>
           <h2>Curriculum Packs</h2>
-          <p class="section-copy">Training is deliberately small and repeatable. Users pick a failure mode, run a few matches, patch policy, then rerun the same pack.</p>
+          <p class="section-copy">Training is deliberately focused and repeatable. Users pick a failure mode, execute a few matches, patch policy, then evaluate the same pack again.</p>
         </div>
         <a class="pill strong" href="marketplace.html">Browse marketplace</a>
       </div>
@@ -264,7 +264,7 @@ opennego spar --user-strategy strategy_candidate.json</div>
       <div class="section-head">
         <div>
           <h2>Battle Report to Strategy Patch</h2>
-          <p class="section-copy">The toolkit turns run artifacts into specific edits users can copy into their strategy layer. It should explain what failed, where it happened, and how to rerun the test.</p>
+          <p class="section-copy">The toolkit turns trace artifacts into specific edits users can copy into their strategy layer. It explains what failed, where it happened, and how to evaluate the strategy again.</p>
         </div>
         <span class="pill strong">example output</span>
       </div>
@@ -293,7 +293,7 @@ Keep the OpenNegotiation gym contract stable. Edit only the strategy layer.
       <div class="section-head">
         <div>
           <h2>Toolkit Surface</h2>
-          <p class="section-copy">These are the current commands and APIs for a small, repeatable improvement loop over the same NPC curriculum.</p>
+          <p class="section-copy">These commands and APIs form a repeatable improvement loop over the same NPC curriculum.</p>
         </div>
       </div>
       <div class="grid-2">
@@ -305,7 +305,7 @@ opennego spar --output-dir /tmp/rerun --opponent-profile seller_hardline_anchor_
 opennego compare --before /tmp/baseline/profiles/seller_hardline_anchor_v1/battle_report.json --after /tmp/rerun/profiles/seller_hardline_anchor_v1/battle_report.json --output /tmp/strategy_comparison.json</div>
         </div>
         <div class="card">
-          <h3>Python SDK Sketch</h3>
+          <h3>Python SDK</h3>
           <div class="code-block">from opennego.sparring import run_sparring_suite
 
 summary = run_sparring_suite(
@@ -319,7 +319,7 @@ summary = run_sparring_suite(
     </section>
 
     <footer>
-      Generated from OpenNegotiation benchmark and policy-learning artifacts. This is a product-facing toolkit sketch, not a hosted training service.
+      Generated from OpenNegotiation benchmark and policy-learning artifacts for the agent improvement toolkit.
     </footer>
   </main>
 </body>

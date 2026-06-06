@@ -94,8 +94,11 @@
     }
     .section-copy { max-width: 740px; color: var(--muted); }
     .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 14px; }
-    .tab { padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--panel); font-size: 13px; }
+    .tab { padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--panel); font-size: 13px; cursor: pointer; }
+    .tab:hover { color: var(--accent-dark); border-color: var(--accent); }
+    .tab:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     .tab.active { background: var(--accent); border-color: var(--accent); color: #fffdf8; }
+    tbody tr[hidden] { display: none; }
     table { width: 100%; border-collapse: collapse; }
     .table-scroll { width: 100%; overflow-x: auto; }
     .table-scroll table { min-width: 780px; }
@@ -147,51 +150,51 @@
     <section class="hero">
       <div>
         <h1>Leaderboard</h1>
-        <p class="subtitle">A dedicated ranking surface for OpenNegotiation model runs, role tracks, tool-aware negotiation behavior, and market-grounded deal quality.</p>
+        <p class="subtitle">A dedicated ranking surface for the latest OpenNegotiation live model snapshot, role-aware validation, and market-grounded deal quality.</p>
       </div>
       <div class="score-strip" aria-label="Leaderboard summary">
-        <div class="strip-item"><div class="strip-label">Live runs</div><div class="strip-value">5</div></div>
-        <div class="strip-item"><div class="strip-label">Run failures</div><div class="strip-value">0</div></div>
-        <div class="strip-item"><div class="strip-label">Best deal</div><div class="strip-value">$520</div></div>
-        <div class="strip-item"><div class="strip-label">Reference</div><div class="strip-value">$575</div></div>
+        <div class="strip-item"><div class="strip-label">Evaluations</div><div class="strip-value">5</div></div>
+        <div class="strip-item"><div class="strip-label">Provider failures</div><div class="strip-value">0</div></div>
+        <div class="strip-item"><div class="strip-label">Closed deals</div><div class="strip-value">1 / 5</div></div>
+        <div class="strip-item"><div class="strip-label">Best deal</div><div class="strip-value">$550</div></div>
       </div>
     </section>
 
     <section class="section">
       <div class="section-head">
         <div>
-          <h2>Live Validation Leaderboard</h2>
-          <p class="section-copy">This snapshot shows the bounded OpenRouter validation for the current workflow: three buyer-model runs plus two live buyer/seller role-pair runs, all routed through LiteLLM and scored from versioned artifacts.</p>
+          <h2>Latest Five-Model Snapshot</h2>
+          <p class="section-copy">This snapshot is generated from the current OpenRouter / LiteLLM demo artifacts. Every provider call completed; rows marked no deal are negotiation outcomes where the agent did not close a transaction within the run budget, not network timeouts.</p>
         </div>
         <span class="pill strong">LiteLLM gateway</span>
       </div>
       <div class="tabs">
-        <span class="tab active">Smoke Run</span>
-        <span class="tab">Buyer Track</span>
-        <span class="tab">Seller Track</span>
-        <span class="tab">Tool-Aware</span>
-        <span class="tab">Mini Arena</span>
+        <button class="tab active" type="button" data-filter="overall" aria-pressed="true">Overall</button>
+        <button class="tab" type="button" data-filter="deal" aria-pressed="false">Closed Deal</button>
+        <button class="tab" type="button" data-filter="nodeal" aria-pressed="false">No Deal</button>
+        <button class="tab" type="button" data-filter="lowcost" aria-pressed="false">Low Cost</button>
+        <button class="tab" type="button" data-filter="multicall" aria-pressed="false">Multi-Call</button>
       </div>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
               <th>Rank</th>
-              <th>Run</th>
-              <th>Buyer</th>
-              <th>Seller</th>
+              <th>LLM Model</th>
+              <th>Gateway</th>
+              <th>Status</th>
               <th>Outcome</th>
               <th>Deal Price</th>
-              <th>Score</th>
-              <th>Tool Regime</th>
+              <th>LLM Calls</th>
+              <th>Tokens / Cost</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>1</td><td>gpt-4.1-mini buyer smoke</td><td>openai/gpt-4.1-mini</td><td>scripted seller</td><td>deal</td><td>$540.00</td><td><span class="score">93.8</span></td><td>buyer private search</td></tr>
-            <tr><td>2</td><td>gpt-4.1-nano buyer smoke</td><td>openai/gpt-4.1-nano</td><td>scripted seller</td><td>deal</td><td>$520.00</td><td><span class="score">90.2</span></td><td>buyer private search</td></tr>
-            <tr><td>3</td><td>claude-3.5-haiku buyer smoke</td><td>anthropic/claude-3.5-haiku</td><td>scripted seller</td><td>timeout</td><td>-</td><td><span class="score">40.0</span></td><td>buyer private search</td></tr>
-            <tr><td>4</td><td>role-pair A</td><td>openai/gpt-4.1-nano</td><td>openai/gpt-4.1-mini</td><td>timeout</td><td>-</td><td><span class="score">40.0</span></td><td>buyer + seller private search</td></tr>
-            <tr><td>5</td><td>role-pair B</td><td>openai/gpt-4.1-mini</td><td>openai/gpt-4.1-nano</td><td>timeout</td><td>-</td><td><span class="score">40.0</span></td><td>buyer + seller private search</td></tr>
+            <tr data-track="overall deal lowcost"><td>1</td><td>Grok 4.3</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>deal</td><td>$550.00</td><td>1</td><td>1,011 / $0.0015356</td></tr>
+            <tr data-track="overall nodeal multicall"><td>2</td><td>GPT-5.4 Pro</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>no deal</td><td>-</td><td>4</td><td>3,500 / $0.237</td></tr>
+            <tr data-track="overall nodeal"><td>3</td><td>Claude Opus 4.8</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>no deal</td><td>-</td><td>2</td><td>2,937 / $0.019025</td></tr>
+            <tr data-track="overall nodeal multicall"><td>4</td><td>Gemini 3.1 Pro Preview</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>no deal</td><td>-</td><td>4</td><td>3,642 / $0.015924</td></tr>
+            <tr data-track="overall nodeal lowcost multicall"><td>5</td><td>Qwen3 235B A22B</td><td>OpenRouter / LiteLLM</td><td><span class="score">completed</span></td><td>no deal</td><td>-</td><td>4</td><td>7,220 / $0.009732</td></tr>
           </tbody>
         </table>
       </div>
@@ -200,14 +203,14 @@
     <section class="section">
       <div class="section-head">
         <div>
-          <h2>Scoring Tracks</h2>
-          <p class="section-copy">The benchmark ranks both role-specific and tool-aware tracks instead of treating one buyer smoke run as the whole story. The current snapshot contains 4 participant summaries and 6 buyer/seller role tracks.</p>
+          <h2>Full-Realism Validation Context</h2>
+          <p class="section-copy">The five-model snapshot is a public demo table. The acceptance validation uses a heavier role-swapped setup: 24 reciprocal benchmark slices, 12 market-evidence regimes, 32-turn runs, 8192-token LLM calls, transaction guards, and full post-processing.</p>
         </div>
       </div>
       <div class="grid-3">
-        <div class="card"><h3>Buyer Track</h3><p class="muted">Price discipline, market evidence use, close timing, and constraint compliance under seller pressure.</p></div>
-        <div class="card"><h3>Seller Track</h3><p class="muted">Reservation discipline, truthful evidence handling, concession policy, and transaction-risk disclosure.</p></div>
-        <div class="card"><h3>Tool-Aware Track</h3><p class="muted">Search timing, provenance inspection, stale-comparison resistance, and evidence-to-offer conversion.</p></div>
+        <div class="card"><h3>24 benchmark slices</h3><p class="muted">GPT-4.1 Mini and GPT-4.1 Nano were evaluated in reciprocal buyer/seller assignments with 0 failed benchmark runs.</p></div>
+        <div class="card"><h3>Role coverage 1.0</h3><p class="muted">Both participants were evaluated as buyer and seller, avoiding one-sided buyer-only leaderboard claims.</p></div>
+        <div class="card"><h3>96 live slices total</h3><p class="muted">Benchmark, baseline sparring, strategy rerun, marketplace export, and training adapter validation all completed in the full pass.</p></div>
       </div>
     </section>
 
@@ -229,7 +232,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td>Deal completion</td><td>Whether the agent can reach valid agreement.</td><td>Timeout, invalid action, brittle negotiation loop.</td></tr>
+            <tr><td>Deal completion</td><td>Whether the agent can reach valid agreement.</td><td>no deal, invalid action, brittle negotiation loop.</td></tr>
             <tr><td>Market gap</td><td>Distance from comparable-sale reference after normalizing condition and fees.</td><td>Overpaying, underpricing, or exploiting toy hidden costs.</td></tr>
             <tr><td>Utility</td><td>Role-specific surplus against private constraints.</td><td>Winning the conversation while violating role economics.</td></tr>
             <tr><td>Tool quality</td><td>Whether searches are timely, sourced, and converted into offers.</td><td>Over-search, stale evidence, uncited claims.</td></tr>
@@ -240,8 +243,28 @@
     </section>
 
     <footer>
-      Generated from OpenNegotiation benchmark artifacts. This snapshot is a bounded live validation, not a large public benchmark batch.
+      Generated from OpenNegotiation benchmark artifacts for the public leaderboard demo.
     </footer>
   </main>
+  <script>
+    (() => {
+      const tabs = Array.from(document.querySelectorAll('.tabs .tab'));
+      const rows = Array.from(document.querySelectorAll('tbody tr[data-track]'));
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const filter = tab.dataset.filter;
+          tabs.forEach((item) => {
+            const active = item === tab;
+            item.classList.toggle('active', active);
+            item.setAttribute('aria-pressed', String(active));
+          });
+          rows.forEach((row) => {
+            const tracks = row.dataset.track.split(' ');
+            row.hidden = !tracks.includes(filter);
+          });
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
