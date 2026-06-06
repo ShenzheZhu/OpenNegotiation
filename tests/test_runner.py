@@ -6,7 +6,12 @@ import pytest
 
 from opennego.artifacts import load_manifest, load_metric_report
 from opennego.ports import LLMRequest, LLMResponse
-from opennego.runner import ConfigValidationError, run_experiment_config
+from opennego.runner import (
+    ConfigValidationError,
+    load_experiment_config,
+    prepare_runs,
+    run_experiment_config,
+)
 from opennego.schema import AgentAction, AgentContext, Role
 
 
@@ -217,6 +222,25 @@ def test_config_runner_accepts_llm_agents_with_injected_llm_factory(tmp_path):
         "buyer",
         "seller",
     ]
+
+
+def test_full_realism_live_example_prepares_max_budget_matrix():
+    config = load_experiment_config("configs/full_realism_live.example.yaml")
+    runs = prepare_runs(config)
+
+    assert config.scenarios[0].max_turns == 32
+    assert len(config.tool_regimes) == 12
+    assert len(runs) == 12
+    assert config.agents.buyer.params["max_tokens"] == 8192
+    assert config.agents.seller.params["max_tokens"] == 8192
+    assert config.transaction is not None
+    assert config.transaction.tracking_required is True
+    assert config.transaction.compliance_checks == (
+        "clean_imei",
+        "unlocked_device",
+        "battery_health_disclosed",
+        "listing_condition_matches_photos",
+    )
 
 
 def test_config_runner_rejects_llm_agent_without_llm_factory_before_output(tmp_path):

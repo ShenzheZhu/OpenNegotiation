@@ -114,13 +114,14 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - OpenRouter and OpenAI credentials are available from local Keychain under the
   OpenNegotiation service names; live commands inject them into child-process
   environment variables at execution time.
-- Issue `#102` now uses a strict small-scope OpenRouter validation standard:
-  two live models, buyer/seller role swapping, 8-turn scenarios, 512-token LLM
-  calls, validated real-market fixture data, four tool regimes, transaction
-  guards, leaderboard/report generation, live user-agent sparring against a
-  live profile NPC, strategy evolution, strategy-candidate rerun, before/after
-  comparison, marketplace validation, and external training adapter validation.
-  Details are recorded in `docs/live_validation_102.md`.
+- Issue `#102` now uses a max-realism current-system OpenRouter validation
+  standard: two live models, buyer/seller role swapping, 32-turn scenarios,
+  8192-token LLM calls, validated real-market fixture data, all current
+  `market_price_search` mode/visibility regimes, transaction guards,
+  leaderboard/report generation, live user-agent sparring against every
+  seller-side NPC profile, strategy evolution, strategy-candidate rerun,
+  profile-by-profile comparison, marketplace validation, and external training
+  adapter validation. Details are recorded in `docs/live_validation_102.md`.
 
 ### Issue And PR State
 
@@ -152,12 +153,13 @@ Do not record API keys, cookies, credentials, or raw live-provider payloads here
 - `opennego role-swap`: passing with buyer/seller role coverage 1.0.
 - `opennego arena-plan`: passing with reciprocal buyer/seller matchups and
   `opennego.arena_plan.v1`.
-- Strict small-scope live OpenRouter validation for issue `#102`: passing
-  across validated market/source gates, 8 role-swapped live A2A benchmark runs,
-  8-run leaderboard/report aggregation, live user-agent/profile-NPC sparring,
-  strategy evolution rerun, before/after comparison, local marketplace
-  validation, and external training adapter validation. The pass also exposed
-  and fixed a sparring manifest provenance gap for transaction metadata.
+- Max-realism current-system live OpenRouter validation for issue `#102`:
+  passing across validated market/source gates, 24 role-swapped live A2A
+  benchmark runs, 24-run leaderboard/report aggregation, 36-slice baseline
+  live user-agent/profile-NPC sparring, 36-slice strategy rerun, profile-by-
+  profile comparisons, local marketplace validation, and external training
+  adapter validation. The earlier pass also exposed and fixed a sparring
+  manifest provenance gap for transaction metadata.
 - Browser smoke for the static demo panel passed on narrow and wide viewports.
 
 ### Next

@@ -382,8 +382,12 @@ opennego run-models \
 
 `run-models` is intentionally cheap and buyer-only against a scripted seller.
 For realistic live validation, use config-driven buyer/seller LLM runs with role
-swapping, 8-turn scenarios, tool regimes, transaction guards, and full
-post-processing; see [Issue #102 Live Validation](docs/live_validation_102.md).
+swapping, high turn/token budgets, the full current tool-regime surface,
+transaction guards, sparring/evolution reruns, marketplace export, and adapter
+validation. Start from
+[configs/full_realism_live.example.yaml](configs/full_realism_live.example.yaml)
+and duplicate it with buyer/seller models swapped for reciprocal role coverage;
+see [Issue #102 Live Validation](docs/live_validation_102.md).
 
 Use provider-backed NPC profiles:
 

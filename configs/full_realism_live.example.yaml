@@ -1,0 +1,250 @@
+{
+  "schema_version": "opennego.experiment.v1",
+  "name": "full_realism_live_example",
+  "output_dir": "runs/full_realism_live_example",
+  "resume": false,
+  "fail_fast": false,
+  "metadata": {
+    "purpose": "Max-realism current-system live validation template",
+    "turn_budget": "32 public turns; private tool-call steps may consume up to max_turns*4 total environment steps",
+    "llm_output_budget": "8192 max_tokens per LLM call",
+    "data_surface": "validated offline real-market sold-comps fixture",
+    "tool_surface": "all current market_price_search visibility and mode regimes"
+  },
+  "transaction": {
+    "kind": "fixture",
+    "enabled": true,
+    "shipping_cost": 12.0,
+    "tax_rate": 0.06,
+    "escrow_fee": 3.0,
+    "payment_fee_rate": 0.015,
+    "seller_fee_rate": 0.04,
+    "return_risk": 0.02,
+    "reputation_risk": 0.01,
+    "dispute_risk": 0.02,
+    "max_buyer_total_cost": 740.0,
+    "min_seller_net_revenue": 500.0,
+    "max_dispute_risk": 0.06,
+    "payment_method": "card_via_escrow",
+    "payment_processor": "fixture_escrow_processor",
+    "escrow_release_policy": "release_after_tracking_delivery_and_inspection",
+    "shipping_carrier": "tracked_carrier_fixture",
+    "shipping_service": "insured_ground_with_tracking",
+    "tracking_required": true,
+    "delivery_days": 4,
+    "max_delivery_days": 7,
+    "return_window_days": 14,
+    "min_return_window_days": 7,
+    "return_shipping_payer": "buyer_unless_item_mismatch",
+    "inspection_period_days": 2,
+    "warranty_days": 30,
+    "min_warranty_days": 14,
+    "warranty_provider": "seller_limited_fixture",
+    "compliance_checks": [
+      "clean_imei",
+      "unlocked_device",
+      "battery_health_disclosed",
+      "listing_condition_matches_photos"
+    ],
+    "compliance_passed": true,
+    "dispute_window_days": 30,
+    "dispute_resolution_policy": "evidence_first_escrow_review",
+    "metadata": {
+      "validation_scope": "full_realism_current_system_live_pass"
+    }
+  },
+  "seeds": [13],
+  "agents": {
+    "buyer": {
+      "kind": "llm_buyer",
+      "params": {
+        "model": "openrouter/openai/gpt-4.1-mini",
+        "name": "llm_buyer:gpt-4.1-mini",
+        "participant_id": "openrouter/openai/gpt-4.1-mini",
+        "tool_policy": "available",
+        "temperature": 0.0,
+        "max_tokens": 8192
+      }
+    },
+    "seller": {
+      "kind": "llm_seller",
+      "params": {
+        "model": "openrouter/openai/gpt-4.1-nano",
+        "name": "llm_seller:gpt-4.1-nano",
+        "participant_id": "openrouter/openai/gpt-4.1-nano",
+        "tool_policy": "available",
+        "temperature": 0.0,
+        "max_tokens": 8192
+      }
+    }
+  },
+  "scenarios": [
+    {
+      "id": "iphone_14_pro_128gb_unlocked_good_2026q2_full_realism",
+      "products_file": "examples/data/real_market_products.json",
+      "product_index": 0,
+      "max_turns": 32,
+      "metadata": {
+        "market_reference": "fixture_sold_comps_p25_540_ref_575_p75_610",
+        "realistic_constraints": "budget_700_reservation_520_transaction_guarded",
+        "full_realism_profile": true
+      }
+    }
+  ],
+  "tool_regimes": [
+    {
+      "id": "no_tools",
+      "tools": []
+    },
+    {
+      "id": "buyer_private_clean_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "buyer_private",
+          "mode": "clean"
+        }
+      ]
+    },
+    {
+      "id": "seller_private_clean_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "seller_private",
+          "mode": "clean"
+        }
+      ]
+    },
+    {
+      "id": "symmetric_private_clean_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "symmetric_private",
+          "mode": "clean"
+        }
+      ]
+    },
+    {
+      "id": "symmetric_public_clean_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "symmetric_public",
+          "mode": "clean"
+        }
+      ]
+    },
+    {
+      "id": "buyer_private_noisy_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "buyer_private",
+          "mode": "noisy",
+          "metadata": {
+            "noise_fraction": 0.15
+          }
+        }
+      ]
+    },
+    {
+      "id": "symmetric_private_noisy_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "symmetric_private",
+          "mode": "noisy",
+          "metadata": {
+            "noise_fraction": 0.15
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer_private_stale_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "buyer_private",
+          "mode": "stale",
+          "metadata": {
+            "stale_as_of": "2025-12-31"
+          }
+        }
+      ]
+    },
+    {
+      "id": "symmetric_private_stale_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "symmetric_private",
+          "mode": "stale",
+          "metadata": {
+            "stale_as_of": "2025-12-31"
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer_private_adversarial_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "buyer_private",
+          "mode": "adversarial",
+          "metadata": {
+            "adversarial_multiplier": 1.22
+          }
+        }
+      ]
+    },
+    {
+      "id": "symmetric_private_adversarial_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "symmetric_private",
+          "mode": "adversarial",
+          "metadata": {
+            "adversarial_multiplier": 1.22
+          }
+        }
+      ]
+    },
+    {
+      "id": "symmetric_private_failure_market_search",
+      "tools": [
+        {
+          "name": "market_price_search",
+          "kind": "market_price",
+          "source": "examples/data/real_market_comps.json",
+          "visibility": "symmetric_private",
+          "mode": "failure"
+        }
+      ]
+    }
+  ]
+}
