@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OpenNegotiation | Real-Market Negotiation Gym for AI Agents</title>
+  <title>OpenNegotiation | A Real-Market Negotiation Gym for Agent-to-Agent Evaluation and Evolution</title>
   <style>
     :root {
       --ink: #26302e;
@@ -51,7 +51,7 @@
       padding: 54px 0 34px;
       max-width: 940px;
     }
-    h1 { margin: 0 0 14px; max-width: 900px; font-size: 54px; line-height: 1.04; letter-spacing: 0; }
+    h1 { margin: 0 0 14px; max-width: 900px; font-size: 54px; line-height: 1.04; letter-spacing: 0; overflow-wrap: break-word; }
     h2 { margin: 0 0 14px; font-size: 25px; letter-spacing: 0; }
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p { margin: 0; }
@@ -60,6 +60,7 @@
       color: var(--accent-dark);
       box-shadow: inset 0 -0.18em 0 rgba(102, 120, 110, .22);
     }
+    .mobile-title-break { display: none; }
     .section {
       margin-top: 24px;
       padding: 26px;
@@ -132,9 +133,13 @@
       .grid-3 { grid-template-columns: 1fr; }
     }
     @media (max-width: 620px) {
+      body { overflow-x: hidden; }
+      .shell { width: 100%; max-width: 100%; overflow-x: hidden; }
       .nav { align-items: flex-start; flex-direction: column; }
       .navlinks { width: 100%; gap: 10px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; font-size: 13px; }
-      h1 { font-size: 36px; }
+      h1 { font-size: 30px; max-width: 100%; overflow-wrap: anywhere; }
+      .subtitle, .section-copy, .muted { max-width: 100%; overflow-wrap: anywhere; }
+      .mobile-title-break { display: block; }
       .section-head { align-items: flex-start; flex-direction: column; }
     }
   </style>
@@ -154,7 +159,7 @@
 
   <main class="shell">
     <section id="overview" class="hero">
-      <h1><span class="brand-word">OpenNegotiation:</span> A Real-Market Negotiation Gym for AI Agents</h1>
+      <h1><span class="brand-word">OpenNegotiation:</span><br class="mobile-title-break"> A Real-Market<br class="mobile-title-break"> Negotiation Gym<br class="mobile-title-break"> for Agent&#8209;to&#8209;Agent<br class="mobile-title-break"> Evaluation<br class="mobile-title-break"> and Evolution</h1>
       <p class="subtitle">OpenNegotiation is an evaluation and improvement framework for agent-to-agent negotiation. It moves negotiation beyond static prompt roleplay by giving agents market evidence, tool access, private constraints, transaction rules, and traceable outcomes.</p>
     </section>
 
