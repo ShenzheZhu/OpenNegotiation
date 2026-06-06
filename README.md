@@ -4,12 +4,11 @@
 
 <p align="center">
   <a href="#overview">Overview</a> ·
-  <a href="#capabilities">Capabilities</a> ·
-  <a href="#quickstart">Quickstart</a> ·
-  <a href="#workflows">Workflows</a> ·
-  <a href="#system-model">System model</a> ·
-  <a href="#agent-integration">Agent integration</a> ·
-  <a href="#current-scope">Current scope</a>
+  <a href="#features">Features</a> ·
+  <a href="#start-here">Start here</a> ·
+  <a href="#documentation">Documentation</a> ·
+  <a href="#examples">Examples</a> ·
+  <a href="#citation">Citation</a>
 </p>
 
 <p align="center">
@@ -23,88 +22,47 @@
 <h2 id="overview">Overview</h2>
 
 OpenNegotiation is a real-market negotiation gym for agent-to-agent evaluation
-and evolution. It lets you benchmark, spar, and improve buyer/seller agents in
-transaction-aware scenarios where market evidence, private constraints, tool
-use, and deal outcomes are all recorded as inspectable artifacts.
+and evolution. It helps teams benchmark, spar, and improve buyer/seller agents
+in market-grounded scenarios with tool access, private constraints, transaction
+rules, and traceable outcomes.
 
-Give OpenNegotiation a product scenario, market references, agent strategies,
-and transaction rules. It runs the negotiation loop, preserves every message,
-offer, tool call, and settlement event, then returns metrics, reports, and
-strategy-improvement artifacts.
+The repo is built around one shared gym core and two primary modes:
 
-| You provide | OpenNegotiation returns |
-| --- | --- |
-| Product fixtures or real-market sold comps | Versioned scenarios, manifests, traces, and metrics |
-| Buyer, seller, model, or external agent configs | Benchmark runs, role-swapped scorecards, and leaderboard summaries |
-| A user agent plus curated NPC counterparties | Sparring battle reports, failure analysis, and strategy patch candidates |
-| Strategy configs ready to share or reuse | Local marketplace profiles and external training adapter packages |
+| Mode | Use it for | Main outputs |
+| --- | --- | --- |
+| Benchmark | Compare agents across buyer/seller roles and market scenarios | traces, metrics, scorecards, leaderboard summaries |
+| Sparring and evolution | Pit a user agent against curated NPC counterparties | battle reports, failure analysis, strategy patch candidates |
 
-The core idea is simple: negotiation should be tested as an agentic workflow,
-not as two static prompts talking in a vacuum. Agents can inspect evidence
-before acting, keep private constraints private, call tools through typed ports,
-and produce traces that are useful for evaluation and policy improvement.
+OpenNegotiation is meant to be used as research infrastructure, not a static
+prompt demo. Agents can inspect market evidence, call typed tools, keep private
+state private, negotiate under transaction constraints, and leave behind
+versioned artifacts that can be audited or reused for policy improvement.
 
-The default path is deterministic and no-key. You can run the benchmark,
-training loop, local strategy marketplace, and external handoff package without
-provider credentials. Live model runs use the LiteLLM adapter behind the same
-provider-neutral gateway.
+<h2 id="features">Features</h2>
 
-<h2 id="capabilities">Capabilities</h2>
-
-### Benchmark Real Negotiation Behavior
-
-- Run market-grounded buyer/seller scenarios with product data, sold-comps
+- Market-grounded negotiation scenarios with product fixtures, sold-comps
   references, private budgets, seller targets, fees, and transaction terms.
-- Evaluate the same participant as both buyer and seller with role-swapped
-  artifacts and combined leaderboard summaries.
-- Plan reciprocal arena schedules before launching larger model-vs-model
-  batches.
+- Provider-neutral `AgentPort`, `ToolPort`, and `LLMPort` contracts, with live
+  model runs routed through a LiteLLM adapter outside the core environment.
+- Role-swapped benchmark tracks so a participant can be evaluated as both buyer
+  and seller before leaderboard aggregation.
+- Tool-aware trace logging that preserves messages, offers, tool calls,
+  transaction events, provenance, and private/shared visibility boundaries.
+- Curated NPC strategy profiles for sparring, failure diagnosis, and
+  strategy-layer prompt improvement.
+- Local strategy marketplace primitives for sharing, validating, and installing
+  reusable negotiation profiles.
+- Deterministic no-key demo paths plus bounded live-validation hooks for model
+  providers and official real-market data adapters.
 
-### Make Every Run Auditable
+<h2 id="start-here">Start Here</h2>
 
-- Write standard artifacts for every run: `scenario.json`, `manifest.json`,
-  `trace.jsonl`, and `metrics.json`.
-- Preserve tool-call provenance, arguments, results, and visibility boundaries
-  instead of flattening runs into plain chat logs.
-- Score outcomes from structured actions and transaction events, not from
-  informal transcript inspection.
-
-### Improve Agents After They Lose
-
-- Spar a user agent against curated NPC buyer/seller strategy profiles.
-- Convert failed runs into battle reports with traps, missed signals, and
-  concrete policy lessons.
-- Generate strategy-layer prompt patch candidates, apply them into versioned
-  strategy configs, and compare baseline versus patched runs.
-
-### Integrate Without Lock-In
-
-- Use provider-neutral `AgentPort`, `ToolPort`, and `LLMPort` contracts in the
-  core environment.
-- Route live model providers through the LiteLLM adapter without binding
-  provider SDKs into the run loop.
-- Export external training adapter packages for user-owned agents without
-  mutating their source code.
-- Validate local strategy marketplace profiles for sharing, installing, and
-  reusing negotiation strategies.
-
-### Start With The Demo Reports
-
-Curated static examples are committed for quick inspection:
-
-- [MVP demo report](examples/reports/opennego_mvp_demo.html)
-- [Benchmark demo report](examples/reports/opennego_demo.html)
-- [No-key smoke summary](examples/outputs/no_key_smoke_summary.json)
-- [Private market-search metrics](examples/outputs/buyer_private_market_search_metrics.json)
-
-<h2 id="quickstart">Quickstart</h2>
-
-Install:
+Install the local package:
 
 ```bash
 git clone https://github.com/Kordi-AI/OpenNegotiation.git
 cd OpenNegotiation
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
@@ -120,459 +78,60 @@ opennego validate-demo-bundle \
   --manifest /tmp/opennegotiation-mvp/mvp_demo_manifest.json
 ```
 
-Expected result:
-
-```json
-{
-  "schema_version": "opennego.mvp_demo_bundle_validation.v1",
-  "status": "passed",
-  "errors": []
-}
-```
-
-The demo produces a benchmark leaderboard summary, a trace-grounded battle
-report, a strategy candidate, a bundle manifest, and an HTML report.
-
 Run the minimal smoke benchmark:
 
 ```bash
 opennego run --config configs/no_key_smoke.yaml
 ```
 
-<h2 id="workflows">Operational Workflows</h2>
-
-### Choose The Path You Need
-
-| If you want to... | Run | Read next |
-| --- | --- | --- |
-| Generate the full local demo | `opennego mvp-demo` | [Policy Learning](docs/policy_learning.md) |
-| Evaluate fixture benchmark agents | `opennego run` | [Experiment Runner](docs/experiment_runner.md) |
-| Build a leaderboard artifact | `opennego leaderboard` | [Benchmark Contract](docs/benchmark_contract.md) |
-| Check buyer/seller role coverage | `opennego role-swap` | [Benchmark Spec](docs/benchmark_spec.md) |
-| Plan a reciprocal large-batch schedule | `opennego arena-plan` | [Benchmark Contract](docs/benchmark_contract.md) |
-| Spar against NPC profiles | `opennego spar` | [Policy Learning](docs/policy_learning.md) |
-| Run a strategy improvement loop | `opennego train` | [Agent Integration](docs/agent_integration.md) |
-| Export a local strategy profile | `opennego marketplace-export` | [Policy Learning](docs/policy_learning.md) |
-| Package results for another team | `opennego handoff` | [Release Checklist](docs/release_checklist.md) |
-| Connect your own model or agent | `AgentPort`, `LLMPort`, or `--agent-factory` | [Agent Integration](docs/agent_integration.md) |
-
-### Benchmark
-
-```bash
-opennego run \
-  --config configs/real_market_demo.yaml \
-  --output-dir /tmp/opennegotiation-benchmark
-
-opennego leaderboard \
-  --input-dir /tmp/opennegotiation-benchmark \
-  --output /tmp/opennegotiation-benchmark/leaderboard_summary.json
-
-opennego report \
-  --input-dir /tmp/opennegotiation-benchmark \
-  --output /tmp/opennegotiation-benchmark.html
-```
-
-### Role-Swapped Track
-
-```bash
-opennego role-swap \
-  --output-dir /tmp/opennegotiation-role-swap \
-  --participant-id baseline_strategy
-```
-
-This evaluates one participant identity as both buyer and seller, then writes
-role-specific runs, combined run artifacts, `role_swap_summary.json`, and a
-combined `leaderboard_summary.json`.
-
-### Arena Plan
-
-```bash
-opennego arena-plan \
-  --participant model_a \
-  --participant model_b \
-  --participant model_c \
-  --scenario-id real_market_demo \
-  --seed 13 \
-  --output /tmp/opennegotiation-arena-plan.json
-```
-
-The plan records reciprocal buyer/seller matchups and required role coverage.
-OpenNegotiation currently treats deterministic scorecards as the primary
-summary. Elo or Bradley-Terry fitting is a future layer after reciprocal
-coverage exists.
-
-### Sparring And Training
-
-List curated NPC profiles:
-
-```bash
-opennego strategies
-opennego strategies --role seller
-```
-
-Run sparring:
-
-```bash
-opennego spar \
-  --output-dir /tmp/opennegotiation-sparring \
-  --report /tmp/opennegotiation-sparring.html \
-  --opponent-profile seller_hardline_anchor_v1 \
-  --opponent-profile seller_hidden_fees_v1
-```
-
-Run the no-key training loop:
-
-```bash
-opennego train \
-  --output-dir /tmp/opennegotiation-training \
-  --opponent-profile seller_hardline_anchor_v1 \
-  --parent-strategy-id buyer_baseline
-```
-
-Training writes baseline sparring artifacts, a battle report, a strategy
-candidate, an applied `strategy_config.json`, rerun artifacts,
-`strategy_comparison.json`, and `training_loop.json`.
-
-### Strategy Export
-
-```bash
-opennego export-training-adapter \
-  --strategy-config /tmp/opennegotiation-training/strategy_config.json \
-  --output /tmp/opennegotiation-training/external_training_adapter.json \
-  --agent-kind team_buyer_agent
-
-opennego validate-training-adapter \
-  --adapter /tmp/opennegotiation-training/external_training_adapter.json
-```
-
-The adapter includes a fixed base protocol prompt, an editable strategy prompt,
-lineage, target role, and an explicit `code_mutation: false` contract.
-
-Export to the local strategy marketplace:
-
-```bash
-opennego marketplace-export \
-  --candidate /tmp/opennegotiation-training/strategy_candidate.json \
-  --output /tmp/opennegotiation-training/marketplace_profile.json \
-  --profile-id shared_buyer_guard_v1 \
-  --install-registry /tmp/opennegotiation-local-marketplace.json
-
-opennego validate-marketplace \
-  --registry /tmp/opennegotiation-local-marketplace.json \
-  --profile /tmp/opennegotiation-training/marketplace_profile.json
-```
-
-### External Handoff
-
-```bash
-opennego handoff --output-dir /tmp/opennegotiation-handoff
-```
-
-The handoff package includes a package README, MVP demo artifacts, validation
-JSON files, role-swapped benchmark artifacts, marketplace validation, and
-`handoff_manifest.json`. Treat it as ready only when the manifest reports
-`status: passed`.
-
-<h2 id="system-model">System Model</h2>
-
-OpenNegotiation has three product layers:
-
-1. **Benchmark**: run buyer/seller agents in market-grounded scenarios and write
-   versioned artifacts.
-2. **Training / prompt optimization**: convert completed traces into battle
-   reports, strategy patches, strategy configs, reruns, and comparisons.
-3. **Strategy marketplace**: expose curated NPC profiles and local shared
-   strategy profiles for repeatable sparring.
-
-```mermaid
-flowchart LR
-  Config["Config / CLI"] --> Env["NegotiationEnvironment"]
-  Env --> Buyer["Buyer Agent"]
-  Env --> Seller["Seller Agent"]
-  Env --> Tools["ToolPort"]
-  Env --> Tx["TransactionPort"]
-  Env --> Artifacts["Versioned Artifacts"]
-  Artifacts --> Metrics["Metrics + Leaderboard"]
-  Artifacts --> Learning["Battle Report"]
-  Learning --> Strategy["Strategy Candidate"]
-  Strategy --> Rerun["Sparring Rerun"]
-  Rerun --> Compare["Before / After Comparison"]
-  Strategy --> Marketplace["Local Strategy Marketplace"]
-```
-
-Core run artifacts:
-
-```text
-run_dir/
-  scenario.json   scenario, constraints, and market reference
-  manifest.json   agents, tools, transaction config, and provenance
-  trace.jsonl     messages, offers, tool calls, and transaction events
-  metrics.json    deal outcome, utility, market gap, tool use, and risk
-```
-
-Training and reporting layers read these files. They do not rely on hidden
-provider logs or one-off chat transcripts.
-
-### Prompt Boundary
-
-OpenNegotiation separates prompt state into two layers:
-
-| Layer | Editable by user? | Purpose |
-| --- | --- | --- |
-| Base | No | role rules, action schema, tool permissions, transaction constraints, invariant checks |
-| Strategy | Yes | concession style, disclosure behavior, risk tolerance, opponent modeling, tool timing |
-
-Policy learning only suggests edits to the strategy layer. The base protocol
-stays fixed so benchmark runs remain comparable.
-
-<h2 id="agent-integration">Agent Integration</h2>
-
-Implement `AgentPort`:
-
-```python
-from opennego.ports import AgentPort
-from opennego.schema import AgentAction, AgentContext, Role
-
-
-class MyBuyerAgent(AgentPort):
-    name = "my_buyer"
-    role = Role.BUYER
-
-    def act(self, context: AgentContext) -> AgentAction:
-        return AgentAction.offer_price(750, note="My offer is $750.")
-```
-
-Register it in Python:
-
-```python
-from opennego.runner import run_experiment_config
-
-summary = run_experiment_config(
-    "configs/my_eval.yaml",
-    agent_factories={"my_buyer": my_buyer_factory},
-)
-```
-
-Or load an explicit local factory from the CLI:
-
-```bash
-opennego run \
-  --config configs/my_eval.yaml \
-  --agent-factory my_buyer=/absolute/path/to/my_agents.py:my_buyer_factory
-```
-
-OpenNegotiation imports only the local file you provide. It does not
-auto-discover plugins, install remote code, or mutate your agent repository.
-
-For LLM-backed agents, install the optional gateway dependency:
-
-```bash
-python -m pip install -e ".[dev,llm]"
-export OPENROUTER_API_KEY=...
-```
-
-Run a tiny live-model latency demo:
-
-```bash
-opennego run-models \
-  --output-dir /tmp/opennegotiation-live-models \
-  --max-turns 4 \
-  --max-tokens 256
-```
-
-`run-models` is intentionally cheap and buyer-only against a scripted seller.
-For realistic live validation, use config-driven buyer/seller LLM runs with role
-swapping, high turn/token budgets, the full current tool-regime surface,
-transaction guards, sparring/evolution reruns, marketplace export, and adapter
-validation. Start from
-[configs/full_realism_live.example.yaml](configs/full_realism_live.example.yaml)
-and duplicate it with buyer/seller models swapped for reciprocal role coverage;
-see [Issue #102 Live Validation](docs/live_validation_102.md).
-
-Use provider-backed NPC profiles:
-
-```bash
-opennego spar \
-  --output-dir /tmp/opennegotiation-live-npc \
-  --opponent-profile seller_hardline_anchor_v1 \
-  --opponent-llm-model openrouter/openai/gpt-4o-mini \
-  --opponent-llm-max-tokens 256
-```
-
-Run a live user-agent sparring/evolution loop:
-
-```bash
-opennego spar \
-  --output-dir /tmp/opennegotiation-live-baseline \
-  --opponent-profile seller_hardline_anchor_v1 \
-  --user-llm-model openrouter/openai/gpt-4.1-nano \
-  --opponent-llm-model openrouter/openai/gpt-4.1-mini \
-  --learning-tool-regime buyer_private_market_search \
-  --no-fail-fast
-
-opennego evolve \
-  --battle-report /tmp/opennegotiation-live-baseline/profiles/seller_hardline_anchor_v1/battle_report.json \
-  --output /tmp/opennegotiation-live-strategy.json \
-  --parent-strategy-id my_live_buyer
-
-opennego spar \
-  --output-dir /tmp/opennegotiation-live-rerun \
-  --opponent-profile seller_hardline_anchor_v1 \
-  --user-strategy /tmp/opennegotiation-live-strategy.json \
-  --user-llm-model openrouter/openai/gpt-4.1-nano \
-  --opponent-llm-model openrouter/openai/gpt-4.1-mini \
-  --learning-tool-regime buyer_private_market_search \
-  --no-fail-fast
-```
-
-Keep API keys in environment variables, a LiteLLM proxy config, Keychain, or
-another local secret manager. Do not commit credentials or raw live traces that
-may contain private data.
-
-<h2 id="real-market-data">Real-Market Data</h2>
-
-OpenNegotiation supports offline sold-comps normalization and source-policy
-validation. It also includes an eBay Marketplace Insights adapter contract for
-licensed sold-comps ingestion. The live path uses official APIs only; it does
-not scrape marketplace pages and it still requires eBay API credentials plus
-Marketplace Insights production access. eBay's docs mark Marketplace Insights
-as Limited Release, so ordinary developer keys may not be enough for production
-sold-comps access.
-
-```bash
-opennego market-source-policy \
-  --output /tmp/ebay-source-policy.json \
-  --source-id ebay_offline_export
-
-opennego validate-market-source \
-  --policy /tmp/ebay-source-policy.json
-```
-
-Attach a validated policy during ingestion:
-
-```bash
-opennego ingest-market \
-  --input /path/to/sold_comps.json \
-  --products-output /tmp/products.json \
-  --comps-output /tmp/market_comps.json \
-  --manifest-output /tmp/market_manifest.json \
-  --source-policy /tmp/ebay-source-policy.json
-```
-
-Source policies record data rights, collection mode, privacy fields,
-credential policy, and anti-scraping boundaries.
-
-For official eBay sold-comps ingestion, create a live source policy first:
-
-```bash
-opennego market-source-policy \
-  --output /tmp/ebay-live-source-policy.json \
-  --source-id ebay_marketplace_insights \
-  --adapter-kind ebay_marketplace_insights \
-  --collection-mode official_api \
-  --data-rights official_ebay_api_with_marketplace_insights_access \
-  --terms-url https://developer.ebay.com/api-docs/buy/marketplace-insights/static/overview.html \
-  --privacy-classification official_api_sold_comps_without_account_pii \
-  --live-collection-enabled
-```
-
-Then run a bounded ingestion. Credentials stay in the environment or your
-secret manager; never commit them.
-
-```bash
-export EBAY_CLIENT_ID=...
-export EBAY_CLIENT_SECRET=...
-
-opennego ingest-ebay \
-  --query "Apple iPhone 14 Pro 128GB Unlocked" \
-  --source-policy /tmp/ebay-live-source-policy.json \
-  --snapshot-output /tmp/ebay_sold_snapshot.json \
-  --products-output /tmp/products.json \
-  --comps-output /tmp/market_comps.json \
-  --manifest-output /tmp/market_manifest.json \
-  --limit 50
-```
-
-The adapter writes a sanitized sold-comps snapshot, then reuses the same
-normalization path as offline data. CI and local no-key checks can exercise the
-contract with `--mock-response`. A GCP deployment is useful for Cloud Run jobs,
-Secret Manager, scheduler/rate-limit control, and GCS-hosted frozen artifacts,
-but eBay access still depends on official API approval and credentials.
-
-<h2 id="current-scope">Current Scope</h2>
-
-### Implemented
-
-- Provider-neutral buyer/seller environment.
-- Fixture-backed market evidence and transaction terms.
-- Versioned benchmark artifacts.
-- Leaderboard summaries and static reports.
-- Role-swapped benchmark tracks.
-- Arena schedule planning.
-- NPC profile sparring.
-- Deterministic battle reports and strategy patch generation.
-- Strategy config application and before/after comparison.
-- Local strategy marketplace export and validation.
-- External training adapter packages.
-- No-key external handoff bundles.
-- eBay Marketplace Insights adapter contract with no-key mock-response tests.
-- Optional LiteLLM-backed live model demos.
-
-### Not Implemented Yet
-
-- Hosted strategy marketplace backend.
-- Account-backed sharing or installable remote profiles.
-- Production-verified live eBay ingestion with approved Marketplace Insights
-  credentials.
-- Non-eBay live C2C marketplace adapters.
-- Real payment, logistics, warranty, legal, or dispute provider integrations.
-- Production-scale Elo or Bradley-Terry leaderboard fitting.
-
-<h2 id="repository-layout">Repository Layout</h2>
-
-```text
-src/opennego/
-  agents/         scripted and LLM-backed baseline agents
-  adapters/       concrete provider bindings such as LiteLLM
-  artifacts.py    versioned artifact contracts and JSON I/O
-  environment.py  core negotiation loop
-  ports/          provider-neutral agent, LLM, tool, and transaction contracts
-  runner.py       config-driven experiment runner
-  sparring.py     NPC profile sparring suites
-  training.py     no-key strategy improvement loop
-  marketplace.py  local strategy profile export and validation
-  transactions/   deterministic transaction simulators
-  tools/          built-in market-price search tool
-
-configs/          local experiment configs
-examples/data/    fixtures and NPC strategy registry
-examples/outputs/ curated sample artifacts
-examples/reports/ curated static demo reports
-tests/            no-key regression tests
-docs/             design, integration, and benchmark notes
-```
-
-<h2 id="verification">Verification</h2>
-
-```bash
-pytest -q
-PYTHONPYCACHEPREFIX=/tmp/opennego-pycache PYTHONPATH=src python -m compileall -q src tests
-git diff --check
-```
+For detailed commands, configuration fields, live model setup, and handoff
+packages, use the documentation map below.
 
 <h2 id="documentation">Documentation</h2>
 
-- [Architecture](docs/architecture.md): module boundaries and provider-neutral design
-- [Agent Integration](docs/agent_integration.md): custom `AgentPort`, CLI factories, and training adapters
-- [Benchmark Contract](docs/benchmark_contract.md): versioned artifact contracts
-- [Benchmark Spec](docs/benchmark_spec.md): benchmark structure and scoring surface
-- [Experiment Runner](docs/experiment_runner.md): config schema and output layout
-- [Policy Learning](docs/policy_learning.md): strategy patches, sparring, and marketplace MVP
-- [Transaction Simulator](docs/transaction_simulator.md): fixture settlement and lifecycle guards
-- [Real-Market Benchmark Design](docs/real_market_benchmark_design.md): offline C2C data design
-- [LLM Baselines](docs/llm_baselines.md): structured action JSON for model-backed agents
-- [Release Checklist](docs/release_checklist.md): no-key handoff gate
-- [Troubleshooting](docs/troubleshooting.md): common setup and parser issues
+| I want to... | Read |
+| --- | --- |
+| Understand the system architecture | [Architecture](docs/architecture.md) |
+| Run config-driven experiments | [Experiment Runner](docs/experiment_runner.md) |
+| Connect my own agent or local factory | [Agent Integration](docs/agent_integration.md) |
+| Run LLM-backed baselines through LiteLLM | [LLM Baselines](docs/llm_baselines.md) |
+| Understand benchmark artifacts and scoring | [Benchmark Contract](docs/benchmark_contract.md) and [Benchmark Spec](docs/benchmark_spec.md) |
+| Plan reciprocal buyer/seller evaluations | [Benchmark Contract](docs/benchmark_contract.md) |
+| Use NPC sparring and policy learning | [Policy Learning](docs/policy_learning.md) |
+| Work with strategy marketplace profiles | [Policy Learning](docs/policy_learning.md) |
+| Inspect transaction simulation rules | [Transaction Simulator](docs/transaction_simulator.md) |
+| Design real-market C2C evaluation data | [Real-Market Benchmark Design](docs/real_market_benchmark_design.md) |
+| Validate source policy and live collection boundaries | [Live Validation Notes](docs/live_validation_102.md) |
+| Prepare an external demo or handoff bundle | [MVP Readiness](docs/mvp_readiness.md) and [Release Checklist](docs/release_checklist.md) |
+| Debug setup, parser, or CLI issues | [Troubleshooting](docs/troubleshooting.md) |
+| Track research directions and open product gaps | [Research Agenda](docs/research_agenda.md) |
+
+<h2 id="examples">Examples</h2>
+
+Curated no-key artifacts are committed for quick inspection:
+
+| Artifact | Link |
+| --- | --- |
+| Full MVP demo report | [examples/reports/opennego_mvp_demo.html](examples/reports/opennego_mvp_demo.html) |
+| Benchmark report | [examples/reports/opennego_demo.html](examples/reports/opennego_demo.html) |
+| No-key smoke summary | [examples/outputs/no_key_smoke_summary.json](examples/outputs/no_key_smoke_summary.json) |
+| Private market-search metrics | [examples/outputs/buyer_private_market_search_metrics.json](examples/outputs/buyer_private_market_search_metrics.json) |
+
+<h2 id="repository-map">Repository Map</h2>
+
+| Path | Purpose |
+| --- | --- |
+| [src/opennego/](src/opennego/) | core package, ports, adapters, agents, tools, transactions, metrics |
+| [configs/](configs/) | no-key and live-validation experiment configs |
+| [examples/data/](examples/data/) | small fixtures and NPC strategy registry |
+| [examples/reports/](examples/reports/) | curated static HTML reports |
+| [docs/](docs/) | implementation details, contracts, integration guides, release notes |
+| [tests/](tests/) | deterministic regression tests |
+
+<h2 id="citation">Citation</h2>
+
+Citation information will be added with the first public paper or technical
+report release.
 
 <h2 id="license">License</h2>
 
