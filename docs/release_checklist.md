@@ -43,7 +43,7 @@ Confirm:
 
 ## External Handoff Package
 
-For a shareable no-key package, run:
+For a shareable local fixture package, run:
 
 ```bash
 opennego handoff --output-dir /tmp/opennego-handoff
@@ -53,8 +53,8 @@ The command writes:
 
 - `/tmp/opennego-handoff/README.md`
 - `/tmp/opennego-handoff/handoff_manifest.json`
-- MVP demo artifacts and an HTML report
-- MVP bundle, market fixture, and strategy marketplace validation JSON
+- demo artifacts and an HTML report
+- demo bundle, market fixture, and strategy marketplace validation JSON
 - role-swapped benchmark artifacts with participant role coverage
 
 The top-level manifest uses schema `opennego.external_handoff.v1`. Treat the

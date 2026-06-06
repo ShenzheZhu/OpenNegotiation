@@ -1,41 +1,41 @@
 {
-  "name": "no_key_smoke",
-  "output_dir": "runs/no_key_smoke",
+  "name": "demo_suite",
+  "output_dir": "runs/demo_suite",
   "total_runs": 5,
   "completed": 5,
   "skipped": 0,
   "failed": 0,
   "runs": [
     {
-      "run_id": "no_key_smoke-camera_001-buyer_private_failure_market_search-seed-7",
+      "run_id": "demo_suite-camera_001-buyer_private_failure_market_search-seed-7",
       "outcome": "deal",
       "deal_price": 800.0,
       "transaction_completed_rate": 1.0,
       "tool_failure_count": 1.0
     },
     {
-      "run_id": "no_key_smoke-camera_001-buyer_private_market_search-seed-7",
+      "run_id": "demo_suite-camera_001-buyer_private_market_search-seed-7",
       "outcome": "deal",
       "deal_price": 760.0,
       "transaction_completed_rate": 1.0,
       "tool_failure_count": 0.0
     },
     {
-      "run_id": "no_key_smoke-camera_001-no_tools-seed-7",
+      "run_id": "demo_suite-camera_001-no_tools-seed-7",
       "outcome": "deal",
       "deal_price": 800.0,
       "transaction_completed_rate": 1.0,
       "tool_failure_count": 0.0
     },
     {
-      "run_id": "no_key_smoke-camera_001-seller_private_market_search-seed-7",
+      "run_id": "demo_suite-camera_001-seller_private_market_search-seed-7",
       "outcome": "deal",
       "deal_price": 800.0,
       "transaction_completed_rate": 1.0,
       "tool_failure_count": 0.0
     },
     {
-      "run_id": "no_key_smoke-camera_001-symmetric_market_search-seed-7",
+      "run_id": "demo_suite-camera_001-symmetric_market_search-seed-7",
       "outcome": "deal",
       "deal_price": 760.0,
       "transaction_completed_rate": 1.0,

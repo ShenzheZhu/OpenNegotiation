@@ -89,7 +89,14 @@
     .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
     .section-copy { max-width: 720px; color: var(--muted); }
     .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .card { padding: 16px; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; }
+    .lesson-card { padding: 16px; background: #fffaf0; border: 1px solid #f3d7a4; border-radius: 8px; }
+    .profile-card { padding: 16px; background: #f8fbff; border: 1px solid var(--line); border-radius: 8px; }
+    .prompt-patch { margin-top: 12px; padding: 12px; background: #10212b; color: #e7f6f2; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .severity-high { color: #b91c1c; font-weight: 750; }
+    .severity-medium { color: #b45309; font-weight: 750; }
+    .severity-low { color: var(--accent-dark); font-weight: 750; }
     .muted { color: var(--muted); }
     .overview-figure {
       padding: 18px;
@@ -127,7 +134,7 @@
     footer { margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }
     @media (max-width: 860px) {
       .nav { align-items: flex-start; flex-direction: column; }
-      .hero, .grid-3, .flow, .figure-grid, .kpis { grid-template-columns: 1fr; }
+      .hero, .grid-3, .grid-2, .flow, .figure-grid, .kpis { grid-template-columns: 1fr; }
       h1 { font-size: 36px; }
       .section-head { align-items: flex-start; flex-direction: column; }
       .kpi .value { font-size: 20px; }
@@ -142,6 +149,9 @@
         <a href="#overview">Overview</a>
         <a href="#mechanism">Mechanism</a>
         <a href="#leaderboard">Leaderboard</a>
+
+        <a href="#training">Training</a>
+        <a href="#marketplace">Marketplace</a>
         <a href="#trace">Trace</a>
         <a href="#findings">Findings</a>
       </div>
@@ -155,13 +165,14 @@
       <div class="actions">
         <a class="button primary" href="#leaderboard">View leaderboard preview</a>
         <a class="button" href="#overview">Explore mechanism</a>
+        <a class="button" href="#training">Review training advice</a>
         <a class="button" href="../../docs/real_market_benchmark_design.md">Design notes</a>
       </div>
       <div class="kpis">
         <div class="kpi"><div class="label">Demo Runs</div><div class="value">3</div></div>
         <div class="kpi"><div class="label">Product Cluster</div><div class="value">used good</div></div>
         <div class="kpi"><div class="label">Market Reference</div><div class="value">$575.00</div></div>
-        <div class="kpi"><div class="label">Sold Comps</div><div class="value">24</div></div>
+        <div class="kpi"><div class="label">Training Reports</div><div class="value">1</div></div>
       </div>
     </section>
 
@@ -177,10 +188,10 @@
         <div class="figure-grid">
           <div class="figure-node"><strong>Buyer Agent</strong><span class="muted">Budget, preferences, search tools, and offer policy.</span></div>
           <div class="figure-node"><strong>Market Evidence</strong><span class="muted">Sold comps, provenance, noisy/stale/failure regimes.</span></div>
-          <div class="figure-node"><strong>Negotiation Protocol</strong><span class="muted">Messages, offers, accepts, rejects, and private tool traces.</span></div>
-          <div class="figure-node"><strong>Transaction Layer</strong><span class="muted">Shipping, tax, fees, escrow, payment, and risk outcomes.</span></div>
+          <div class="figure-node"><strong>Policy Learning</strong><span class="muted">Battle reports extract trace-grounded lessons and strategy prompt patches.</span></div>
+          <div class="figure-node"><strong>Strategy Marketplace</strong><span class="muted">Preset NPC profiles expose anchors, stale evidence, hidden fees, and probing tactics.</span></div>
         </div>
-        <p class="figure-caption">The public benchmark reads versioned artifacts: scenario, manifest, trace JSONL, and metrics.</p>
+        <p class="figure-caption">The demo loop is benchmark, diagnose, patch strategy, and spar against harder NPC profiles.</p>
       </div>
     </section>
 
@@ -188,8 +199,8 @@
       <h2>Why Choose OpenNegotiation</h2>
       <div class="grid-3">
         <div class="card"><h3>Agentic, not prompt-only</h3><p class="muted">Agents can use tools for market search, provenance checks, and transaction reasoning before making offers.</p></div>
-        <div class="card"><h3>Market-grounded</h3><p class="muted">Scenarios are anchored to comparable sale distributions instead of assuming a hidden human cost price.</p></div>
-        <div class="card"><h3>Transaction-aware</h3><p class="muted">Accepted offers can be settled through shipping, tax, fees, escrow, payment, and risk simulators.</p></div>
+        <div class="card"><h3>Training-ready</h3><p class="muted">Every run can become a battle report with failure diagnoses and strategy-layer prompt patches.</p></div>
+        <div class="card"><h3>Marketplace-driven</h3><p class="muted">Curated NPC strategies give users repeatable sparring partners for systematic optimization.</p></div>
       </div>
     </section>
 
@@ -238,12 +249,62 @@
       </div>
     </section>
 
-    <section id="findings" class="section">
-      <h2>Key Findings From This Smoke</h2>
+
+
+
+    <section id="training" class="section">
+      <div class="section-head">
+        <div>
+          <h2>Training / Prompt Optimization</h2>
+          <p class="section-copy">Battle reports turn benchmark artifacts into strategy-layer edits. The base protocol remains fixed; only the user's strategy prompt changes.</p>
+        </div>
+        <span class="pill">Policy score 85.0</span>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Battle Summary</h3>
+          <p class="muted">As buyer, the agent ended with outcome=deal at $608.00 against Hardline Anchor Seller. Policy score=85.0. Detected 1 actionable issue(s) for strategy optimization.</p>
+          <p class="muted">Run: real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13</p>
+          <p class="muted">Failure modes: price_discipline</p>
+        </div>
+        <div class="card">
+          <h3>Strategy Patch</h3>
+          <div class="prompt-patch">Role strategy patch for buyer:
+Keep OpenNegotiation base protocol fixed. Edit only the strategy layer.
+1. Never exceed market_reference * 1.05 unless a written exception is justified by condition, bundle value, or time preference.</div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:14px;">
+        <div class="lesson-card"><h3>Price Discipline</h3><p class="muted">buyer_overpaid_market</p><p class="severity-high">HIGH</p><p>The accepted price $608.00 is more than 5% above the market reference $575.00.</p><p class="muted">Cap final buyer offers at the market reference unless the trace records a concrete quality, shipping, warranty, or urgency reason.</p><p class="muted">Evidence: turn 1 buyer offer; turn 2 seller accept</p></div>
+      </div>
+    </section>
+
+
+
+    <section id="marketplace" class="section">
+      <div class="section-head">
+        <div>
+          <h2>Strategy Marketplace</h2>
+          <p class="section-copy">Preset NPC profiles provide repeatable sparring partners. Each profile separates fixed sandbox base logic from editable strategy behavior.</p>
+        </div>
+        <span class="pill">5 NPC profiles</span>
+      </div>
       <div class="grid-3">
-        <div class="card"><h3>Tools change price formation</h3><p class="muted">The buyer-private market tool pulls offers toward the sold-comparable reference instead of the inflated asking price.</p></div>
-        <div class="card"><h3>Noisy evidence remains visible</h3><p class="muted">Tool regime metadata and trace provenance make clean, noisy, stale, adversarial, and failure cases auditable.</p></div>
-        <div class="card"><h3>Transactions are part of eval</h3><p class="muted">The accepted offer is not the final story: buyer total cost, seller net revenue, fees, and risk are separately scored.</p></div>
+        <div class="profile-card"><h3>Hardline Anchor Seller</h3><p><span class="pill">seller</span> <span class="pill">medium</span></p><p class="muted">Anchors near listing price, concedes slowly, and tests whether buyers can stay disciplined against high opening offers.</p><p class="muted">Tests: High opening anchor can pull weak buyers above market reference.; Slow concessions can force timeout if the buyer lacks close-mode policy.</p><p class="muted">Tags: seller, anchor, concession, baseline</p></div>
+<div class="profile-card"><h3>Stale Comps Seller</h3><p><span class="pill">seller</span> <span class="pill">hard</span></p><p class="muted">Uses stale or selective market evidence to defend price and tests whether buyers verify provenance before accepting.</p><p class="muted">Tests: Stale market evidence can mislead agents that do not inspect provenance.; Selective comparable sales can make market gap look smaller than it is.</p><p class="muted">Tags: seller, market-evidence, stale, tool-aware</p></div>
+<div class="profile-card"><h3>Hidden Fees Seller</h3><p><span class="pill">seller</span> <span class="pill">hard</span></p><p class="muted">Keeps negotiated price attractive while shifting attention away from shipping, escrow, payment, and platform costs.</p><p class="muted">Tests: Low item price can hide high all-in transaction cost.; Late concessions can cause buyers to accept before computing settlement risk.</p><p class="muted">Tags: seller, transaction, fees, risk</p></div>
+<div class="profile-card"><h3>Budget Probe Buyer</h3><p><span class="pill">buyer</span> <span class="pill">medium</span></p><p class="muted">Uses low anchors and repeated justification requests to discover weak seller reservation logic.</p><p class="muted">Tests: Low anchors can push sellers below market if they lack price floors.; Repeated justification requests can expose reservation logic.</p><p class="muted">Tags: buyer, probe, reservation, baseline</p></div>
+<div class="profile-card"><h3>Tool Overuse Buyer</h3><p><span class="pill">buyer</span> <span class="pill">easy</span></p><p class="muted">Calls tools repeatedly but struggles to convert evidence into concrete offers, useful for testing tool-use discipline.</p><p class="muted">Tests: Excessive search can burn negotiation turns.; Evidence collection without offer policy causes timeout.</p><p class="muted">Tags: buyer, tool-use, timeout, training</p></div>
+      </div>
+    </section>
+
+
+    <section id="findings" class="section">
+      <h2>Key Findings From This Demo</h2>
+      <div class="grid-3">
+        <div class="card"><h3>Benchmark is the evidence layer</h3><p class="muted">Scenario, manifest, trace, and metrics artifacts remain the source of truth for scoring and replay.</p></div>
+        <div class="card"><h3>Training turns scores into edits</h3><p class="muted">Battle reports cite trace events before recommending strategy prompt patches.</p></div>
+        <div class="card"><h3>NPCs define the curriculum</h3><p class="muted">Marketplace profiles expose anchors, stale evidence, hidden fees, reservation probes, and tool overuse.</p></div>
       </div>
     </section>
 
@@ -259,7 +320,7 @@
     </section>
 
     <footer>
-      Generated from OpenNegotiation benchmark artifacts. This is a no-key demo surface, not a live marketplace collection.
+      Generated from OpenNegotiation benchmark and policy-learning artifacts. This is a fixture-backed demo surface, not a live marketplace collection.
     </footer>
   </main>
 </body>

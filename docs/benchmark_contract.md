@@ -179,13 +179,13 @@ seller. It writes:
 - `role_swap_summary.json` with schema `opennego.role_swap_benchmark.v1`
 
 The combined leaderboard should show the selected participant with buyer and
-seller roles and `role_coverage: 1.0`. This is a small no-key methodology
+seller roles and `role_coverage: 1.0`. This is a small local fixture methodology
 track for external handoff, not a pairwise arena or large-batch leaderboard.
 
-## MVP Demo Bundle
+## Demo Bundle
 
-`opennego mvp-demo` writes `mvp_demo_manifest.json` with schema
-`opennego.mvp_demo_bundle.v1`. The bundle manifest is a handoff index, not a
+`opennego demo` writes `demo_manifest.json` with schema
+`opennego.demo_bundle.v1`. The bundle manifest is a handoff index, not a
 separate scoring surface. It records:
 
 - benchmark completion and failure counts
@@ -193,10 +193,10 @@ separate scoring surface. It records:
 - paths for `leaderboard_summary.json`, `battle_report.json`,
   `strategy_candidate.json`, and the rendered HTML report
 - observed and expected schema versions for machine-readable artifacts
-- ordered workflow steps used by the one-command no-key demo
+- ordered workflow steps used by the one-command local fixture demo
 
-`opennego validate-demo-bundle --manifest <mvp_demo_manifest.json>` validates
-that handoff bundle and returns `opennego.mvp_demo_bundle_validation.v1` JSON.
+`opennego validate-demo --manifest <demo_manifest.json>` validates
+that handoff bundle and returns `opennego.demo_bundle_validation.v1` JSON.
 It checks the bundle schema, benchmark summary fields, workflow step order,
 required artifact paths, and the expected schema versions for the leaderboard
 summary, battle report, and strategy candidate artifacts. A failed validation
@@ -207,15 +207,15 @@ bundles before handoff.
 
 `opennego handoff --output-dir <dir>` writes a top-level
 `handoff_manifest.json` with schema `opennego.external_handoff.v1`. The handoff
-manifest is the package index for external no-key model-team smoke tests. It
+manifest is the package index for external local fixture model-team smoke tests. It
 records:
 
 - the package README path
-- MVP demo artifact paths and benchmark completion counts
+- demo artifact paths and benchmark completion counts
 - role-swapped benchmark summary path and participant role coverage
-- MVP bundle, market fixture, and strategy marketplace validation statuses
+- demo bundle, market fixture, and strategy marketplace validation statuses
 - recheck commands for the package validators
-- no-key boundaries: fixture-backed data, no live marketplace collection, no
+- local fixture boundaries: fixture-backed data, no live marketplace collection, no
   live model-provider calls, and no hosted marketplace backend
 
 The handoff package is ready only when the manifest `status` is `passed`.
@@ -234,7 +234,7 @@ the methodology contract for larger reciprocal schedules:
 - Elo or Bradley-Terry as a planned optional layer only after reciprocal pair
   coverage is available
 
-Use this artifact before scaling beyond the no-key role-swapped track. It makes
+Use this artifact before scaling beyond the local fixture role-swapped track. It makes
 large-batch schedule coverage auditable without implying that arena ratings have
 already been fitted.
 

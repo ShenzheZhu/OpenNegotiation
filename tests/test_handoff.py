@@ -7,7 +7,7 @@ from opennego.handoff import (
 )
 from opennego.market_validation import MARKET_VALIDATION_SCHEMA_VERSION
 from opennego.marketplace import MARKETPLACE_VALIDATION_SCHEMA_VERSION
-from opennego.mvp_demo import MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION
+from opennego.demo import DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION
 from opennego.role_swap import ROLE_SWAP_SCHEMA_VERSION
 
 
@@ -17,8 +17,8 @@ def test_external_handoff_package_writes_validated_artifacts(tmp_path):
     summary = run_external_handoff_package(output_dir=output_dir)
     manifest = json.loads((output_dir / "handoff_manifest.json").read_text())
     readme = (output_dir / "README.md").read_text()
-    mvp_validation = json.loads(
-        (output_dir / "validations" / "mvp_demo_bundle_validation.json").read_text()
+    demo_validation = json.loads(
+        (output_dir / "validations" / "demo_bundle_validation.json").read_text()
     )
     market_validation = json.loads(
         (output_dir / "validations" / "market_validation.json").read_text()
@@ -34,19 +34,19 @@ def test_external_handoff_package_writes_validated_artifacts(tmp_path):
     assert summary.status == "passed"
     assert manifest["schema_version"] == EXTERNAL_HANDOFF_SCHEMA_VERSION
     assert manifest["status"] == "passed"
-    assert manifest["mvp_demo"]["benchmark_completed"] == 3
-    assert manifest["mvp_demo"]["benchmark_failed"] == 0
+    assert manifest["demo"]["benchmark_completed"] == 3
+    assert manifest["demo"]["benchmark_failed"] == 0
     assert manifest["role_swap"]["participant_role_coverage"] == 1.0
-    assert manifest["validations"]["mvp_demo_bundle"]["status"] == "passed"
+    assert manifest["validations"]["demo_bundle"]["status"] == "passed"
     assert manifest["validations"]["market_dataset"]["status"] == "passed"
     assert manifest["validations"]["strategy_marketplace"]["status"] == "passed"
-    assert mvp_validation["schema_version"] == MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION
+    assert demo_validation["schema_version"] == DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION
     assert market_validation["schema_version"] == MARKET_VALIDATION_SCHEMA_VERSION
     assert marketplace_validation["schema_version"] == MARKETPLACE_VALIDATION_SCHEMA_VERSION
     assert role_swap["schema_version"] == ROLE_SWAP_SCHEMA_VERSION
     assert (output_dir / "README.md").exists()
-    assert (output_dir / "reports" / "opennegotiation_mvp_demo.html").exists()
-    assert (output_dir / "mvp_demo" / "mvp_demo_manifest.json").exists()
+    assert (output_dir / "reports" / "opennegotiation_demo.html").exists()
+    assert (output_dir / "demo" / "demo_manifest.json").exists()
     assert "OpenNegotiation External Handoff Package" in readme
     assert "fixture-backed" in readme
     assert "no live model-provider calls" in readme
@@ -63,7 +63,7 @@ def test_handoff_cli_prints_summary(tmp_path, capsys):
     assert payload["status"] == "passed"
     assert payload["readme"] == str(output_dir / "README.md")
     assert payload["manifest_path"] == str(output_dir / "handoff_manifest.json")
-    assert payload["validations"]["mvp_demo_bundle"]["status"] == "passed"
+    assert payload["validations"]["demo_bundle"]["status"] == "passed"
     assert payload["validations"]["market_dataset"]["status"] == "passed"
     assert payload["validations"]["strategy_marketplace"]["status"] == "passed"
     assert (output_dir / "README.md").exists()

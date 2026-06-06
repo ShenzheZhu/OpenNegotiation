@@ -115,7 +115,7 @@ The framework should use a `MarketDataPort` and frozen benchmark artifacts. It
 should not assume that live marketplace data is always available during eval.
 
 Official or licensed data sources should enter the gym through source adapters
-that emit frozen benchmark artifacts. The no-key demo uses fixture-backed sold
+that emit frozen benchmark artifacts. The local fixture demo uses fixture-backed sold
 comps only. The eBay Marketplace Insights adapter contract supports an official
 API path for sold-comps ingestion, but production use still requires eBay
 Marketplace Insights access and credentials. eBay's docs mark Marketplace

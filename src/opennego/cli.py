@@ -55,7 +55,11 @@ from opennego.model_demo import (
     make_litellm_gateway,
     run_model_demo,
 )
-from opennego.mvp_demo import run_mvp_demo, validate_mvp_demo_bundle
+from opennego.demo import (
+    run_demo,
+    run_mvp_demo,
+    validate_demo_bundle,
+)
 from opennego.report import write_demo_report
 from opennego.role_swap import run_role_swap_benchmark
 from opennego.runner import (
@@ -130,10 +134,14 @@ def main(argv: list[str] | None = None) -> int:
         return _ingest_ebay_main(argv[1:])
     if argv and argv[0] == "validate-market":
         return _validate_market_main(argv[1:])
+    if argv and argv[0] == "validate-demo":
+        return _validate_demo_bundle_main(argv[1:])
     if argv and argv[0] == "validate-demo-bundle":
         return _validate_demo_bundle_main(argv[1:])
+    if argv and argv[0] == "demo":
+        return _demo_main(argv[1:])
     if argv and argv[0] == "mvp-demo":
-        return _mvp_demo_main(argv[1:])
+        return _demo_main(argv[1:], legacy=True)
     if argv and argv[0] == "handoff":
         return _handoff_main(argv[1:])
     if argv and argv[0] == "train":
@@ -1053,32 +1061,34 @@ def _validate_market_main(argv: list[str] | None = None) -> int:
 
 def _validate_demo_bundle_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Validate an OpenNegotiation MVP demo bundle manifest."
+        description="Validate an OpenNegotiation demo bundle manifest."
     )
     parser.add_argument(
         "--manifest",
         required=True,
-        help="Path to mvp_demo_manifest.json produced by opennego mvp-demo.",
+        help="Path to demo_manifest.json produced by opennego demo.",
     )
     args = parser.parse_args(argv)
 
-    result = validate_mvp_demo_bundle(args.manifest)
+    result = validate_demo_bundle(args.manifest)
     print(json.dumps(to_jsonable(result), indent=2))
     return 0 if result.status == "passed" else 1
 
 
-def _mvp_demo_main(argv: list[str] | None = None) -> int:
+def _demo_main(argv: list[str] | None = None, *, legacy: bool = False) -> int:
+    output_default = "runs/mvp_demo" if legacy else "runs/demo"
+    report_default = "opennego_mvp_demo.html" if legacy else "opennegotiation_demo.html"
     parser = argparse.ArgumentParser(
-        description="Generate the no-key OpenNegotiation MVP demo end to end."
+        description="Generate the local OpenNegotiation demo end to end."
     )
     parser.add_argument(
         "--output-dir",
-        default="runs/mvp_demo",
+        default=output_default,
         help="Directory for benchmark artifacts and battle_report.json.",
     )
     parser.add_argument(
         "--report",
-        help="Optional HTML report path. Defaults to <output-dir>/opennego_mvp_demo.html.",
+        help=f"Optional HTML report path. Defaults to <output-dir>/{report_default}.",
     )
     parser.add_argument(
         "--config",
@@ -1104,7 +1114,8 @@ def _mvp_demo_main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        summary = run_mvp_demo(
+        runner = run_mvp_demo if legacy else run_demo
+        summary = runner(
             output_dir=args.output_dir,
             report_path=args.report,
             config_path=args.config,
@@ -1132,7 +1143,7 @@ def _handoff_main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--config",
         default="configs/real_market_demo.yaml",
-        help="Fixture config reused for MVP and role-swapped runs.",
+        help="Fixture config reused for demo and role-swapped runs.",
     )
     parser.add_argument(
         "--registry",

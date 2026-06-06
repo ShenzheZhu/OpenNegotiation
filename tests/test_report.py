@@ -7,7 +7,7 @@ from opennego.leaderboard import LEADERBOARD_SCHEMA_VERSION, write_leaderboard
 
 def test_write_demo_report_from_real_market_demo_config(tmp_path):
     runs_dir = tmp_path / "runs"
-    report_path = tmp_path / "opennego_demo.html"
+    report_path = tmp_path / "opennegotiation_demo.html"
 
     summary = run_experiment_config(
         "configs/real_market_demo.yaml",
@@ -31,7 +31,7 @@ def test_write_demo_report_from_real_market_demo_config(tmp_path):
 
 def test_write_demo_report_uses_leaderboard_summary_when_available(tmp_path):
     runs_dir = tmp_path / "runs"
-    report_path = tmp_path / "opennego_demo.html"
+    report_path = tmp_path / "opennegotiation_demo.html"
 
     run_experiment_config(
         "configs/real_market_demo.yaml",
@@ -51,7 +51,7 @@ def test_write_demo_report_uses_leaderboard_summary_when_available(tmp_path):
 
 def test_write_demo_report_falls_back_for_malformed_leaderboard_summary(tmp_path):
     runs_dir = tmp_path / "runs"
-    report_path = tmp_path / "opennego_demo.html"
+    report_path = tmp_path / "opennegotiation_demo.html"
 
     run_experiment_config(
         "configs/real_market_demo.yaml",
@@ -70,7 +70,7 @@ def test_write_demo_report_falls_back_for_malformed_leaderboard_summary(tmp_path
 
 def test_write_demo_report_includes_policy_learning_when_report_exists(tmp_path):
     runs_dir = tmp_path / "runs"
-    report_path = tmp_path / "opennego_mvp.html"
+    report_path = tmp_path / "opennegotiation_training_demo.html"
 
     run_experiment_config(
         "configs/real_market_demo.yaml",

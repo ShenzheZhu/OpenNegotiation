@@ -9,8 +9,8 @@ OpenNegotiation has three connected product layers:
 3. Strategy marketplace: provide curated NPC agents and strategy modules that
    users can spar against and learn from.
 
-The first policy-learning slice is intentionally deterministic and no-key. It
-can be run as a one-command MVP demo, or pointed at existing benchmark
+The first policy-learning slice is intentionally deterministic and fixture-backed. It
+can be run as a one-command demo, or pointed at existing benchmark
 artifacts to produce a battle report that can guide strategy prompt edits
 without calling a live model provider.
 
@@ -65,7 +65,7 @@ opennego strategies
 opennego strategies --role seller
 ```
 
-This is a local curated marketplace in the MVP. A hosted marketplace or
+This is a local curated marketplace in the demo. A hosted marketplace or
 contributed strategy backend is intentionally out of scope for the first slice.
 
 Users can export their own improved strategy candidates into the same local
@@ -104,7 +104,7 @@ ids are malformed.
 ## Strategy Sparring Suite
 
 `opennego spar` turns marketplace profiles into a repeatable training suite.
-The default path is no-key:
+The default path is fixture-backed:
 
 ```bash
 opennego spar \
@@ -175,7 +175,7 @@ summary = run_sparring_suite(
 ```
 
 This still uses the same artifacts and learning reports. Live provider calls
-remain optional and are not required for no-key CI.
+remain optional and are not required for local CI.
 
 For live LLM user agents, the CLI can also instantiate the user policy directly
 through LiteLLM. This is the recommended live-provider path when you want to
@@ -203,23 +203,23 @@ instructions while the base action schema and environment rules remain fixed.
 The quickest end-to-end path is:
 
 ```bash
-opennego mvp-demo --output-dir /tmp/opennego-mvp-demo --report /tmp/opennego-mvp-demo.html
-opennego validate-demo-bundle --manifest /tmp/opennego-mvp-demo/mvp_demo_manifest.json
+opennego demo --output-dir /tmp/opennegotiation-demo --report /tmp/opennegotiation-demo.html
+opennego validate-demo --manifest /tmp/opennegotiation-demo/demo_manifest.json
 ```
 
 This runs the small real-market benchmark, writes
-`/tmp/opennego-mvp-demo/leaderboard_summary.json` plus
-`/tmp/opennego-mvp-demo/battle_report.json`, writes an
-`opennego.mvp_demo_bundle.v1` handoff manifest at
-`/tmp/opennego-mvp-demo/mvp_demo_manifest.json`, and renders an HTML page with
+`/tmp/opennegotiation-demo/leaderboard_summary.json` plus
+`/tmp/opennegotiation-demo/battle_report.json`, writes an
+`opennego.demo_bundle.v1` handoff manifest at
+`/tmp/opennegotiation-demo/demo_manifest.json`, and renders an HTML page with
 the leaderboard preview, Training / Prompt Optimization section, and Strategy
 Marketplace section. The leaderboard preview is rendered from the versioned
 leaderboard summary artifact when it is available. The validation command emits
-`opennego.mvp_demo_bundle_validation.v1` JSON and is the no-key release check
+`opennego.demo_bundle_validation.v1` JSON and is the local release check
 that the benchmark, learning report, strategy candidate, and HTML report still
 line up as one coherent demo bundle.
 
-For a focused no-key training loop:
+For a focused local fixture training loop:
 
 ```bash
 opennego train \
@@ -255,7 +255,7 @@ opennego learn \
   --output /tmp/opennego-real-market-demo/battle_report.json \
   --user-role buyer \
   --opponent-profile seller_hardline_anchor_v1
-opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennego-mvp-demo.html
+opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennegotiation-demo.html
 ```
 
 The JSON report uses schema version `opennego.policy_learning.v1` and contains:
@@ -342,7 +342,7 @@ opennego spar \
   --output-dir /tmp/opennego-rerun
 ```
 
-For the no-key MVP, the candidate is applied as deterministic policy knobs for
+For the local demo, the candidate is applied as deterministic policy knobs for
 the user agent. Buyer candidates can tighten market-reference price discipline
 and seller candidates can tighten reservation or market-floor behavior. The
 sparring summary and per-run manifests record the candidate id, parent strategy
@@ -387,7 +387,7 @@ HTML report renders a Training / Prompt Optimization section. The same report
 also renders `leaderboard_summary.json` participant coverage when available and
 loads the local NPC strategy marketplace from `examples/data/npc_strategies.json`.
 
-Example lesson excerpt from the no-key real-market demo:
+Example lesson excerpt from the local fixture real-market demo:
 
 ```json
 {
@@ -415,7 +415,7 @@ Example lesson excerpt from the no-key real-market demo:
 
 ## Deterministic Lesson Heuristics
 
-The MVP extracts a small set of high-signal lessons:
+The demo extracts a small set of high-signal lessons:
 
 - no-deal recovery when a run rejects or times out
 - missed market-tool use when tools are available but unused
@@ -426,24 +426,24 @@ The MVP extracts a small set of high-signal lessons:
 - opponent trap awareness from NPC profiles
 
 These are not intended to replace model-generated coaching. They are the stable,
-no-key baseline that future LLM summarizers can build on.
+local fixture baseline that future LLM summarizers can build on.
 
-## MVP Boundary
+## Demo Boundary
 
 In scope:
 
-- no-key NPC strategy registry
-- no-key battle report generation from artifacts
+- local fixture NPC strategy registry
+- local fixture battle report generation from artifacts
 - trace-grounded policy lessons
 - strategy prompt patch suggestions
 - versioned strategy candidate, applied strategy config, and comparison
   artifacts
 - CLI commands for listing profiles, writing battle reports, and rendering the
-  one-command MVP demo with visual, machine-readable, and bundle-manifest
+  one-command demo with visual, machine-readable, and bundle-manifest
   artifacts
-- no-key sparring suite artifacts for selected marketplace profiles
-- no-key runtime application of versioned strategy candidates in sparring
-- one-command no-key training loop for sparring, strategy extraction, rerun,
+- local fixture sparring suite artifacts for selected marketplace profiles
+- local fixture runtime application of versioned strategy candidates in sparring
+- one-command local fixture training loop for sparring, strategy extraction, rerun,
   applied strategy config, and comparison artifacts
 - local export and installation of strategy candidates as marketplace profiles
 
@@ -464,9 +464,9 @@ The near-term product loop is:
 4. OpenNegotiation converts the battle report into a strategy candidate.
 5. OpenNegotiation applies the candidate into a versioned `strategy_config.json`.
 6. User consumes that config in their own agent integration, or reruns the
-   no-key local candidate through `opennego spar --user-strategy`.
+   local fixture candidate through `opennego spar --user-strategy`.
 7. User reruns against the same or harder NPC profile.
 8. OpenNegotiation compares the before/after battle reports.
 
-`opennego train` automates steps 3-8 for the no-key local strategy-candidate
+`opennego train` automates steps 3-8 for the local fixture strategy-candidate
 runtime and writes `strategy_config.json` next to the candidate.
