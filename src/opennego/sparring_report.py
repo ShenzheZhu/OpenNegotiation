@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from opennego.branding import PRODUCT_NAME
 
 
 def write_sparring_report(summary_file: str | Path, output_file: str | Path) -> Path:
@@ -25,7 +24,7 @@ def write_sparring_report(summary_file: str | Path, output_file: str | Path) -> 
 
 def render_sparring_report(summary: Mapping[str, Any]) -> str:
     results = _mapping_list(summary.get("results"))
-    title = f"{PRODUCT_NAME} Strategy Sparring"
+    title = f"OpenNegotiation Strategy Sparring"
     return f"""
 <!doctype html>
 <html lang="en">
@@ -90,7 +89,7 @@ def render_sparring_report(summary: Mapping[str, Any]) -> str:
   <main class="shell">
     <section class="hero">
       <p class="eyebrow">Strategy marketplace training loop</p>
-      <h1>{PRODUCT_NAME} strategy sparring report</h1>
+      <h1>OpenNegotiation strategy sparring report</h1>
       <p class="subtitle">A no-key curriculum view over marketplace NPC profiles, benchmark artifacts, and policy-learning battle reports.</p>
       <p><span class="pill">{_escape(summary.get("execution_mode"))}</span> <span class="pill">schema {_escape(summary.get("schema_version"))}</span></p>
     </section>

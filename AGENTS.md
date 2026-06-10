@@ -1,66 +1,29 @@
 # Repository Guidelines
 
-## Project Structure
-
-OpenNegotiation uses a `src/` Python package layout.
-
-- `src/opennego/schema.py`: shared dataclasses, action types, and parsing
-  helpers.
-- `src/opennego/environment.py`: core buyer-seller loop and private tool trace
-  handling.
-- `src/opennego/artifacts.py`: versioned scenario, manifest, trace, and metrics
-  artifact contracts.
-- `src/opennego/runner.py`: config-driven experiment runner and resume logic.
-- `src/opennego/ports/`: provider-neutral contracts for agents, LLM gateways,
-  tools, and future transaction systems.
-- `src/opennego/adapters/`: concrete provider integrations. LiteLLM belongs
-  here, not in core environment code.
-- `src/opennego/tools/`: tool interfaces and concrete tool implementations.
-- `src/opennego/transactions/`: deterministic transaction simulators.
-- `src/opennego/agents/`: scripted and LLM-backed baseline agents.
-- `src/opennego/metrics.py`: run-level evaluation metrics.
-- `examples/data/`: small fixtures for local demos.
-- `configs/`: local experiment configs, including no-key smoke runs.
-- `docs/experiment_runner.md`: config runner schema and output layout.
-- `tests/`: pytest regression tests.
-
-Generated outputs should go under `results/`, `runs/`, or `artifacts/` and
-should not be committed unless they are curated examples.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first: it defines the project layout,
+design rules, check suite, and PR expectations. The notes below are the
+short operational summary.
 
 ## Development Commands
 
 ```bash
-python -m pip install -e ".[dev]"
-python -m opennego.cli --products-file examples/data/products.json --market-comps-file examples/data/market_comps.json
+python -m pip install -e ".[dev]"          # add ,llm for LiteLLM-backed agents
+pytest -q
 opennego run --config configs/no_key_smoke.yaml
-pytest
+opennego help                              # list every CLI command
 ```
 
-For LLM-backed agents, install the optional gateway dependency:
+## Hard Rules
 
-```bash
-python -m pip install -e ".[dev,llm]"
-```
-
-## Coding Style
-
-Use Python 3.10+ and keep the core package provider-neutral. Prefer explicit
-dataclasses, small pure functions, and deterministic tests. Do not bind the
-environment layer directly to a specific LLM provider or web API.
-
-Use ports before adapters. Core code may depend on `opennego.ports`; provider
-SDKs such as LiteLLM should only be imported lazily from `opennego.adapters`.
-
-Tool calls are part of the research surface. Preserve provenance, arguments,
-results, and whether the event is private to one agent or visible to both.
-
-## Testing
-
-Every new environment behavior should have a focused pytest. For LLM or live
-tool integrations, keep a deterministic fake or fixture-backed path so CI can
-exercise the contract without external credentials.
-
-## Secrets
-
-Never commit API keys, cookies, live marketplace credentials, or generated raw
-browser traces that may contain personal data.
+- Keep the core package provider-neutral: core code may depend on
+  `opennego.ports`; provider SDKs (LiteLLM, eBay) are imported lazily and only
+  from `opennego.adapters`. `tests/test_architecture_boundaries.py` enforces
+  this.
+- Every new environment behavior needs a focused, deterministic pytest. Live
+  integrations must keep a fixture-backed path that runs without credentials.
+- Preserve tool-call provenance: arguments, results, and private/public
+  visibility are part of the research surface.
+- Generated outputs go under `results/`, `runs/`, or `artifacts/` (gitignored).
+  Never commit credentials, raw provider payloads, or personal data.
+- Artifact schema changes require a `opennego.<name>.v<N>` version bump and a
+  `CHANGELOG.md` entry.

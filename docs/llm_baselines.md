@@ -160,8 +160,7 @@ gates, the full current tool-regime surface, sparring/evolution reruns,
 marketplace export, adapter validation, and full post-processing. Start from
 `configs/full_realism_live.example.yaml`, duplicate it with buyer/seller models
 swapped for reciprocal role coverage, and then run the same config through
-`opennego spar` for user-agent evolution. The issue `#102` max-realism pass is
-documented in [live_validation_102.md](live_validation_102.md).
+`opennego spar` for user-agent evolution.
 
 The command writes `/tmp/opennego-five-model-demo/summary.json` for the full
 attempt. Completed model directories contain the normal benchmark artifacts.

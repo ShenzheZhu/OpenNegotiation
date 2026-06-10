@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
 from opennego.artifacts import to_jsonable
-from opennego.branding import PRODUCT_NAME
 from opennego.learning import StrategyProfile
 from opennego.ports import LLMPort, LLMRequest
 from opennego.schema import (
@@ -299,10 +298,10 @@ def _system_prompt(
         else "You may not request tools. Do not return tool_call."
     )
     prompt = (
-        f"You are a {PRODUCT_NAME} baseline negotiation agent. "
+        f"You are a OpenNegotiation baseline negotiation agent. "
         f"Your role is {role.value}. "
         "Choose one next action for the current turn. "
-        f"Return only valid JSON matching the {PRODUCT_NAME} action schema. "
+        f"Return only valid JSON matching the OpenNegotiation action schema. "
         "Use type=offer with price for numeric offers, type=accept to accept the "
         "counterparty's latest offer, type=reject to end negotiation, type=message "
         "for non-binding text, and type=tool_call only when tools are allowed. "
@@ -347,7 +346,7 @@ def _repair_prompt(
     allowed_tools: Sequence[str],
 ) -> str:
     return (
-        f"Your previous response was rejected by the {PRODUCT_NAME} action parser. "
+        f"Your previous response was rejected by the OpenNegotiation action parser. "
         f"Parser error: {error}. "
         "Return one corrected JSON object only. "
         f"Available tools: {list(allowed_tools)}."

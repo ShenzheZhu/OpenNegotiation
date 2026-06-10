@@ -2,7 +2,7 @@ import json
 import textwrap
 from pathlib import Path
 
-import opennego.cli as cli_module
+import opennego.cli.common as cli_common
 from opennego.artifacts import load_manifest
 from opennego.cli import main
 from opennego.evolution import STRATEGY_EVOLUTION_SCHEMA_VERSION
@@ -180,7 +180,7 @@ def test_spar_cli_runs_profile_llm_opponent_with_fake_gateway(
     )
     _pretend_litellm_is_installed(monkeypatch)
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
-    monkeypatch.setattr(cli_module, "make_litellm_gateway", lambda: fake_llm)
+    monkeypatch.setattr(cli_common, "make_litellm_gateway", lambda: fake_llm)
 
     exit_code = main(
         [
@@ -231,7 +231,7 @@ def test_spar_cli_runs_user_llm_with_strategy_and_fake_gateway(
     )
     _pretend_litellm_is_installed(monkeypatch)
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
-    monkeypatch.setattr(cli_module, "make_litellm_gateway", lambda: fake_llm)
+    monkeypatch.setattr(cli_common, "make_litellm_gateway", lambda: fake_llm)
 
     exit_code = main(
         [
@@ -364,14 +364,14 @@ def _write_strategy_candidate(tmp_path: Path) -> Path:
 
 
 def _pretend_litellm_is_installed(monkeypatch):
-    real_find_spec = cli_module.importlib.util.find_spec
+    real_find_spec = cli_common.importlib.util.find_spec
 
     def fake_find_spec(name, *args, **kwargs):
         if name == "litellm":
             return object()
         return real_find_spec(name, *args, **kwargs)
 
-    monkeypatch.setattr(cli_module.importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(cli_common.importlib.util, "find_spec", fake_find_spec)
 
 
 def _write_agent_module(tmp_path: Path) -> Path:

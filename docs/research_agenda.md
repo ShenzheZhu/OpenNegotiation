@@ -64,9 +64,7 @@ tool-call cost.
 
 OpenNegotiation should learn from mature agentic market simulators such as
 [Magentic Marketplace](https://arxiv.org/abs/2510.25779), but it should not
-become a compatibility wrapper for one paper or one synthetic marketplace. See
-[Magentic Marketplace Architecture Notes](magentic_marketplace_architecture_notes.md)
-for the current research-to-engineering translation.
+become a compatibility wrapper for one paper or one synthetic marketplace.
 
 The key design shift is to treat negotiation as one phase in a broader market
 lifecycle:
