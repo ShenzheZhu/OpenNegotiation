@@ -29,7 +29,32 @@ Top-level fields:
 - `scenarios`: product/scenario inputs.
 - `tool_regimes`: tool availability matrix.
 - `transaction`: optional fixture transaction simulator config.
+- `rules`: optional negotiation time-structure rules (see below).
 - `metadata`: optional object copied into run manifests.
+
+The optional `rules` block enables market time structure for every run in the
+experiment. Omitting the block preserves the classic unlimited protocol.
+
+```json
+{
+  "rules": {
+    "offer_expiry_turns": 1,
+    "max_offers_per_side": 4,
+    "turn_delay_cost": 1.0
+  }
+}
+```
+
+- `offer_expiry_turns`: a standing offer lapses after this many public turns;
+  `1` means the counterpart must respond immediately or the offer is gone.
+- `max_offers_per_side`: offers (including counters) allowed per role; an
+  offer beyond the cap ends the run with outcome `invalid_offer`.
+- `turn_delay_cost`: per-public-turn cost reported as the
+  `turn_delay_cost_total` metric.
+
+Agents see their rule budgets in private state (`negotiation_rules` with
+`remaining_offers`, `offer_expiry_turns`, and the standing offer age), and the
+run manifest records the active rules under `metadata.rules`.
 
 Supported built-in no-key agent kinds:
 

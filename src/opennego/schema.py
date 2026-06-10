@@ -20,6 +20,7 @@ class ActionType(str, Enum):
     REJECT = "reject"
     MESSAGE = "message"
     TRANSACTION = "transaction"
+    GHOST = "ghost"
 
 
 def parse_price(value: Any) -> float:
@@ -264,6 +265,12 @@ class AgentAction:
     @classmethod
     def message(cls, content: str) -> "AgentAction":
         return cls(type=ActionType.MESSAGE, content=content)
+
+    @classmethod
+    def ghost(cls, note: str = "") -> "AgentAction":
+        """End the thread by going silent instead of explicitly rejecting."""
+
+        return cls(type=ActionType.GHOST, content=note)
 
 
 @dataclass(frozen=True)
