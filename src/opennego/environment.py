@@ -113,6 +113,9 @@ class NegotiationEnvironment:
             private_state["budget"] = self.scenario.buyer_budget
         else:
             private_state["reservation_price"] = self.scenario.seller_reservation_price
+        outside_option = self._own_side_batna(role)
+        if outside_option is not None:
+            private_state["outside_option"] = outside_option
         return AgentContext(
             scenario=self.scenario,
             role=role,
@@ -120,6 +123,17 @@ class NegotiationEnvironment:
             available_tools=self._available_tools_for(role),
             private_state=private_state,
         )
+
+    def _own_side_batna(self, role: Role) -> Mapping[str, object] | None:
+        """Surface this side's outside-option derivation, never the counterpart's."""
+
+        batna = self.scenario.metadata.get("batna")
+        if not isinstance(batna, Mapping):
+            return None
+        side = batna.get("buyer" if role == Role.BUYER else "seller")
+        if not isinstance(side, Mapping):
+            return None
+        return dict(side)
 
     def _event_from_action(
         self,

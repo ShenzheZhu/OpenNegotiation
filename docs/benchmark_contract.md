@@ -35,6 +35,15 @@ derived from a synthetic seller reservation or market reference for
 backward-compatible execution; the product attributes should record
 `legacy_wholesale_basis`.
 
+Scenarios produced by the BATNA generator additionally carry a
+`metadata.batna` object with schema `opennego.batna.v1`. It records how each
+side's private constraint was derived from market evidence: the buyer block
+(`alternative_price`, `switching_friction`, `derived_budget`), the seller
+block (`expected_resale_price`, `relist_cost`, `reservation_floor`,
+`derived_reservation`), the source statistics, and the generator seed. At
+runtime each agent's private state exposes only its own side of this object
+as `outside_option`; the counterpart's derivation is never visible.
+
 Required fields:
 
 - `schema_version`
