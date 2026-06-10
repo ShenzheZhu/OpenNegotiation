@@ -165,7 +165,7 @@ exit codes `0` (success), `1` (completed with failures), `2` (usage error).
 | Benchmark | `run`, `report`, `leaderboard`, `role-swap`, `arena-plan` |
 | Demo | `demo`, `validate-demo`, `run-models` |
 | Sparring & learning | `strategies`, `spar`, `learn`, `evolve`, `compare`, `train`, `apply-strategy`, `export-training-adapter`, `validate-training-adapter` |
-| Market data | `market-source-policy`, `validate-market-source`, `ingest-market`, `ingest-ebay`, `validate-market`, `scenarios` |
+| Market data | `market-source-policy`, `validate-market-source`, `ingest-market`, `ingest-ebay`, `ingest-ebay-active`, `validate-market`, `scenarios` |
 | Strategy marketplace | `marketplace-export`, `validate-marketplace` |
 
 ## Documentation

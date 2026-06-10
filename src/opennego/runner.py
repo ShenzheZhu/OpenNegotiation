@@ -29,7 +29,7 @@ from opennego.environment import (
 )
 from opennego.ports import AgentPort, LLMPort, ToolPort
 from opennego.schema import Product, Role, Scenario
-from opennego.tools import MarketPriceTool
+from opennego.tools import ActiveListingTool, MarketPriceTool
 from opennego.transactions import (
     FeeScheduleError,
     FixtureTransactionSimulator,
@@ -661,33 +661,43 @@ def _build_tools(
     for spec in tool_regime.tools:
         if not spec.enabled:
             continue
-        if spec.kind != "market_price":
+        if spec.kind not in {"market_price", "active_listings"}:
             raise ConfigValidationError(
                 f"tool_regimes[{tool_regime.id}].tools[{spec.name}].kind: "
                 f"unsupported kind {spec.kind!r}"
-            )
-        if spec.name != "market_price_search":
-            raise ConfigValidationError(
-                f"tool_regimes[{tool_regime.id}].tools[{spec.name}].name: "
-                "only 'market_price_search' is supported in this runner slice"
             )
         if spec.source is None:
             raise ConfigValidationError(f"tool {spec.name}: source is required")
         if not spec.source.exists():
             raise ConfigValidationError(f"{spec.source}: tool source does not exist")
-        tools.append(
-            MarketPriceTool.from_json(
-                spec.source,
-                mode=spec.mode,
-                noise_fraction=_metadata_float(spec.metadata, "noise_fraction", 0.1),
-                adversarial_multiplier=_metadata_float(
-                    spec.metadata,
-                    "adversarial_multiplier",
-                    1.25,
-                ),
-                stale_as_of=_metadata_str(spec.metadata, "stale_as_of"),
+        if spec.kind == "active_listings":
+            if spec.name != "active_listing_search":
+                raise ConfigValidationError(
+                    f"tool_regimes[{tool_regime.id}].tools[{spec.name}].name: "
+                    "active_listings tools must be named 'active_listing_search'"
+                )
+            tools.append(ActiveListingTool.from_json(spec.source))
+        else:
+            if spec.name != "market_price_search":
+                raise ConfigValidationError(
+                    f"tool_regimes[{tool_regime.id}].tools[{spec.name}].name: "
+                    "market_price tools must be named 'market_price_search'"
+                )
+            tools.append(
+                MarketPriceTool.from_json(
+                    spec.source,
+                    mode=spec.mode,
+                    noise_fraction=_metadata_float(
+                        spec.metadata, "noise_fraction", 0.1
+                    ),
+                    adversarial_multiplier=_metadata_float(
+                        spec.metadata,
+                        "adversarial_multiplier",
+                        1.25,
+                    ),
+                    stale_as_of=_metadata_str(spec.metadata, "stale_as_of"),
+                )
             )
-        )
         configs.append(
             ToolRuntimeConfig(
                 name=spec.name,
