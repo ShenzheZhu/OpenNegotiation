@@ -15,7 +15,7 @@ from __future__ import annotations
 import sys
 from typing import Callable
 
-from . import benchmark, demo, learning, market, marketplace, smoke
+from . import benchmark, demo, learning, market, marketplace, scenarios, smoke
 
 CommandMain = Callable[[list[str]], int]
 
@@ -69,6 +69,7 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, CommandMain, str], ...]], ...]
             ("ingest-market", market.ingest_market_main, "Normalize offline sold-comps exports."),
             ("ingest-ebay", market.ingest_ebay_main, "Ingest eBay Marketplace Insights sold comps."),
             ("validate-market", market.validate_market_main, "Validate normalized market fixtures."),
+            ("scenarios", scenarios.scenarios_main, "Build and validate scenario packs."),
         ),
     ),
     (
