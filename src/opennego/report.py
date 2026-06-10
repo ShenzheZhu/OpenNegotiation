@@ -197,7 +197,10 @@ def load_battle_reports(input_dir: str | Path) -> tuple[BattleReportView, ...]:
             data = json.loads(path.read_text())
         except (OSError, json.JSONDecodeError):
             continue
-        if isinstance(data, Mapping) and data.get("schema_version") == "opennego.policy_learning.v1":
+        if isinstance(data, Mapping) and data.get("schema_version") in {
+            "opennego.policy_learning.v1",
+            "opennego.battle_report.v2",
+        }:
             reports.append(_battle_report_from_mapping(data))
     return tuple(reports)
 

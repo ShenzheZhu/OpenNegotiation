@@ -120,7 +120,7 @@ def test_strategy_evolution_rejects_malformed_policy_schema(tmp_path):
     bad_report = tmp_path / "bad_battle_report.json"
     bad_report.write_text(json.dumps({"schema_version": "wrong"}) + "\n")
 
-    with pytest.raises(StrategyEvolutionError, match="expected opennego.policy_learning.v1"):
+    with pytest.raises(StrategyEvolutionError, match="expected one of"):
         generate_strategy_candidate(bad_report)
 
     status = main(
