@@ -172,7 +172,7 @@ exit codes `0` (success), `1` (completed with failures), `2` (usage error).
 | Inspect transaction settlement rules | [Transaction Simulator](docs/transaction_simulator.md) |
 | Design real-market evaluation data | [Real-Market Benchmark Design](docs/real_market_benchmark_design.md) |
 | Schedule automated eBay ingestion | [GitHub Actions Ingestion](docs/github_actions_ingestion.md) |
-| See research directions | [Research Agenda](docs/research_agenda.md) |
+| See the product roadmap and design decisions | [Roadmap](docs/roadmap.md) |
 | Debug setup or CLI issues | [Troubleshooting](docs/troubleshooting.md) |
 
 Curated example artifacts: [full demo report](examples/reports/full_demo.html),
