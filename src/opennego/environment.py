@@ -18,6 +18,8 @@ from .schema import (
     TranscriptEvent,
 )
 
+RULES_ACTOR = "negotiation_rules"
+
 
 @dataclass(frozen=True)
 class ToolRuntimeConfig:
@@ -37,8 +39,41 @@ class ToolRuntimeConfig:
             raise ValueError("tool visibility must be 'private' or 'public'")
 
 
+@dataclass(frozen=True)
+class NegotiationRules:
+    """Optional market time-structure rules.
+
+    All fields default to "off", so an environment without rules behaves
+    exactly like the classic unlimited-counter, never-expiring protocol.
+
+    - ``offer_expiry_turns``: a standing offer lapses after this many public
+      turns; an expiry of 1 means the counterpart must respond immediately.
+    - ``max_offers_per_side``: cap on offers (including counters) per role.
+      An offer beyond the cap ends the run as ``invalid_offer``.
+    - ``turn_delay_cost``: bookkeeping cost per public turn, reported in
+      metrics as ``turn_delay_cost_total``.
+    """
+
+    offer_expiry_turns: int | None = None
+    max_offers_per_side: int | None = None
+    turn_delay_cost: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.offer_expiry_turns is not None and self.offer_expiry_turns <= 0:
+            raise ValueError("offer_expiry_turns must be positive when set")
+        if self.max_offers_per_side is not None and self.max_offers_per_side <= 0:
+            raise ValueError("max_offers_per_side must be positive when set")
+        if self.turn_delay_cost < 0:
+            raise ValueError("turn_delay_cost must be non-negative")
+
+
 class NegotiationEnvironment:
-    """Runs a two-party negotiation while preserving private tool traces."""
+    """Runs a two-party negotiation while preserving private tool traces.
+
+    The environment is steppable: ``step()`` advances exactly one agent
+    action, which lets a market-level scheduler interleave many concurrent
+    negotiations. ``run()`` simply steps to completion.
+    """
 
     def __init__(
         self,
@@ -48,6 +83,7 @@ class NegotiationEnvironment:
         tools: tuple[ToolPort, ...] = (),
         tool_configs: tuple[ToolRuntimeConfig, ...] | None = None,
         transaction_simulator: TransactionPort | None = None,
+        rules: NegotiationRules | None = None,
     ) -> None:
         if buyer.role != Role.BUYER:
             raise ValueError("buyer agent must have role=Role.BUYER")
@@ -59,48 +95,128 @@ class NegotiationEnvironment:
         self.tools = {tool.name: tool for tool in tools}
         self.tool_configs = self._normalize_tool_configs(tool_configs)
         self.transaction_simulator = transaction_simulator
+        self.rules = rules
         self.events: list[TranscriptEvent] = []
         self._latest_offer_role: Role | None = None
         self._latest_offer_price: float | None = None
+        self._latest_offer_public_turn: int | None = None
+        self._offer_counts: dict[Role, int] = {Role.BUYER: 0, Role.SELLER: 0}
+        self._actor: AgentPort = self.buyer
+        self._public_turns = 0
+        self._total_steps = 0
+        self._final_result: RunResult | None = None
+
+    @property
+    def result(self) -> RunResult | None:
+        return self._final_result
+
+    @property
+    def is_complete(self) -> bool:
+        return self._final_result is not None
 
     def run(self) -> RunResult:
-        actor: AgentPort = self.buyer
-        public_turns = 0
-        total_steps = 0
+        while self._final_result is None:
+            self.step()
+        return self._final_result
+
+    def step(self) -> TranscriptEvent | None:
+        """Advance the negotiation by exactly one agent action.
+
+        Returns the recorded event, or None once the run has finished
+        (including the call that finalizes a timeout).
+        """
+
+        if self._final_result is not None:
+            return None
         max_total_steps = self.scenario.max_turns * 4
+        if (
+            self._public_turns >= self.scenario.max_turns
+            or self._total_steps >= max_total_steps
+        ):
+            self._final_result = self._build_result("timeout", None)
+            return None
 
-        while public_turns < self.scenario.max_turns and total_steps < max_total_steps:
-            total_steps += 1
-            context = self._context_for(actor.role)
-            action = actor.act(context)
-            event = self._event_from_action(total_steps, actor, action, context)
-            self.events.append(event)
+        self._expire_standing_offer_if_due()
+        self._total_steps += 1
+        actor = self._actor
+        context = self._context_for(actor.role)
+        action = actor.act(context)
+        event = self._event_from_action(self._total_steps, actor, action, context)
+        self.events.append(event)
 
-            if action.type == ActionType.TOOL_CALL:
-                continue
+        if action.type == ActionType.TOOL_CALL:
+            return event
 
-            public_turns += 1
-            if action.type == ActionType.OFFER and action.offer is not None:
-                self._latest_offer_role = actor.role
-                self._latest_offer_price = action.offer.price
-                actor = self._next_actor(actor)
-                continue
+        self._public_turns += 1
+        if action.type == ActionType.OFFER and action.offer is not None:
+            if self._offer_exceeds_cap(actor.role):
+                self._final_result = self._build_result("invalid_offer", None)
+                return event
+            self._offer_counts[actor.role] += 1
+            self._latest_offer_role = actor.role
+            self._latest_offer_price = action.offer.price
+            self._latest_offer_public_turn = self._public_turns
+            self._actor = self._next_actor(actor)
+            return event
 
-            if action.type == ActionType.ACCEPT:
-                outcome, deal_price = self._accept_outcome(actor.role)
-                transaction = self._settle_transaction(
-                    accepting_role=actor.role,
-                    deal_price=deal_price,
-                    next_turn=total_steps + 1,
-                )
-                return self._result(outcome, deal_price, public_turns, transaction)
+        if action.type == ActionType.ACCEPT:
+            outcome, deal_price = self._accept_outcome(actor.role)
+            transaction = self._settle_transaction(
+                accepting_role=actor.role,
+                deal_price=deal_price,
+                next_turn=self._total_steps + 1,
+            )
+            self._final_result = self._build_result(outcome, deal_price, transaction)
+            return event
 
-            if action.type == ActionType.REJECT:
-                return self._result("rejected", None, public_turns)
+        if action.type == ActionType.REJECT:
+            self._final_result = self._build_result("rejected", None)
+            return event
 
-            actor = self._next_actor(actor)
+        if action.type == ActionType.GHOST:
+            self._final_result = self._build_result("ghosted", None)
+            return event
 
-        return self._result("timeout", None, public_turns)
+        self._actor = self._next_actor(actor)
+        return event
+
+    def _expire_standing_offer_if_due(self) -> None:
+        if (
+            self.rules is None
+            or self.rules.offer_expiry_turns is None
+            or self._latest_offer_role is None
+            or self._latest_offer_public_turn is None
+        ):
+            return
+        age = self._public_turns - self._latest_offer_public_turn
+        if age >= self.rules.offer_expiry_turns:
+            self._append_rule_event(
+                f"offer_expired:{self._latest_offer_role.value}"
+            )
+            self._latest_offer_role = None
+            self._latest_offer_price = None
+            self._latest_offer_public_turn = None
+
+    def _offer_exceeds_cap(self, role: Role) -> bool:
+        if self.rules is None or self.rules.max_offers_per_side is None:
+            return False
+        if self._offer_counts[role] < self.rules.max_offers_per_side:
+            return False
+        self._append_rule_event(f"offer_cap_exceeded:{role.value}")
+        return True
+
+    def _append_rule_event(self, content: str) -> None:
+        self._total_steps += 1
+        self.events.append(
+            TranscriptEvent(
+                turn=self._total_steps,
+                role=Role.SYSTEM,
+                actor=RULES_ACTOR,
+                action_type=ActionType.MESSAGE,
+                content=content,
+                private=False,
+            )
+        )
 
     def _context_for(self, role: Role) -> AgentContext:
         visible_events = tuple(
@@ -116,6 +232,9 @@ class NegotiationEnvironment:
         outside_option = self._own_side_batna(role)
         if outside_option is not None:
             private_state["outside_option"] = outside_option
+        rule_state = self._rule_state(role)
+        if rule_state is not None:
+            private_state["negotiation_rules"] = rule_state
         return AgentContext(
             scenario=self.scenario,
             role=role,
@@ -134,6 +253,24 @@ class NegotiationEnvironment:
         if not isinstance(side, Mapping):
             return None
         return dict(side)
+
+    def _rule_state(self, role: Role) -> Mapping[str, object] | None:
+        if self.rules is None:
+            return None
+        state: dict[str, object] = {
+            "turn_delay_cost": self.rules.turn_delay_cost,
+        }
+        if self.rules.max_offers_per_side is not None:
+            state["remaining_offers"] = max(
+                0, self.rules.max_offers_per_side - self._offer_counts[role]
+            )
+        if self.rules.offer_expiry_turns is not None:
+            state["offer_expiry_turns"] = self.rules.offer_expiry_turns
+            if self._latest_offer_public_turn is not None:
+                state["standing_offer_age_turns"] = (
+                    self._public_turns - self._latest_offer_public_turn
+                )
+        return state
 
     def _event_from_action(
         self,
@@ -177,20 +314,25 @@ class NegotiationEnvironment:
     def _next_actor(self, actor: AgentPort) -> AgentPort:
         return self.seller if actor.role == Role.BUYER else self.buyer
 
-    def _result(
+    def _build_result(
         self,
         outcome: str,
         deal_price: float | None,
-        completed_turns: int,
         transaction: TransactionOutcome | None = None,
     ) -> RunResult:
-        metrics = compute_metrics(self.scenario, outcome, deal_price, self.events)
+        metrics = dict(
+            compute_metrics(self.scenario, outcome, deal_price, self.events)
+        )
+        if self.rules is not None and self.rules.turn_delay_cost > 0:
+            metrics["turn_delay_cost_total"] = (
+                self.rules.turn_delay_cost * self._public_turns
+            )
         return RunResult(
             scenario=self.scenario,
             events=tuple(self.events),
             outcome=outcome,
             deal_price=deal_price,
-            completed_turns=completed_turns,
+            completed_turns=self._public_turns,
             metrics=metrics,
             transaction=transaction,
         )

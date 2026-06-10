@@ -22,8 +22,11 @@ from opennego.artifacts import (
     load_trace,
     write_run_artifacts,
 )
-from opennego.environment import NegotiationEnvironment
-from opennego.environment import ToolRuntimeConfig
+from opennego.environment import (
+    NegotiationEnvironment,
+    NegotiationRules,
+    ToolRuntimeConfig,
+)
 from opennego.ports import AgentPort, LLMPort, ToolPort
 from opennego.schema import Product, Role, Scenario
 from opennego.tools import MarketPriceTool
@@ -105,6 +108,7 @@ class ExperimentConfig:
     resume: bool = False
     fail_fast: bool = True
     transaction: "TransactionConfig | None" = None
+    rules: NegotiationRules | None = None
     metadata: Mapping[str, Any] | None = None
 
 
@@ -225,6 +229,7 @@ def load_experiment_config(path: str | Path) -> ExperimentConfig:
     resume = _optional_bool(data, "resume", False)
     fail_fast = _optional_bool(data, "fail_fast", True)
     transaction = _parse_transaction_config(data.get("transaction"))
+    rules = _parse_negotiation_rules(data.get("rules"))
     metadata = _optional_mapping(data, "metadata")
     return ExperimentConfig(
         name=name,
@@ -236,6 +241,7 @@ def load_experiment_config(path: str | Path) -> ExperimentConfig:
         resume=resume,
         fail_fast=fail_fast,
         transaction=transaction,
+        rules=rules,
         metadata=metadata,
     )
 
@@ -357,6 +363,7 @@ def _execute_prepared_run(
         tools=prepared_run.tools,
         tool_configs=prepared_run.tool_configs,
         transaction_simulator=prepared_run.transaction_simulator,
+        rules=config.rules,
     )
     result = env.run()
     write_run_artifacts(
@@ -374,6 +381,7 @@ def _execute_prepared_run(
         metadata={
             "experiment_name": config.name,
             "transaction": transaction_config_metadata(config.transaction),
+            "rules": negotiation_rules_metadata(config.rules),
             **dict(config.metadata or {}),
         },
     )
@@ -940,6 +948,37 @@ def _build_transaction_simulator(
         failure_reason=config.failure_reason,
         metadata=dict(config.metadata or {}),
     )
+
+
+def _parse_negotiation_rules(data: Any) -> NegotiationRules | None:
+    if data is None:
+        return None
+    if not isinstance(data, Mapping):
+        raise ConfigValidationError("rules: expected object")
+    known_keys = {"offer_expiry_turns", "max_offers_per_side", "turn_delay_cost"}
+    unknown = set(data) - known_keys
+    if unknown:
+        raise ConfigValidationError(f"rules: unknown keys {sorted(unknown)}")
+    turn_delay_cost = _optional_float(data, "turn_delay_cost")
+    try:
+        return NegotiationRules(
+            offer_expiry_turns=_optional_nullable_int(data, "offer_expiry_turns"),
+            max_offers_per_side=_optional_nullable_int(data, "max_offers_per_side"),
+            turn_delay_cost=turn_delay_cost if turn_delay_cost is not None else 0.0,
+        )
+    except ValueError as exc:
+        raise ConfigValidationError(f"rules: {exc}") from exc
+
+
+def negotiation_rules_metadata(rules: NegotiationRules | None) -> Mapping[str, Any]:
+    if rules is None:
+        return {"enabled": False}
+    return {
+        "enabled": True,
+        "offer_expiry_turns": rules.offer_expiry_turns,
+        "max_offers_per_side": rules.max_offers_per_side,
+        "turn_delay_cost": rules.turn_delay_cost,
+    }
 
 
 def transaction_config_metadata(config: TransactionConfig | None) -> Mapping[str, Any]:
