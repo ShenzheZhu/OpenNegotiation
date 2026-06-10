@@ -22,12 +22,19 @@ from opennego.artifacts import (
     load_trace,
     write_run_artifacts,
 )
-from opennego.environment import NegotiationEnvironment
-from opennego.environment import ToolRuntimeConfig
+from opennego.environment import (
+    NegotiationEnvironment,
+    NegotiationRules,
+    ToolRuntimeConfig,
+)
 from opennego.ports import AgentPort, LLMPort, ToolPort
 from opennego.schema import Product, Role, Scenario
-from opennego.tools import MarketPriceTool
-from opennego.transactions import FixtureTransactionSimulator
+from opennego.tools import ActiveListingTool, MarketPriceTool
+from opennego.transactions import (
+    FeeScheduleError,
+    FixtureTransactionSimulator,
+    load_fee_schedule,
+)
 
 EXPERIMENT_CONFIG_VERSION = "opennego.experiment.v1"
 
@@ -105,6 +112,7 @@ class ExperimentConfig:
     resume: bool = False
     fail_fast: bool = True
     transaction: "TransactionConfig | None" = None
+    rules: NegotiationRules | None = None
     metadata: Mapping[str, Any] | None = None
 
 
@@ -125,11 +133,17 @@ class PreparedRun:
 class TransactionConfig:
     kind: str = "fixture"
     enabled: bool = False
+    schedule: str | None = None
+    schedule_as_of: str | None = None
+    schedule_source_url: str | None = None
     shipping_cost: float = 0.0
     tax_rate: float = 0.0
     escrow_fee: float = 0.0
     payment_fee_rate: float = 0.0
+    payment_fee_fixed: float = 0.0
     seller_fee_rate: float = 0.0
+    seller_fee_fixed: float = 0.0
+    seller_fee_tiers: tuple = ()
     return_risk: float = 0.0
     reputation_risk: float = 0.0
     dispute_risk: float = 0.0
@@ -225,6 +239,7 @@ def load_experiment_config(path: str | Path) -> ExperimentConfig:
     resume = _optional_bool(data, "resume", False)
     fail_fast = _optional_bool(data, "fail_fast", True)
     transaction = _parse_transaction_config(data.get("transaction"))
+    rules = _parse_negotiation_rules(data.get("rules"))
     metadata = _optional_mapping(data, "metadata")
     return ExperimentConfig(
         name=name,
@@ -236,6 +251,7 @@ def load_experiment_config(path: str | Path) -> ExperimentConfig:
         resume=resume,
         fail_fast=fail_fast,
         transaction=transaction,
+        rules=rules,
         metadata=metadata,
     )
 
@@ -357,6 +373,7 @@ def _execute_prepared_run(
         tools=prepared_run.tools,
         tool_configs=prepared_run.tool_configs,
         transaction_simulator=prepared_run.transaction_simulator,
+        rules=config.rules,
     )
     result = env.run()
     write_run_artifacts(
@@ -374,6 +391,7 @@ def _execute_prepared_run(
         metadata={
             "experiment_name": config.name,
             "transaction": transaction_config_metadata(config.transaction),
+            "rules": negotiation_rules_metadata(config.rules),
             **dict(config.metadata or {}),
         },
     )
@@ -643,33 +661,43 @@ def _build_tools(
     for spec in tool_regime.tools:
         if not spec.enabled:
             continue
-        if spec.kind != "market_price":
+        if spec.kind not in {"market_price", "active_listings"}:
             raise ConfigValidationError(
                 f"tool_regimes[{tool_regime.id}].tools[{spec.name}].kind: "
                 f"unsupported kind {spec.kind!r}"
-            )
-        if spec.name != "market_price_search":
-            raise ConfigValidationError(
-                f"tool_regimes[{tool_regime.id}].tools[{spec.name}].name: "
-                "only 'market_price_search' is supported in this runner slice"
             )
         if spec.source is None:
             raise ConfigValidationError(f"tool {spec.name}: source is required")
         if not spec.source.exists():
             raise ConfigValidationError(f"{spec.source}: tool source does not exist")
-        tools.append(
-            MarketPriceTool.from_json(
-                spec.source,
-                mode=spec.mode,
-                noise_fraction=_metadata_float(spec.metadata, "noise_fraction", 0.1),
-                adversarial_multiplier=_metadata_float(
-                    spec.metadata,
-                    "adversarial_multiplier",
-                    1.25,
-                ),
-                stale_as_of=_metadata_str(spec.metadata, "stale_as_of"),
+        if spec.kind == "active_listings":
+            if spec.name != "active_listing_search":
+                raise ConfigValidationError(
+                    f"tool_regimes[{tool_regime.id}].tools[{spec.name}].name: "
+                    "active_listings tools must be named 'active_listing_search'"
+                )
+            tools.append(ActiveListingTool.from_json(spec.source))
+        else:
+            if spec.name != "market_price_search":
+                raise ConfigValidationError(
+                    f"tool_regimes[{tool_regime.id}].tools[{spec.name}].name: "
+                    "market_price tools must be named 'market_price_search'"
+                )
+            tools.append(
+                MarketPriceTool.from_json(
+                    spec.source,
+                    mode=spec.mode,
+                    noise_fraction=_metadata_float(
+                        spec.metadata, "noise_fraction", 0.1
+                    ),
+                    adversarial_multiplier=_metadata_float(
+                        spec.metadata,
+                        "adversarial_multiplier",
+                        1.25,
+                    ),
+                    stale_as_of=_metadata_str(spec.metadata, "stale_as_of"),
+                )
             )
-        )
         configs.append(
             ToolRuntimeConfig(
                 name=spec.name,
@@ -857,14 +885,46 @@ def _parse_transaction_config(data: Any) -> TransactionConfig | None:
     kind = _optional_str(data, "kind") or "fixture"
     if kind != "fixture":
         raise ConfigValidationError(f"transaction.kind: unsupported kind {kind!r}")
+    schedule_id = _optional_str(data, "schedule")
+    schedule = None
+    if schedule_id is not None:
+        try:
+            schedule = load_fee_schedule(schedule_id)
+        except FeeScheduleError as exc:
+            raise ConfigValidationError(f"transaction.schedule: {exc}") from exc
+
+    def _scheduled_float(key: str, schedule_value: float) -> float:
+        explicit = _optional_float(data, key)
+        if explicit is not None:
+            return explicit
+        return schedule_value if schedule is not None else 0.0
+
     return TransactionConfig(
         kind=kind,
         enabled=_optional_bool(data, "enabled", True),
-        shipping_cost=_optional_float(data, "shipping_cost") or 0.0,
-        tax_rate=_optional_float(data, "tax_rate") or 0.0,
-        escrow_fee=_optional_float(data, "escrow_fee") or 0.0,
-        payment_fee_rate=_optional_float(data, "payment_fee_rate") or 0.0,
-        seller_fee_rate=_optional_float(data, "seller_fee_rate") or 0.0,
+        schedule=schedule_id,
+        schedule_as_of=schedule.as_of if schedule is not None else None,
+        schedule_source_url=schedule.source_url if schedule is not None else None,
+        shipping_cost=_scheduled_float(
+            "shipping_cost", schedule.shipping_cost if schedule else 0.0
+        ),
+        tax_rate=_scheduled_float("tax_rate", schedule.tax_rate if schedule else 0.0),
+        escrow_fee=_scheduled_float(
+            "escrow_fee", schedule.escrow_fee if schedule else 0.0
+        ),
+        payment_fee_rate=_scheduled_float(
+            "payment_fee_rate", schedule.payment_fee_rate if schedule else 0.0
+        ),
+        payment_fee_fixed=_scheduled_float(
+            "payment_fee_fixed", schedule.payment_fee_fixed if schedule else 0.0
+        ),
+        seller_fee_rate=_scheduled_float(
+            "seller_fee_rate", schedule.seller_fee_rate if schedule else 0.0
+        ),
+        seller_fee_fixed=_scheduled_float(
+            "seller_fee_fixed", schedule.seller_fee_fixed if schedule else 0.0
+        ),
+        seller_fee_tiers=schedule.seller_fee_tiers if schedule is not None else (),
         return_risk=_optional_float(data, "return_risk") or 0.0,
         reputation_risk=_optional_float(data, "reputation_risk") or 0.0,
         dispute_risk=_optional_float(data, "dispute_risk") or 0.0,
@@ -908,7 +968,10 @@ def _build_transaction_simulator(
         tax_rate=config.tax_rate,
         escrow_fee=config.escrow_fee,
         payment_fee_rate=config.payment_fee_rate,
+        payment_fee_fixed=config.payment_fee_fixed,
         seller_fee_rate=config.seller_fee_rate,
+        seller_fee_fixed=config.seller_fee_fixed,
+        seller_fee_tiers=config.seller_fee_tiers,
         return_risk=config.return_risk,
         reputation_risk=config.reputation_risk,
         dispute_risk=config.dispute_risk,
@@ -942,17 +1005,54 @@ def _build_transaction_simulator(
     )
 
 
+def _parse_negotiation_rules(data: Any) -> NegotiationRules | None:
+    if data is None:
+        return None
+    if not isinstance(data, Mapping):
+        raise ConfigValidationError("rules: expected object")
+    known_keys = {"offer_expiry_turns", "max_offers_per_side", "turn_delay_cost"}
+    unknown = set(data) - known_keys
+    if unknown:
+        raise ConfigValidationError(f"rules: unknown keys {sorted(unknown)}")
+    turn_delay_cost = _optional_float(data, "turn_delay_cost")
+    try:
+        return NegotiationRules(
+            offer_expiry_turns=_optional_nullable_int(data, "offer_expiry_turns"),
+            max_offers_per_side=_optional_nullable_int(data, "max_offers_per_side"),
+            turn_delay_cost=turn_delay_cost if turn_delay_cost is not None else 0.0,
+        )
+    except ValueError as exc:
+        raise ConfigValidationError(f"rules: {exc}") from exc
+
+
+def negotiation_rules_metadata(rules: NegotiationRules | None) -> Mapping[str, Any]:
+    if rules is None:
+        return {"enabled": False}
+    return {
+        "enabled": True,
+        "offer_expiry_turns": rules.offer_expiry_turns,
+        "max_offers_per_side": rules.max_offers_per_side,
+        "turn_delay_cost": rules.turn_delay_cost,
+    }
+
+
 def transaction_config_metadata(config: TransactionConfig | None) -> Mapping[str, Any]:
     if config is None:
         return {"enabled": False}
     return {
         "kind": config.kind,
         "enabled": config.enabled,
+        "schedule": config.schedule,
+        "schedule_as_of": config.schedule_as_of,
+        "schedule_source_url": config.schedule_source_url,
         "shipping_cost": config.shipping_cost,
         "tax_rate": config.tax_rate,
         "escrow_fee": config.escrow_fee,
         "payment_fee_rate": config.payment_fee_rate,
+        "payment_fee_fixed": config.payment_fee_fixed,
         "seller_fee_rate": config.seller_fee_rate,
+        "seller_fee_fixed": config.seller_fee_fixed,
+        "seller_fee_tiers": [list(tier) for tier in config.seller_fee_tiers],
         "return_risk": config.return_risk,
         "reputation_risk": config.reputation_risk,
         "dispute_risk": config.dispute_risk,

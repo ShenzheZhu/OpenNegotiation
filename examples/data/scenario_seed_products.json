@@ -1,0 +1,110 @@
+[
+  {
+    "id": "iphone_14_pro_128gb_unlocked_good_seed",
+    "name": "Apple iPhone 14 Pro 128GB Unlocked",
+    "description": "Used unlocked iPhone 14 Pro, 128GB, clean IMEI, light wear, battery health above 85%.",
+    "condition": "used_good",
+    "category": "smartphones",
+    "asking_price": 760.0,
+    "market_reference": {
+      "reference_price": 575.0,
+      "p25_price": 540.0,
+      "p75_price": 610.0,
+      "sample_size": 24,
+      "currency": "USD",
+      "window_days": 90,
+      "source": "fixture_sold_comps",
+      "sale_mechanism": "mixed"
+    }
+  },
+  {
+    "id": "sony_a6400_body_used_seed",
+    "name": "Sony Alpha a6400 Mirrorless Camera Body",
+    "description": "Used a6400 body, shutter count under 15k, with battery and charger.",
+    "condition": "used_good",
+    "category": "cameras",
+    "asking_price": 700.0,
+    "market_reference": {
+      "reference_price": 615.0,
+      "p25_price": 580.0,
+      "p75_price": 655.0,
+      "sample_size": 18,
+      "currency": "USD",
+      "window_days": 90,
+      "source": "fixture_sold_comps",
+      "sale_mechanism": "mixed"
+    }
+  },
+  {
+    "id": "rtx_4070_founders_used_seed",
+    "name": "NVIDIA GeForce RTX 4070 Founders Edition",
+    "description": "Used RTX 4070 FE, never mined, original box, light dust.",
+    "condition": "used_good",
+    "category": "computer_parts",
+    "asking_price": 480.0,
+    "market_reference": {
+      "reference_price": 420.0,
+      "p25_price": 390.0,
+      "p75_price": 455.0,
+      "sample_size": 31,
+      "currency": "USD",
+      "window_days": 60,
+      "source": "fixture_sold_comps",
+      "sale_mechanism": "mixed"
+    }
+  },
+  {
+    "id": "switch_oled_white_used_seed",
+    "name": "Nintendo Switch OLED White Console",
+    "description": "Used Switch OLED with dock, Joy-Cons, and cables; minor scratches on dock.",
+    "condition": "used_good",
+    "category": "video_game_consoles",
+    "asking_price": 290.0,
+    "market_reference": {
+      "reference_price": 245.0,
+      "p25_price": 225.0,
+      "p75_price": 265.0,
+      "sample_size": 42,
+      "currency": "USD",
+      "window_days": 90,
+      "source": "fixture_sold_comps",
+      "sale_mechanism": "mixed"
+    }
+  },
+  {
+    "id": "specialized_allez_54_used_seed",
+    "name": "Specialized Allez Road Bike 54cm",
+    "description": "Used aluminum road bike, 54cm frame, Shimano Claris groupset, recently tuned.",
+    "condition": "used_good",
+    "category": "bicycles",
+    "asking_price": 820.0,
+    "market_reference": {
+      "reference_price": 700.0,
+      "p25_price": 620.0,
+      "p75_price": 780.0,
+      "sample_size": 12,
+      "currency": "USD",
+      "window_days": 120,
+      "source": "fixture_sold_comps",
+      "sale_mechanism": "mixed"
+    }
+  },
+  {
+    "id": "breville_barista_express_used_seed",
+    "name": "Breville Barista Express Espresso Machine",
+    "description": "Used BES870XL, descaled and cleaned, includes portafilter and tamper.",
+    "condition": "used_good",
+    "category": "small_kitchen_appliances",
+    "asking_price": 460.0,
+    "market_reference": {
+      "reference_price": 410.0,
+      "p25_price": 370.0,
+      "p75_price": 450.0,
+      "sample_size": 22,
+      "currency": "USD",
+      "window_days": 90,
+      "source": "fixture_sold_comps",
+      "sale_mechanism": "mixed"
+    }
+  }
+]

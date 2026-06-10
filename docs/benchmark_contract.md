@@ -35,6 +35,15 @@ derived from a synthetic seller reservation or market reference for
 backward-compatible execution; the product attributes should record
 `legacy_wholesale_basis`.
 
+Scenarios produced by the BATNA generator additionally carry a
+`metadata.batna` object with schema `opennego.batna.v1`. It records how each
+side's private constraint was derived from market evidence: the buyer block
+(`alternative_price`, `switching_friction`, `derived_budget`), the seller
+block (`expected_resale_price`, `relist_cost`, `reservation_floor`,
+`derived_reservation`), the source statistics, and the generator seed. At
+runtime each agent's private state exposes only its own side of this object
+as `outside_option`; the counterpart's derivation is never visible.
+
 Required fields:
 
 - `schema_version`
@@ -67,9 +76,12 @@ runner configs can add fields without changing the core environment API.
 
 `trace.jsonl` is the authoritative audit trail. Each row records one event:
 
-- public dialogue actions: `message`, `offer`, `accept`, `reject`
+- public dialogue actions: `message`, `offer`, `accept`, `reject`, `ghost`
 - private tool actions: `tool_call`
 - system settlement actions: `transaction`
+- system rule actions: `message` rows with `role: "system"` and
+  `actor: "negotiation_rules"`, whose `content` names the rule event
+  (`offer_expired:<role>`, `offer_cap_exceeded:<role>`)
 - tool result summaries and provenance
 - transaction outcomes and cost/risk breakdowns
 - parser, judge, and error events in future extensions
@@ -111,6 +123,13 @@ Transaction events use `action_type: "transaction"` and preserve a
 `metrics.json` records the outcome, deal price, completed public turns, and
 metric dictionary. Metrics should be reproducible from `scenario.json` and
 `trace.jsonl` when possible.
+
+Run outcomes are: `deal`, `rejected`, `timeout`, `ghosted` (a party went
+silent), `invalid_accept` (acceptance without a standing offer, including
+offers lapsed under `offer_expiry_turns`), and `invalid_offer` (an offer made
+beyond `max_offers_per_side`). Runs executed with negotiation rules and a
+positive `turn_delay_cost` additionally report `turn_delay_cost_total`
+(cost times completed public turns); runs without rules omit the key.
 
 Current core metrics:
 

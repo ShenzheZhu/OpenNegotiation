@@ -15,8 +15,10 @@ real payment, escrow, shipping, tax, or marketplace APIs.
 - `tax_rate`: tax rate applied to negotiated price.
 - `escrow_fee`: fixed fee included in buyer total cost and deducted from seller
   net revenue.
-- `payment_fee_rate`: buyer-side payment processing fee.
-- `seller_fee_rate`: seller-side marketplace or platform fee.
+- `payment_fee_rate` / `payment_fee_fixed`: buyer-side payment processing fee.
+- `seller_fee_rate` / `seller_fee_fixed`: seller-side marketplace or platform
+  fee; `seller_fee_tiers` supports marginal tiered schedules like real
+  final-value fees.
 - `return_risk`: deterministic return-risk placeholder.
 - `reputation_risk`: deterministic counterparty/reputation-risk placeholder.
 - `dispute_risk`: deterministic dispute-risk placeholder; included in total
@@ -90,6 +92,36 @@ The `transaction_terms` metadata object uses schema
 `opennego.transaction_terms.v1` and is intentionally provider-neutral. It is a
 fixture contract for benchmark and training comparability, not a live payment or
 logistics adapter.
+
+## Published Fee Schedules
+
+Instead of inventing fee constants, experiment configs can reference a
+published platform schedule by id:
+
+```json
+{
+  "transaction": {
+    "kind": "fixture",
+    "enabled": true,
+    "schedule": "ebay_us_2026_general"
+  }
+}
+```
+
+Curated schedules live in `opennego/transactions/data/fee_schedules.json`
+(`opennego.fee_schedule.v1`). Every entry must carry `source_url` and `as_of`
+provenance; entries without provenance fail to load. Shipped schedules:
+
+- `ebay_us_2026_general`: tiered final value fee (13.35% to $7,500, 2.35%
+  above) plus a fixed per-order amount, payment processing included,
+  representative blended marketplace-facilitator tax rate.
+- `paypal_gs_us_2026`: direct peer-to-peer sale via PayPal Goods and
+  Services; the receiving seller pays 2.99% plus a fixed fee.
+- `local_cash_pickup`: zero-fee local meetup with no buyer protection.
+
+Explicit keys in the `transaction` block override schedule values. Run
+manifests record the schedule id, `as_of` date, and resolved fee parameters
+under `metadata.transaction`.
 
 ## Trace Contract
 

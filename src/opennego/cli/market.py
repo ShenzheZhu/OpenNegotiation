@@ -263,6 +263,96 @@ def ingest_ebay_main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def ingest_ebay_active_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Fetch eBay Browse active listings and normalize them into "
+            "active_listing_search fixtures."
+        )
+    )
+    parser.add_argument("--query", required=True, help="Active-listing search query.")
+    parser.add_argument(
+        "--source-policy",
+        required=True,
+        help=(
+            "Validated live opennego.market_source_policy.v1 artifact with "
+            "adapter_kind=ebay_browse, collection_mode=official_api, and "
+            "live_collection_enabled=true."
+        ),
+    )
+    parser.add_argument(
+        "--snapshot-output",
+        required=True,
+        help="Path to write the sanitized Browse snapshot JSON.",
+    )
+    parser.add_argument(
+        "--listings-output",
+        required=True,
+        help="Path to write normalized active_listings.json fixture records.",
+    )
+    parser.add_argument(
+        "--marketplace-id",
+        default="EBAY_US",
+        help="eBay marketplace header, e.g. EBAY_US or EBAY_GB.",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=50,
+        help="Maximum active listings to ingest.",
+    )
+    parser.add_argument(
+        "--category-id",
+        action="append",
+        help="Optional eBay category id. Can be provided multiple times.",
+    )
+    parser.add_argument(
+        "--filter",
+        dest="item_filter",
+        action="append",
+        help="Optional Browse API filter expression.",
+    )
+    parser.add_argument(
+        "--environment",
+        default="production",
+        choices=("production", "sandbox"),
+        help="eBay API environment.",
+    )
+    parser.add_argument(
+        "--mock-response",
+        help=(
+            "Contract-test path to a saved Browse JSON response. "
+            "Skips OAuth and network calls."
+        ),
+    )
+    parser.add_argument(
+        "--as-of",
+        help="ISO date used to derive deterministic listing_age_days.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        browse_adapter = importlib.import_module("opennego.adapters.ebay_browse")
+        result = browse_adapter.ingest_ebay_browse_listings(
+            query=args.query,
+            source_policy_path=args.source_policy,
+            snapshot_output=args.snapshot_output,
+            listings_output=args.listings_output,
+            marketplace_id=args.marketplace_id,
+            limit=args.limit,
+            category_ids=tuple(args.category_id or ()),
+            item_filter=tuple(args.item_filter or ()),
+            environment=args.environment,
+            mock_response_path=args.mock_response,
+            as_of=args.as_of,
+        )
+    except (OSError, RuntimeError, MarketSourcePolicyError) as exc:
+        return common.print_error(exc)
+
+    common.print_json(to_jsonable(result))
+    return 0
+
+
 def validate_market_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Validate normalized OpenNegotiation market fixture files."
@@ -281,12 +371,17 @@ def validate_market_main(argv: list[str] | None = None) -> int:
         "--manifest-file",
         help="Optional market dataset manifest produced by ingest-market.",
     )
+    parser.add_argument(
+        "--active-listings-file",
+        help="Optional active_listings.json fixture to validate alongside.",
+    )
     args = parser.parse_args(argv)
 
     result = validate_market_dataset(
         products_file=args.products_file,
         market_comps_file=args.market_comps_file,
         manifest_file=args.manifest_file,
+        active_listings_file=args.active_listings_file,
     )
     common.print_json(to_jsonable(result))
     return 0 if result.status == "passed" else 1

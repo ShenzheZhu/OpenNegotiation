@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from opennego.ports import TransactionPort, TransactionRequest
 from opennego.schema import TransactionOutcome
+from opennego.transactions.fee_schedules import tiered_seller_fee
 
 
 @dataclass(frozen=True)
@@ -15,7 +16,10 @@ class FixtureTransactionSimulator(TransactionPort):
     tax_rate: float = 0.0
     escrow_fee: float = 0.0
     payment_fee_rate: float = 0.0
+    payment_fee_fixed: float = 0.0
     seller_fee_rate: float = 0.0
+    seller_fee_fixed: float = 0.0
+    seller_fee_tiers: tuple[tuple[float | None, float], ...] = ()
     return_risk: float = 0.0
     reputation_risk: float = 0.0
     dispute_risk: float = 0.0
@@ -50,8 +54,15 @@ class FixtureTransactionSimulator(TransactionPort):
     def settle(self, request: TransactionRequest) -> TransactionOutcome:
         negotiated_price = request.negotiated_price
         tax = round(negotiated_price * self.tax_rate, 2)
-        payment_fee = round(negotiated_price * self.payment_fee_rate, 2)
-        seller_fee = round(negotiated_price * self.seller_fee_rate, 2)
+        payment_fee = round(
+            negotiated_price * self.payment_fee_rate + self.payment_fee_fixed, 2
+        )
+        seller_fee = tiered_seller_fee(
+            negotiated_price,
+            self.seller_fee_tiers,
+            fallback_rate=self.seller_fee_rate,
+            fixed=self.seller_fee_fixed,
+        )
         buyer_total_cost = round(
             negotiated_price + self.shipping_cost + tax + self.escrow_fee + payment_fee,
             2,

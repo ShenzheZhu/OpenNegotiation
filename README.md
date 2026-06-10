@@ -142,6 +142,15 @@ opennego validate-market --products-file data/products.json \
   --market-comps-file data/market_comps.json --manifest-file data/manifest.json
 ```
 
+Then turn a validated dataset into a runnable multi-category scenario pack
+with BATNA-derived private constraints:
+
+```bash
+opennego scenarios build --products-file data/products.json \
+  --market-comps-file data/market_comps.json --output-dir packs/my_pack --seed 13
+opennego run --config packs/my_pack/experiment_config.json
+```
+
 Live ingestion uses the official eBay Marketplace Insights API
 ([guide](docs/github_actions_ingestion.md) for the scheduled GitHub Actions
 version).
@@ -156,7 +165,7 @@ exit codes `0` (success), `1` (completed with failures), `2` (usage error).
 | Benchmark | `run`, `report`, `leaderboard`, `role-swap`, `arena-plan` |
 | Demo | `demo`, `validate-demo`, `run-models` |
 | Sparring & learning | `strategies`, `spar`, `learn`, `evolve`, `compare`, `train`, `apply-strategy`, `export-training-adapter`, `validate-training-adapter` |
-| Market data | `market-source-policy`, `validate-market-source`, `ingest-market`, `ingest-ebay`, `validate-market` |
+| Market data | `market-source-policy`, `validate-market-source`, `ingest-market`, `ingest-ebay`, `ingest-ebay-active`, `validate-market`, `scenarios` |
 | Strategy marketplace | `marketplace-export`, `validate-marketplace` |
 
 ## Documentation

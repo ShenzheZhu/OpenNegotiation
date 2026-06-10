@@ -11,7 +11,7 @@ from typing import Any, Mapping, Sequence
 
 from opennego.market_ingestion import MARKET_DATASET_MANIFEST_SCHEMA_VERSION
 from opennego.schema import Product
-from opennego.tools import MarketComparable
+from opennego.tools import ActiveListing, MarketComparable
 
 MARKET_VALIDATION_SCHEMA_VERSION = "opennego.market_validation.v1"
 
@@ -27,6 +27,8 @@ class MarketValidationResult:
     comparable_count: int
     errors: tuple[str, ...]
     warnings: tuple[str, ...]
+    active_listings_file: str | None = None
+    active_listing_count: int = 0
 
 
 def validate_market_dataset(
@@ -34,18 +36,27 @@ def validate_market_dataset(
     products_file: str | Path,
     market_comps_file: str | Path,
     manifest_file: str | Path | None = None,
+    active_listings_file: str | Path | None = None,
 ) -> MarketValidationResult:
     """Validate normalized market fixtures and an optional dataset manifest."""
 
     products_path = Path(products_file)
     comps_path = Path(market_comps_file)
     manifest_path = Path(manifest_file) if manifest_file is not None else None
+    listings_path = (
+        Path(active_listings_file) if active_listings_file is not None else None
+    )
     errors: list[str] = []
     warnings: list[str] = []
 
     products = _load_products(products_path, errors)
     comparables = _load_comparables(comps_path, errors)
     _validate_fixture_coverage(products, comparables, warnings)
+    listings = (
+        _load_active_listings(listings_path, errors)
+        if listings_path is not None
+        else []
+    )
     if manifest_path is not None:
         _validate_manifest(
             manifest_path=manifest_path,
@@ -68,6 +79,8 @@ def validate_market_dataset(
         comparable_count=len(comparables),
         errors=tuple(errors),
         warnings=tuple(warnings),
+        active_listings_file=str(listings_path) if listings_path is not None else None,
+        active_listing_count=len(listings),
     )
 
 
@@ -85,6 +98,32 @@ def _load_products(path: Path, errors: list[str]) -> list[Product]:
     if not records:
         errors.append("products: expected at least one product")
     return products
+
+
+def _load_active_listings(path: Path, errors: list[str]) -> list[ActiveListing]:
+    records = _load_json_list(path, "active_listings", errors)
+    listings = []
+    for index, record in enumerate(records):
+        if not isinstance(record, Mapping):
+            errors.append(f"active_listings[{index}]: expected object")
+            continue
+        try:
+            listing = ActiveListing.from_mapping(record)
+        except (KeyError, TypeError, ValueError) as exc:
+            errors.append(f"active_listings[{index}]: {exc}")
+            continue
+        if listing.asking_price <= 0:
+            errors.append(f"active_listings[{index}]: asking_price must be positive")
+            continue
+        if listing.listing_age_days is not None and listing.listing_age_days < 0:
+            errors.append(
+                f"active_listings[{index}]: listing_age_days must be non-negative"
+            )
+            continue
+        listings.append(listing)
+    if not records:
+        errors.append("active_listings: expected at least one listing")
+    return listings
 
 
 def _load_comparables(path: Path, errors: list[str]) -> list[MarketComparable]:

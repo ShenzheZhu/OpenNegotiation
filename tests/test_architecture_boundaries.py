@@ -16,6 +16,7 @@ ADAPTER_IMPORTS = {
 ALLOWED_PROVIDER_FILES = {
     Path("src/opennego/adapters/__init__.py"),
     Path("src/opennego/adapters/litellm_gateway.py"),
+    Path("src/opennego/adapters/ebay_browse.py"),
     Path("src/opennego/model_demo.py"),
 }
 

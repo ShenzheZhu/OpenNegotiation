@@ -1,0 +1,55 @@
+{
+  "schema_version": "opennego.fee_schedule.v1",
+  "schedules": {
+    "ebay_us_2026_general": {
+      "platform": "ebay_us",
+      "description": "eBay US managed payments, most categories. Final value fee is tiered with a fixed per-order amount; payment processing is included in the final value fee. Buyer-side sales tax uses a representative blended marketplace-facilitator rate.",
+      "as_of": "2026-01-15",
+      "source_url": "https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees?id=4822",
+      "currency": "USD",
+      "seller_fee_tiers": [
+        { "up_to": 7500.0, "rate": 0.1335 },
+        { "up_to": null, "rate": 0.0235 }
+      ],
+      "seller_fee_fixed": 0.3,
+      "payment_fee_rate": 0.0,
+      "payment_fee_fixed": 0.0,
+      "tax_rate": 0.0635,
+      "shipping_cost": 12.0,
+      "escrow_fee": 0.0,
+      "notes": "tax_rate is a representative blended US state rate for marketplace-facilitator collection; shipping_cost is a representative carrier rate for a small parcel."
+    },
+    "paypal_gs_us_2026": {
+      "platform": "paypal_goods_services",
+      "description": "Direct peer-to-peer sale settled with PayPal Goods and Services. The receiving seller pays the processing fee; no marketplace final value fee and no facilitator tax collection.",
+      "as_of": "2026-01-15",
+      "source_url": "https://www.paypal.com/us/webapps/mpp/merchant-fees",
+      "currency": "USD",
+      "seller_fee_tiers": [],
+      "seller_fee_rate": 0.0299,
+      "seller_fee_fixed": 0.49,
+      "payment_fee_rate": 0.0,
+      "payment_fee_fixed": 0.0,
+      "tax_rate": 0.0,
+      "shipping_cost": 12.0,
+      "escrow_fee": 0.0,
+      "notes": "Processing fee modeled on the seller side because the receiver pays it."
+    },
+    "local_cash_pickup": {
+      "platform": "local_pickup",
+      "description": "Local meetup with cash payment: no platform fees, no payment processing, no shipping, and no buyer protection.",
+      "as_of": "2026-01-15",
+      "source_url": "https://www.ic3.gov/Home/ConsumerAlerts",
+      "currency": "USD",
+      "seller_fee_tiers": [],
+      "seller_fee_rate": 0.0,
+      "seller_fee_fixed": 0.0,
+      "payment_fee_rate": 0.0,
+      "payment_fee_fixed": 0.0,
+      "tax_rate": 0.0,
+      "shipping_cost": 0.0,
+      "escrow_fee": 0.0,
+      "notes": "Zero-fee channel; the realism trade-off is the absence of any platform protection."
+    }
+  }
+}
