@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Market-grounded scenario generator with BATNA structure
+  (`opennego.batna.v1`): buyer budgets derive from next-best active listings
+  plus switching friction, seller reservations from patience-discounted
+  resale minus relist cost; each agent sees only its own outside option.
+- Market time structure: steppable `NegotiationEnvironment.step()` API,
+  optional `NegotiationRules` (offer expiry, per-side offer caps, turn delay
+  costs), and a `ghost` action with the `ghosted` outcome.
+- Scenario pack pipeline (`opennego scenarios build|validate`,
+  `opennego.scenario_pack.v1`): validated market data in, runnable
+  multi-category scenario libraries with fingerprinted provenance out.
+- NPC population expanded 5 → 17 archetypes with difficulty tiers and
+  field-evidence provenance notes, including firm-price, ghosting,
+  deadline-pressure, precise-counter, and safety (scam) archetypes.
+- Published marketplace fee schedules (`opennego.fee_schedule.v1`) with
+  required provenance: eBay US tiered final value fees, PayPal Goods and
+  Services, local cash pickup; configs reference schedules via
+  `transaction.schedule`.
+- Active listings surface: `active_listing_search` tool, eBay Browse API
+  adapter behind source-policy gates (`ingest-ebay-active`), and
+  `validate-market --active-listings-file`.
+
 ### Changed
 
 - Restructured the CLI from a single module into `opennego.cli` command
