@@ -7,9 +7,7 @@ from opennego.learning import POLICY_LEARNING_SCHEMA_VERSION
 from opennego.demo import (
     DEMO_BUNDLE_SCHEMA_VERSION,
     DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION,
-    LEGACY_MVP_DEMO_BUNDLE_SCHEMA_VERSION,
     run_demo,
-    run_mvp_demo,
     validate_demo_bundle,
 )
 
@@ -186,26 +184,3 @@ def test_validate_demo_bundle_reports_malformed_manifest(tmp_path):
     assert result.status == "failed"
     assert result.bundle_schema_version is None
     assert any("manifest: cannot read JSON object" in item for item in result.errors)
-
-
-def test_legacy_mvp_demo_cli_still_works(tmp_path, capsys):
-    output_dir = tmp_path / "legacy_mvp"
-
-    status = main(["mvp-demo", "--output-dir", str(output_dir)])
-    payload = json.loads(capsys.readouterr().out)
-
-    assert status == 0
-    assert payload["name"] == "opennego_mvp_demo"
-    assert payload["bundle_manifest"] == str(output_dir / "mvp_demo_manifest.json")
-    assert (output_dir / "mvp_demo_manifest.json").exists()
-
-    manifest = json.loads((output_dir / "mvp_demo_manifest.json").read_text())
-    assert manifest["schema_version"] == LEGACY_MVP_DEMO_BUNDLE_SCHEMA_VERSION
-
-    validate_code = main(
-        ["validate-demo-bundle", "--manifest", payload["bundle_manifest"]]
-    )
-    validate_payload = json.loads(capsys.readouterr().out)
-
-    assert validate_code == 0
-    assert validate_payload["status"] == "passed"

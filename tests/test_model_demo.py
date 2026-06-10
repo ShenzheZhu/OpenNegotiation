@@ -3,7 +3,7 @@ import json
 from opennego.model_demo import run_model_demo
 from opennego.ports import LLMRequest, LLMResponse
 from opennego.report import write_demo_report
-from opennego.cli import _run_models_preflight_error
+from opennego.cli.common import llm_preflight_error
 
 
 class FakeModelDemoLLM:
@@ -100,18 +100,18 @@ def test_model_demo_report_shows_attempt_status_for_failures(tmp_path):
 
 
 def test_run_models_preflight_reports_missing_litellm(monkeypatch):
-    monkeypatch.setattr("opennego.cli.importlib.util.find_spec", lambda name: None)
+    monkeypatch.setattr("opennego.cli.common.importlib.util.find_spec", lambda name: None)
 
-    error = _run_models_preflight_error(("openrouter/openai/gpt-4o-mini",))
+    error = llm_preflight_error(("openrouter/openai/gpt-4o-mini",))
 
     assert error is not None
     assert "LiteLLM is not installed" in error
 
 
 def test_run_models_preflight_reports_missing_openrouter_key(monkeypatch):
-    monkeypatch.setattr("opennego.cli.importlib.util.find_spec", lambda name: object())
+    monkeypatch.setattr("opennego.cli.common.importlib.util.find_spec", lambda name: object())
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
-    error = _run_models_preflight_error(("openrouter/openai/gpt-4o-mini",))
+    error = llm_preflight_error(("openrouter/openai/gpt-4o-mini",))
 
     assert error == "Missing provider environment variable(s): OPENROUTER_API_KEY"

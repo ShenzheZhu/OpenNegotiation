@@ -18,16 +18,6 @@ from opennego.runner import RunRecord, run_experiment_config
 
 DEMO_BUNDLE_SCHEMA_VERSION = "opennego.demo_bundle.v1"
 DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION = "opennego.demo_bundle_validation.v1"
-LEGACY_MVP_DEMO_BUNDLE_SCHEMA_VERSION = "opennego.mvp_demo_bundle.v1"
-LEGACY_MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION = (
-    "opennego.mvp_demo_bundle_validation.v1"
-)
-
-# Backwards-compatible aliases for older imports. The aliases intentionally point
-# at the current schema versions so downstream tests and docs converge on the
-# refreshed public naming while old symbol imports keep working.
-MVP_DEMO_BUNDLE_SCHEMA_VERSION = DEMO_BUNDLE_SCHEMA_VERSION
-MVP_DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION = DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION
 
 
 @dataclass(frozen=True)
@@ -56,10 +46,6 @@ class DemoBundleValidationResult:
     warnings: tuple[str, ...]
 
 
-MvpDemoSummary = DemoSummary
-MvpDemoBundleValidationResult = DemoBundleValidationResult
-
-
 def run_demo(
     *,
     output_dir: str | Path = "runs/demo",
@@ -71,69 +57,18 @@ def run_demo(
 ) -> DemoSummary:
     """Run benchmark, policy learning, and HTML report generation."""
 
-    return _run_demo_bundle(
-        output_dir=output_dir,
-        report_path=report_path,
-        config_path=config_path,
-        learning_tool_regime=learning_tool_regime,
-        user_role=user_role,
-        opponent_profile_id=opponent_profile_id,
-        manifest_name="demo_manifest.json",
-        default_report_name="opennegotiation_demo.html",
-        bundle_name="opennegotiation_demo",
-        schema_version=DEMO_BUNDLE_SCHEMA_VERSION,
-    )
-
-
-def run_mvp_demo(
-    *,
-    output_dir: str | Path = "runs/mvp_demo",
-    report_path: str | Path | None = None,
-    config_path: str | Path = "configs/real_market_demo.yaml",
-    learning_tool_regime: str = "no_tools",
-    user_role: str = "buyer",
-    opponent_profile_id: str = "seller_hardline_anchor_v1",
-) -> DemoSummary:
-    """Compatibility wrapper for the former legacy demo command."""
-
-    return _run_demo_bundle(
-        output_dir=output_dir,
-        report_path=report_path,
-        config_path=config_path,
-        learning_tool_regime=learning_tool_regime,
-        user_role=user_role,
-        opponent_profile_id=opponent_profile_id,
-        manifest_name="mvp_demo_manifest.json",
-        default_report_name="opennego_mvp_demo.html",
-        bundle_name="opennego_mvp_demo",
-        schema_version=LEGACY_MVP_DEMO_BUNDLE_SCHEMA_VERSION,
-    )
-
-
-def _run_demo_bundle(
-    *,
-    output_dir: str | Path,
-    report_path: str | Path | None,
-    config_path: str | Path,
-    learning_tool_regime: str,
-    user_role: str,
-    opponent_profile_id: str,
-    manifest_name: str,
-    default_report_name: str,
-    bundle_name: str,
-    schema_version: str,
-) -> DemoSummary:
+    bundle_name = "opennegotiation_demo"
     output = Path(output_dir)
     summary = run_experiment_config(config_path, output_dir=output)
     learning_run = _select_learning_run(summary.runs, learning_tool_regime)
-    bundle_manifest = output / manifest_name
+    bundle_manifest = output / "demo_manifest.json"
     leaderboard_summary = output / "leaderboard_summary.json"
     battle_report = output / "battle_report.json"
     strategy_candidate = output / "strategy_candidate.json"
     html_report = (
         Path(report_path)
         if report_path is not None
-        else output / default_report_name
+        else output / "opennegotiation_demo.html"
     )
 
     write_battle_report(
@@ -161,7 +96,7 @@ def _run_demo_bundle(
         strategy_candidate=strategy_candidate,
         html_report=html_report,
         bundle_name=bundle_name,
-        schema_version=schema_version,
+        schema_version=DEMO_BUNDLE_SCHEMA_VERSION,
     )
 
     return DemoSummary(
@@ -178,7 +113,7 @@ def _run_demo_bundle(
     )
 
 
-def validate_mvp_demo_bundle(manifest_file: str | Path) -> MvpDemoBundleValidationResult:
+def validate_demo_bundle(manifest_file: str | Path) -> DemoBundleValidationResult:
     """Validate a one-command demo bundle manifest and referenced artifacts."""
 
     manifest_path = Path(manifest_file)
@@ -192,14 +127,10 @@ def validate_mvp_demo_bundle(manifest_file: str | Path) -> MvpDemoBundleValidati
 
     if manifest:
         version = manifest.get("schema_version")
-        accepted_versions = {
-            DEMO_BUNDLE_SCHEMA_VERSION,
-            LEGACY_MVP_DEMO_BUNDLE_SCHEMA_VERSION,
-        }
-        if version not in accepted_versions:
+        if version != DEMO_BUNDLE_SCHEMA_VERSION:
             errors.append(
-                "manifest.schema_version: expected one of "
-                f"{sorted(accepted_versions)!r}, got {version!r}"
+                "manifest.schema_version: expected "
+                f"{DEMO_BUNDLE_SCHEMA_VERSION!r}, got {version!r}"
             )
         _validate_benchmark_section(manifest, errors)
         _validate_workflow_steps(manifest, errors)
@@ -402,6 +333,3 @@ def _select_learning_run(
     if completed:
         return completed[0]
     raise ValueError("demo bundle requires at least one completed benchmark run")
-
-
-validate_demo_bundle = validate_mvp_demo_bundle

@@ -210,7 +210,7 @@ opennego validate-demo --manifest /tmp/opennegotiation-demo/demo_manifest.json
 This runs the small real-market benchmark, writes
 `/tmp/opennegotiation-demo/leaderboard_summary.json` plus
 `/tmp/opennegotiation-demo/battle_report.json`, writes an
-`opennego.demo_bundle.v1` handoff manifest at
+`opennego.demo_bundle.v1` bundle manifest at
 `/tmp/opennegotiation-demo/demo_manifest.json`, and renders an HTML page with
 the leaderboard preview, Training / Prompt Optimization section, and Strategy
 Marketplace section. The leaderboard preview is rendered from the versioned

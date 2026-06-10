@@ -5,13 +5,32 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "opennego"
 version = "0.1.0"
-description = "Evaluation gym for agent-level agent-to-agent negotiation and transaction research."
+description = "Real-market negotiation gym for agent-to-agent evaluation and evolution."
 readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
 authors = [
   { name = "Kordi AI" }
 ]
+keywords = ["negotiation", "llm", "agents", "benchmark", "evaluation", "multi-agent"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Kordi-AI/OpenNegotiation"
+Repository = "https://github.com/Kordi-AI/OpenNegotiation"
+Issues = "https://github.com/Kordi-AI/OpenNegotiation/issues"
+Changelog = "https://github.com/Kordi-AI/OpenNegotiation/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

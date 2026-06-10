@@ -179,13 +179,13 @@ seller. It writes:
 - `role_swap_summary.json` with schema `opennego.role_swap_benchmark.v1`
 
 The combined leaderboard should show the selected participant with buyer and
-seller roles and `role_coverage: 1.0`. This is a small local fixture methodology
-track for external handoff, not a pairwise arena or large-batch leaderboard.
+seller roles and `role_coverage: 1.0`. This is a small local fixture
+methodology track, not a pairwise arena or large-batch leaderboard.
 
 ## Demo Bundle
 
 `opennego demo` writes `demo_manifest.json` with schema
-`opennego.demo_bundle.v1`. The bundle manifest is a handoff index, not a
+`opennego.demo_bundle.v1`. The bundle manifest is an artifact index, not a
 separate scoring surface. It records:
 
 - benchmark completion and failure counts
@@ -195,30 +195,12 @@ separate scoring surface. It records:
 - observed and expected schema versions for machine-readable artifacts
 - ordered workflow steps used by the one-command local fixture demo
 
-`opennego validate-demo --manifest <demo_manifest.json>` validates
-that handoff bundle and returns `opennego.demo_bundle_validation.v1` JSON.
-It checks the bundle schema, benchmark summary fields, workflow step order,
-required artifact paths, and the expected schema versions for the leaderboard
-summary, battle report, and strategy candidate artifacts. A failed validation
-returns a nonzero CLI exit code so release scripts can gate curated demo
-bundles before handoff.
-
-## External Handoff Package
-
-`opennego handoff --output-dir <dir>` writes a top-level
-`handoff_manifest.json` with schema `opennego.external_handoff.v1`. The handoff
-manifest is the package index for external local fixture model-team smoke tests. It
-records:
-
-- the package README path
-- demo artifact paths and benchmark completion counts
-- role-swapped benchmark summary path and participant role coverage
-- demo bundle, market fixture, and strategy marketplace validation statuses
-- recheck commands for the package validators
-- local fixture boundaries: fixture-backed data, no live marketplace collection, no
-  live model-provider calls, and no hosted marketplace backend
-
-The handoff package is ready only when the manifest `status` is `passed`.
+`opennego validate-demo --manifest <demo_manifest.json>` validates the bundle
+and returns `opennego.demo_bundle_validation.v1` JSON. It checks the bundle
+schema, benchmark summary fields, workflow step order, required artifact
+paths, and the expected schema versions for the leaderboard summary, battle
+report, and strategy candidate artifacts. A failed validation returns a
+nonzero CLI exit code so release scripts can gate curated demo bundles.
 
 ## Arena Planning
 
