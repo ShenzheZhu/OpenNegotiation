@@ -30,7 +30,11 @@ from opennego.environment import (
 from opennego.ports import AgentPort, LLMPort, ToolPort
 from opennego.schema import Product, Role, Scenario
 from opennego.tools import MarketPriceTool
-from opennego.transactions import FixtureTransactionSimulator
+from opennego.transactions import (
+    FeeScheduleError,
+    FixtureTransactionSimulator,
+    load_fee_schedule,
+)
 
 EXPERIMENT_CONFIG_VERSION = "opennego.experiment.v1"
 
@@ -129,11 +133,17 @@ class PreparedRun:
 class TransactionConfig:
     kind: str = "fixture"
     enabled: bool = False
+    schedule: str | None = None
+    schedule_as_of: str | None = None
+    schedule_source_url: str | None = None
     shipping_cost: float = 0.0
     tax_rate: float = 0.0
     escrow_fee: float = 0.0
     payment_fee_rate: float = 0.0
+    payment_fee_fixed: float = 0.0
     seller_fee_rate: float = 0.0
+    seller_fee_fixed: float = 0.0
+    seller_fee_tiers: tuple = ()
     return_risk: float = 0.0
     reputation_risk: float = 0.0
     dispute_risk: float = 0.0
@@ -865,14 +875,46 @@ def _parse_transaction_config(data: Any) -> TransactionConfig | None:
     kind = _optional_str(data, "kind") or "fixture"
     if kind != "fixture":
         raise ConfigValidationError(f"transaction.kind: unsupported kind {kind!r}")
+    schedule_id = _optional_str(data, "schedule")
+    schedule = None
+    if schedule_id is not None:
+        try:
+            schedule = load_fee_schedule(schedule_id)
+        except FeeScheduleError as exc:
+            raise ConfigValidationError(f"transaction.schedule: {exc}") from exc
+
+    def _scheduled_float(key: str, schedule_value: float) -> float:
+        explicit = _optional_float(data, key)
+        if explicit is not None:
+            return explicit
+        return schedule_value if schedule is not None else 0.0
+
     return TransactionConfig(
         kind=kind,
         enabled=_optional_bool(data, "enabled", True),
-        shipping_cost=_optional_float(data, "shipping_cost") or 0.0,
-        tax_rate=_optional_float(data, "tax_rate") or 0.0,
-        escrow_fee=_optional_float(data, "escrow_fee") or 0.0,
-        payment_fee_rate=_optional_float(data, "payment_fee_rate") or 0.0,
-        seller_fee_rate=_optional_float(data, "seller_fee_rate") or 0.0,
+        schedule=schedule_id,
+        schedule_as_of=schedule.as_of if schedule is not None else None,
+        schedule_source_url=schedule.source_url if schedule is not None else None,
+        shipping_cost=_scheduled_float(
+            "shipping_cost", schedule.shipping_cost if schedule else 0.0
+        ),
+        tax_rate=_scheduled_float("tax_rate", schedule.tax_rate if schedule else 0.0),
+        escrow_fee=_scheduled_float(
+            "escrow_fee", schedule.escrow_fee if schedule else 0.0
+        ),
+        payment_fee_rate=_scheduled_float(
+            "payment_fee_rate", schedule.payment_fee_rate if schedule else 0.0
+        ),
+        payment_fee_fixed=_scheduled_float(
+            "payment_fee_fixed", schedule.payment_fee_fixed if schedule else 0.0
+        ),
+        seller_fee_rate=_scheduled_float(
+            "seller_fee_rate", schedule.seller_fee_rate if schedule else 0.0
+        ),
+        seller_fee_fixed=_scheduled_float(
+            "seller_fee_fixed", schedule.seller_fee_fixed if schedule else 0.0
+        ),
+        seller_fee_tiers=schedule.seller_fee_tiers if schedule is not None else (),
         return_risk=_optional_float(data, "return_risk") or 0.0,
         reputation_risk=_optional_float(data, "reputation_risk") or 0.0,
         dispute_risk=_optional_float(data, "dispute_risk") or 0.0,
@@ -916,7 +958,10 @@ def _build_transaction_simulator(
         tax_rate=config.tax_rate,
         escrow_fee=config.escrow_fee,
         payment_fee_rate=config.payment_fee_rate,
+        payment_fee_fixed=config.payment_fee_fixed,
         seller_fee_rate=config.seller_fee_rate,
+        seller_fee_fixed=config.seller_fee_fixed,
+        seller_fee_tiers=config.seller_fee_tiers,
         return_risk=config.return_risk,
         reputation_risk=config.reputation_risk,
         dispute_risk=config.dispute_risk,
@@ -987,11 +1032,17 @@ def transaction_config_metadata(config: TransactionConfig | None) -> Mapping[str
     return {
         "kind": config.kind,
         "enabled": config.enabled,
+        "schedule": config.schedule,
+        "schedule_as_of": config.schedule_as_of,
+        "schedule_source_url": config.schedule_source_url,
         "shipping_cost": config.shipping_cost,
         "tax_rate": config.tax_rate,
         "escrow_fee": config.escrow_fee,
         "payment_fee_rate": config.payment_fee_rate,
+        "payment_fee_fixed": config.payment_fee_fixed,
         "seller_fee_rate": config.seller_fee_rate,
+        "seller_fee_fixed": config.seller_fee_fixed,
+        "seller_fee_tiers": [list(tier) for tier in config.seller_fee_tiers],
         "return_risk": config.return_risk,
         "reputation_risk": config.reputation_risk,
         "dispute_risk": config.dispute_risk,
