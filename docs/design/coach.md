@@ -38,7 +38,7 @@ class CoachPort(Protocol):
 | `scenario_public` | product, list price, market reference, max turns | scenario.json minus counterpart private constraints |
 | `user_private` | the user's own budget/reservation, own BATNA block | scenario + metadata.batna (own side only) |
 | `visible_trace` | events visible to the user role (own private tool calls included, counterpart's excluded) | trace.jsonl filtered |
-| `metrics` | full metric report | metrics.json |
+| `metrics` | role-filtered metric report | metrics.json minus counterpart-derivable metrics |
 | `rules` | active NegotiationRules, if any | manifest metadata |
 | `opponent_card` | NPC public card: name, archetype, difficulty, summary, expected_traps, tags | registry profile (public fields only) |
 
@@ -49,6 +49,9 @@ NPC card. Specifically excluded, enforced by the `CoachCase` builder and
 covered by tests:
 
 - counterpart reservation price / budget,
+- derived metrics that reconstruct them (`buyer_budget_slack` for seller
+  cases; `seller_profit_vs_reservation` and `normalized_deal_price` for
+  buyer cases),
 - counterpart's side of `metadata.batna`,
 - counterpart private tool calls and results,
 - NPC policy parameters (concession fractions, ghost thresholds) — only the
