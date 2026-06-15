@@ -15,7 +15,18 @@ from __future__ import annotations
 import sys
 from typing import Callable
 
-from . import benchmark, demo, learning, market, marketplace, scenarios, serve, smoke
+from . import (
+    benchmark,
+    demo,
+    drills,
+    learning,
+    market,
+    market_sandbox,
+    marketplace,
+    scenarios,
+    serve,
+    smoke,
+)
 
 CommandMain = Callable[[list[str]], int]
 
@@ -44,6 +55,14 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, CommandMain, str], ...]], ...]
         "Client",
         (
             ("serve", serve.serve_main, "Launch the local web client."),
+        ),
+    ),
+    (
+        "Market skills",
+        (
+            ("drill", drills.drill_main, "Run a controlled market-skill drill."),
+            ("market-run", market_sandbox.market_run_main, "Run a concurrent market episode."),
+            ("market-calibrate", market_sandbox.market_calibrate_main, "Compare market distributions to a reference."),
         ),
     ),
     (

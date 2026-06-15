@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Market runtime (M5): `opennego.market` builds a deterministic listings pool (`opennego.market_state.v1`) from product fixtures, advances it with a lifecycle step (age, price-drop on stale listings, expire/relist), and serves a discovery query of ranked listing cards.
+
+- Market skill drills (M5): `opennego drill select` runs a deterministic listing-selection drill (`opennego.skill_drill.v1`) scored by attainable surplus relative to the optimum, where the cheapest sticker is a trap when the seller's reputation is low.
+
 - Web client (M4): a React + Elastic UI frontend in `web/` (Vite,
   TypeScript) with agent definition (key write-only, read-only base
   prompt) and match replay. `opennego serve` serves the built
