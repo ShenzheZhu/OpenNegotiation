@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Strategy candidates record coach provenance (coach kind, source report
   version, addressed phases and turns), and applying a candidate now
   rejects any attempt to overwrite the fixed base prompt.
+- Held-out generalization for `opennego train --holdout-validation`: the
+  opposite-role roster splits into train and held-out sets (scam
+  archetypes in both), the patch is picked from the train set only, and
+  the candidate is rerun across the roster. The training summary reports
+  per-set score/deal-rate deltas and a verdict (improved/train_only/
+  regressed); `apply-strategy` refuses a `train_only` candidate unless
+  `--allow-train-only` is passed.
 
 - Market-grounded scenario generator with BATNA structure
   (`opennego.batna.v1`): buyer budgets derive from next-best active listings
