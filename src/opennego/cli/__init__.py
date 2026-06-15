@@ -29,6 +29,7 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, CommandMain, str], ...]], ...]
             ("leaderboard", benchmark.leaderboard_main, "Aggregate runs into leaderboard JSON."),
             ("role-swap", benchmark.role_swap_main, "Run a role-swapped benchmark track."),
             ("arena-plan", benchmark.arena_plan_main, "Plan a reciprocal arena schedule."),
+            ("arena-run", benchmark.arena_run_main, "Execute an arena plan into a rating store."),
         ),
     ),
     (

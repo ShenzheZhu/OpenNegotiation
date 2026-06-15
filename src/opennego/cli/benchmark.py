@@ -17,6 +17,7 @@ from opennego.runner import (
     load_experiment_config,
     run_experiment_config,
 )
+from opennego.scenario_generator import generate_scenarios, load_products
 
 from . import common
 
@@ -182,6 +183,65 @@ def arena_plan_main(argv: list[str] | None = None) -> int:
         return common.print_error(exc)
 
     common.print_json(to_jsonable(plan))
+    return 0
+
+
+def arena_run_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Execute an arena plan and ingest rated matches into a store."
+    )
+    parser.add_argument(
+        "--plan",
+        required=True,
+        help="Path to an opennego.arena_plan.v1 artifact.",
+    )
+    parser.add_argument(
+        "--store",
+        required=True,
+        help="Path to the SQLite rating store (created if absent).",
+    )
+    parser.add_argument(
+        "--products-file",
+        default="examples/data/real_market_products.json",
+        help="Products fixture used to build the deterministic arena scenario.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=13,
+        help="Seed for the BATNA scenario shared across matchups.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        help="Optional directory for per-matchup result artifacts.",
+    )
+    args = parser.parse_args(argv)
+
+    from opennego.arena import ArenaPlanError, load_arena_plan
+    from opennego.arena_executor import run_arena
+    from opennego.rating import RatingStore
+    from opennego.scenario_generator import ScenarioGenerationError
+
+    try:
+        plan = load_arena_plan(args.plan)
+        products = load_products(args.products_file)
+        scenario = generate_scenarios(products, seed=args.seed)[0]
+    except (OSError, ArenaPlanError, ScenarioGenerationError) as exc:
+        return common.print_error(exc)
+
+    store = RatingStore(args.store)
+    try:
+        summary = run_arena(
+            plan=plan,
+            scenario=scenario,
+            store=store,
+            output_dir=args.output_dir,
+            plan_path=args.plan,
+        )
+    finally:
+        store.close()
+
+    common.print_json(to_jsonable(summary))
     return 0
 
 

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from opennego.artifacts import write_json
+from opennego.artifacts import read_json, write_json
 
 ARENA_PLAN_SCHEMA_VERSION = "opennego.arena_plan.v1"
 
@@ -131,6 +131,52 @@ def write_arena_plan(
     output.parent.mkdir(parents=True, exist_ok=True)
     write_json(output, plan)
     return plan
+
+
+def load_arena_plan(path: str | Path) -> ArenaPlan:
+    """Load a written arena plan artifact."""
+
+    data = read_json(path)
+    version = data.get("schema_version")
+    if version != ARENA_PLAN_SCHEMA_VERSION:
+        raise ArenaPlanError(
+            f"{path}: expected {ARENA_PLAN_SCHEMA_VERSION}, got {version!r}"
+        )
+    raw_matchups = data.get("matchups")
+    if not isinstance(raw_matchups, list):
+        raise ArenaPlanError("matchups: expected list")
+    matchups = tuple(_matchup_from_mapping(item) for item in raw_matchups)
+    return ArenaPlan(
+        schema_version=ARENA_PLAN_SCHEMA_VERSION,
+        status=str(data.get("status", "planned")),
+        output_path=data.get("output_path"),
+        participants=tuple(str(p) for p in data.get("participants", ())),
+        scenario_ids=tuple(str(s) for s in data.get("scenario_ids", ())),
+        seeds=tuple(int(s) for s in data.get("seeds", ())),
+        include_self_play=bool(data.get("include_self_play", False)),
+        matchup_count=int(data.get("matchup_count", len(matchups))),
+        reciprocal_group_count=int(data.get("reciprocal_group_count", 0)),
+        required_role_coverage={
+            str(pid): tuple(str(role) for role in roles)
+            for pid, roles in (data.get("required_role_coverage") or {}).items()
+        },
+        ranking_methodology=data.get("ranking_methodology") or {},
+        matchups=matchups,
+        warnings=tuple(str(w) for w in data.get("warnings", ())),
+    )
+
+
+def _matchup_from_mapping(data: Mapping[str, Any]) -> ArenaMatchup:
+    if not isinstance(data, Mapping):
+        raise ArenaPlanError("matchups[]: expected object")
+    return ArenaMatchup(
+        matchup_id=str(data["matchup_id"]),
+        scenario_id=str(data["scenario_id"]),
+        seed=int(data["seed"]),
+        buyer_participant_id=str(data["buyer_participant_id"]),
+        seller_participant_id=str(data["seller_participant_id"]),
+        reciprocal_group_id=str(data.get("reciprocal_group_id", "")),
+    )
 
 
 def _matchups(
