@@ -31,6 +31,14 @@ def market_run_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--shortlist-size", type=int, default=3)
     parser.add_argument("--max-turns", type=int, default=8)
     parser.add_argument(
+        "--level",
+        choices=("L1", "L2", "L3"),
+        help=(
+            "Run a single buyer at a staged autonomy level (L1 assigned, "
+            "L2 shortlist-select, L3 free concurrent) instead of a full episode."
+        ),
+    )
+    parser.add_argument(
         "--warm-periods",
         type=int,
         default=0,
@@ -54,15 +62,29 @@ def market_run_main(argv: list[str] | None = None) -> int:
 
             store = RatingStore(args.store)
         try:
-            result = run_market_episode(
-                state,
-                buyer_ids=buyers,
-                shortlist_size=args.shortlist_size,
-                max_turns=args.max_turns,
-                seed=args.seed,
-                store=store,
-                output_path=args.output,
-            )
+            if args.level:
+                from opennego.market_autonomy import run_autonomy_episode
+
+                result = run_autonomy_episode(
+                    state,
+                    buyer_id=buyers[0],
+                    level=args.level,
+                    shortlist_size=args.shortlist_size,
+                    max_turns=args.max_turns,
+                    seed=args.seed,
+                    store=store,
+                    output_path=args.output,
+                )
+            else:
+                result = run_market_episode(
+                    state,
+                    buyer_ids=buyers,
+                    shortlist_size=args.shortlist_size,
+                    max_turns=args.max_turns,
+                    seed=args.seed,
+                    store=store,
+                    output_path=args.output,
+                )
         finally:
             if store is not None:
                 store.close()
