@@ -95,7 +95,18 @@ def learn_main(argv: list[str] | None = None) -> int:
         "--opponent-profile",
         help="Optional NPC strategy profile id for the counterparty.",
     )
+    parser.add_argument(
+        "--coach",
+        default="rules",
+        choices=("rules", "llm"),
+        help="Coach implementation. 'rules' is the deterministic no-key default.",
+    )
     args = parser.parse_args(argv)
+
+    if args.coach == "llm":
+        return common.print_error(
+            "coach 'llm' is not available yet (issue #144); use --coach rules"
+        )
 
     try:
         output_path = write_battle_report(

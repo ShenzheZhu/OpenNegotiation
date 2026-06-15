@@ -265,12 +265,19 @@ def write_strategy_comparison(
     return path
 
 
+ACCEPTED_BATTLE_REPORT_VERSIONS = (
+    POLICY_LEARNING_SCHEMA_VERSION,
+    "opennego.battle_report.v2",
+)
+
+
 def _load_battle_report(path: Path) -> Mapping[str, Any]:
     report = read_json(path)
     version = report.get("schema_version")
-    if version != POLICY_LEARNING_SCHEMA_VERSION:
+    if version not in ACCEPTED_BATTLE_REPORT_VERSIONS:
         raise StrategyEvolutionError(
-            f"{path}: expected {POLICY_LEARNING_SCHEMA_VERSION}, got {version!r}"
+            f"{path}: expected one of {ACCEPTED_BATTLE_REPORT_VERSIONS}, "
+            f"got {version!r}"
         )
     return report
 

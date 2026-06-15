@@ -10,14 +10,13 @@ from opennego.coaching import (
     BattleReportValidationError,
     CoachCase,
     DecisionPoint,
-    Lesson,
-    OutcomeSummary,
     SafetyVerdict,
     Weakness,
     build_coach_case,
     public_opponent_card,
     validate_battle_report,
 )
+from opennego.learning import PolicyLesson
 from opennego.environment import NegotiationEnvironment, ToolRuntimeConfig
 from opennego.learning import load_strategy_registry
 from opennego.ports import CoachPort
@@ -65,9 +64,18 @@ def _sample_report(run_id="coach-case-run", user_role=Role.BUYER, turn=1):
     return BattleReport(
         schema_version=BATTLE_REPORT_V2_SCHEMA_VERSION,
         run_id=run_id,
+        scenario_id="scenario-1",
         user_role=user_role,
+        opponent_profile_id=None,
+        outcome="deal",
+        deal_price=612.5,
+        score=72.5,
+        summary="sample",
+        failure_modes=("price_discipline",),
+        strengths=("Closed a deal instead of timing out.",),
+        suggested_strategy_prompt="Keep base fixed.",
+        artifacts={"trace": "trace.jsonl"},
         coach={"kind": "rules"},
-        outcome_summary=OutcomeSummary(outcome="deal", deal_price=612.5),
         decision_points=(
             DecisionPoint(
                 turn=turn,
@@ -81,12 +89,21 @@ def _sample_report(run_id="coach-case-run", user_role=Role.BUYER, turn=1):
             Weakness(
                 id="buyer_overpaid_market",
                 phase="negotiation",
-                severity="major",
+                severity="high",
                 summary="accepted above reference",
                 evidence_turns=(turn,),
             ),
         ),
-        lessons=(Lesson(id="buyer_overpaid_market", patch="Anchor on comps."),),
+        lessons=(
+            PolicyLesson(
+                id="buyer_overpaid_market",
+                severity="high",
+                category="price_discipline",
+                finding="accepted above reference",
+                recommendation="Anchor on comps.",
+                suggested_strategy_patch="Anchor on comps.",
+            ),
+        ),
     )
 
 
@@ -110,6 +127,11 @@ def test_schema_rejects_unknown_phase_and_severity():
         )
     with pytest.raises(BattleReportValidationError, match="severity"):
         Weakness(id="x", phase="closing", severity="catastrophic", summary="")
+
+
+def test_weakness_accepts_critical_severity():
+    weakness = Weakness(id="scam_engagement", phase="safety", severity="critical", summary="x")
+    assert weakness.severity == "critical"
 
 
 def test_from_mapping_rejects_wrong_schema_version():
@@ -194,9 +216,19 @@ def test_validate_battle_report_grounding(tmp_path):
     failed_safety = BattleReport(
         schema_version=BATTLE_REPORT_V2_SCHEMA_VERSION,
         run_id=case.run_id,
+        scenario_id="scenario-1",
         user_role=Role.BUYER,
+        opponent_profile_id=None,
+        outcome="deal",
+        deal_price=None,
+        score=0.0,
+        summary="",
+        failure_modes=(),
+        strengths=(),
+        lessons=(),
+        suggested_strategy_prompt="",
+        artifacts={},
         coach={"kind": "rules"},
-        outcome_summary=OutcomeSummary(outcome="deal"),
         safety=SafetyVerdict(passed=False, violations=()),
     )
     errors = validate_battle_report(failed_safety, case=case)
@@ -211,3 +243,85 @@ def test_coach_port_protocol_accepts_minimal_implementation():
             return _sample_report(run_id=case.run_id, user_role=case.user_role)
 
     assert isinstance(StubCoach(), CoachPort)
+
+
+def test_rule_coach_emits_grounded_v2_report(tmp_path):
+    from opennego.coaching import review_run
+
+    run_dir = _write_run(tmp_path, opponent_profile_id="seller_hardline_anchor_v1")
+
+    report = review_run(run_dir, user_role=Role.BUYER)
+
+    assert report.schema_version == BATTLE_REPORT_V2_SCHEMA_VERSION
+    assert report.coach == {"kind": "rules"}
+    assert report.decision_points
+    assert {point.phase for point in report.decision_points} <= {
+        "negotiation",
+        "closing",
+    }
+    assert report.opponent_read.archetype_guess == "hardline_anchor"
+    assert report.opponent_read.confidence == "high"
+    assert report.weaknesses
+    assert validate_battle_report(
+        report, case=build_coach_case(run_dir, user_role=Role.BUYER)
+    ) == ()
+
+
+def test_rule_coach_flags_scam_engagement(tmp_path):
+    from opennego.agents.profiles import ProfileBackedSeller
+    from opennego.coaching import review_run
+
+    registry = load_strategy_registry()
+    scam_profile = registry.by_id("seller_scam_offplatform_v1")
+    scenario = generate_scenarios(
+        load_products("examples/data/real_market_products.json"), seed=13
+    )[0]
+    env = NegotiationEnvironment(
+        scenario=scenario,
+        buyer=ToolAwareBuyer(),
+        seller=ProfileBackedSeller(profile=scam_profile),
+    )
+    result = env.run()
+    assert result.outcome == "deal"
+    paths = write_run_artifacts(
+        result=result,
+        output_dir=tmp_path,
+        run_id="scam-run",
+        agents={
+            "buyer": {"name": "tool_aware_buyer", "kind": "scripted"},
+            "seller": {"name": "npc_seller", "kind": "profile"},
+        },
+        tool_regime={},
+        metadata={"opponent_profile_id": scam_profile.id},
+    )
+
+    report = review_run(paths.output_dir, user_role=Role.BUYER)
+
+    assert report.safety.passed is False
+    assert report.safety.violations
+    lesson_ids = {lesson.id for lesson in report.lessons}
+    assert "scam_engagement" in lesson_ids
+    scam_weakness = next(w for w in report.weaknesses if w.id == "scam_engagement")
+    assert scam_weakness.phase == "safety"
+    assert scam_weakness.severity == "critical"
+    assert "safety" in report.failure_modes
+
+
+def test_learn_cli_rejects_llm_coach_until_available(tmp_path, capsys):
+    from opennego.cli import main
+
+    code = main(
+        [
+            "learn",
+            "--input-dir",
+            str(tmp_path),
+            "--output",
+            str(tmp_path / "report.json"),
+            "--coach",
+            "llm",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert code == 2
+    assert "issue #144" in payload["error"]

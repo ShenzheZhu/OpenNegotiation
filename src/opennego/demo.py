@@ -12,7 +12,8 @@ from opennego.evolution import (
     write_strategy_candidate,
 )
 from opennego.leaderboard import LEADERBOARD_SCHEMA_VERSION, write_leaderboard
-from opennego.learning import POLICY_LEARNING_SCHEMA_VERSION, write_battle_report
+from opennego.coaching import BATTLE_REPORT_V2_SCHEMA_VERSION
+from opennego.learning import write_battle_report
 from opennego.report import write_demo_report
 from opennego.runner import RunRecord, run_experiment_config
 
@@ -223,7 +224,7 @@ def _write_bundle_manifest(
         },
         "expected_schema_versions": {
             "leaderboard_summary": LEADERBOARD_SCHEMA_VERSION,
-            "battle_report": POLICY_LEARNING_SCHEMA_VERSION,
+            "battle_report": BATTLE_REPORT_V2_SCHEMA_VERSION,
             "strategy_candidate": STRATEGY_EVOLUTION_SCHEMA_VERSION,
         },
         "workflow_steps": (

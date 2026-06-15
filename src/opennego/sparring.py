@@ -9,10 +9,10 @@ from typing import Callable, Sequence
 from opennego.agents import make_profile_agent_pair
 from opennego.artifacts import write_json, write_run_artifacts
 from opennego.environment import NegotiationEnvironment
+from opennego.coaching import BattleReport
 from opennego.evolution import StrategyCandidate, load_strategy_candidate
 from opennego.learning import (
     DEFAULT_NPC_REGISTRY_PATH,
-    BattleReport,
     StrategyProfile,
     generate_battle_report,
     load_strategy_registry,
