@@ -21,6 +21,7 @@ from . import (
     drills,
     learning,
     market,
+    market_sandbox,
     marketplace,
     scenarios,
     serve,
@@ -60,6 +61,7 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, CommandMain, str], ...]], ...]
         "Market skills",
         (
             ("drill", drills.drill_main, "Run a controlled market-skill drill."),
+            ("market-run", market_sandbox.market_run_main, "Run a concurrent market episode."),
         ),
     ),
     (
