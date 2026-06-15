@@ -243,6 +243,9 @@ def _metadata(
         "applied_patches": list(candidate.applied_patches),
         "expected_improvements": list(candidate.expected_improvements),
     }
+    verdict = candidate.metadata.get("generalization_verdict")
+    if verdict is not None:
+        metadata["candidate_generalization_verdict"] = verdict
     if base_config is not None:
         metadata["previous_strategy_id"] = base_config.strategy_id
         metadata["previous_strategy_version"] = base_config.version

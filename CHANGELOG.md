@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   per-set score/deal-rate deltas and a verdict (improved/train_only/
   regressed); `apply-strategy` refuses a `train_only` candidate unless
   `--allow-train-only` is passed.
+- Durable strategy lineage (`opennego.strategy_lineage.v1`): an
+  append-only chain of applied strategy versions with parent links,
+  source candidate/report, generalization verdict, and accept/reject
+  decision. `apply-strategy --lineage <path>` appends a node; the new
+  `opennego lineage` command prints and validates the chain (broken
+  parent links or missing config artifacts fail validation).
 
 - Market-grounded scenario generator with BATNA structure
   (`opennego.batna.v1`): buyer budgets derive from next-best active listings
