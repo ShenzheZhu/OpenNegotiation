@@ -18,39 +18,46 @@
   <img alt="Status" src="https://img.shields.io/badge/status-research--preview-0d3b66?style=flat-square">
 </p>
 
-**OpenNegotiation** is a negotiation gym for AI agents. It runs buyer and
-seller agents against each other in market-grounded consumer-to-consumer
-scenarios — with real sold-comparable price evidence, typed tools, private
-budgets and reservation prices, transaction settlement rules, and fully
-auditable traces — then turns the results into leaderboards, failure
-diagnoses, and concrete strategy improvements.
+**OpenNegotiation** is a training gym for marketplace agents. Bring your own
+buyer or seller agent — any model through LiteLLM plus your own strategy
+prompt — and train it against calibrated opponents on real-market data: spar,
+get a coach's battle report, evolve the strategy prompt with evidence, climb
+an Elo-style ladder, and finally turn it loose in a concurrent eBay-style
+market sandbox. Everything runs deterministically with no API keys by default.
 
 ## Why OpenNegotiation
 
 Most negotiation benchmarks are static prompt exchanges. OpenNegotiation
-treats negotiation as an *agentic* task: what changes when agents can gather
-market evidence, reason about fees and risk, and settle deals under realistic
-transaction constraints?
+treats negotiation as an *agentic* task and closes the loop from evaluation to
+improvement:
 
 - **Market-grounded scenarios.** Products carry sold-comps references
   (median, quartiles, sample size, recency) ingested from offline exports or
-  the official eBay Marketplace Insights API — never scraped data.
-- **Tool regimes as the experimental variable.** Run the same scenario with
-  no tools, buyer-only search, symmetric search, or noisy/stale/adversarial
-  market data, and measure how outcomes shift.
-- **Private state stays private.** Budgets, reservation prices, and private
-  tool calls are visible only to the owning agent, but everything is recorded
-  in the trace for post-hoc audit.
-- **Realistic settlement.** Deals settle through a transaction simulator with
-  shipping, tax, escrow and payment fees, return windows, delivery SLAs,
-  warranty and compliance guards — a deal that violates a buyer's all-in cost
-  cap or a seller's net-revenue floor fails.
-- **Closed improvement loop.** Sparring against curated NPC archetypes
-  produces battle reports, trace-grounded lessons, versioned strategy
-  candidates, and before/after comparisons.
-- **Provider-neutral core.** Agents, tools, LLM gateways, and transactions
-  are ports; LiteLLM and eBay integrations are adapters. Everything runs
-  deterministically without API keys by default.
+  the official eBay APIs — never scraped data. Buyer budgets and seller
+  reservations derive from real outside options (BATNA), not hand-picked
+  constants.
+- **An LLM coach that can't cheat.** After a match, a coach (deterministic by
+  default, or BYOK-LLM) writes a battle report — decision points,
+  counterfactuals, weaknesses by phase, a safety verdict. It sees only what
+  your agent could see; the counterpart's private state never reaches it, so
+  evolved strategies transfer to real markets.
+- **Prompt evolution, not weight training.** The coach proposes strategy-layer
+  edits on top of a fixed base protocol; held-out NPC validation flags
+  overfit candidates before you adopt them, and every version is tracked in a
+  lineage.
+- **Ratings that mean something.** Per-match normalized surplus feeds a
+  continuous Bradley-Terry ladder with separate buyer and seller tracks;
+  engaging a scam zeroes the score, so a price-only optimizer that ignores
+  safety ranks last.
+- **A real market sandbox.** Skill drills (selection, walk-away, multi-thread)
+  train competencies in isolation; a concurrency scheduler then runs many
+  buyer-seller threads at once with clearing, staged autonomy L1–L3, and a
+  calibration report that checks the sandbox against real eBay distributions.
+- **Local web client.** `opennego serve` gives a browser UI for the whole
+  loop; your API key is sent only to the local server and never stored.
+- **Provider-neutral, zero-dependency core.** Agents, tools, LLM gateways, and
+  transactions are ports; LiteLLM and eBay integrations are adapters. The
+  Python package has no runtime dependencies.
 
 ## Quickstart
 
@@ -116,18 +123,61 @@ opennego train --output-dir runs/train      # full spar -> patch -> rerun loop
 ```
 
 `train` produces a versioned strategy candidate plus a before/after
-comparison. Apply it and export it for your own agent stack:
+comparison, and `--holdout-validation` reruns the candidate against opponents
+it never trained on so an overfit (`train_only`) patch is flagged before you
+adopt it. Apply it (recording a lineage), then export it for your own stack:
 
 ```bash
 opennego apply-strategy --candidate runs/train/strategy_candidate.json \
-  --output runs/train/strategy_config.json
+  --output runs/train/strategy_config.json --lineage runs/train/lineage.json
+opennego lineage --lineage runs/train/lineage.json
 opennego export-training-adapter --strategy-config runs/train/strategy_config.json \
   --agent-kind my_agent --output runs/train/adapter.json
 ```
 
-Your own agents plug in through `AgentPort` factories — from the CLI
-(`--agent-factory`, `--user-agent-factory`) or the Python API
+For a single run, `opennego learn` writes the coach battle report (rules by
+default, or `--coach llm --coach-model <id>` to use your own model), and
+`opennego evolve` / `opennego compare` drive the candidate and before/after
+diff directly. Your own agents plug in through `AgentPort` factories — from the
+CLI (`--agent-factory`, `--user-agent-factory`) or the Python API
 ([Agent Integration](docs/agent_integration.md)).
+
+### Rate agents in an arena
+
+Score completed runs as normalized surplus and rank participants on buyer and
+seller rating tracks with uncertainty:
+
+```bash
+opennego arena-plan --participant my_strategy --participant baseline \
+  --output runs/arena/plan.json
+opennego arena-run --plan runs/arena/plan.json --store runs/arena/ratings.db
+opennego leaderboard --store runs/arena/ratings.db --report runs/arena/ratings.html
+```
+
+### Train market skills and run the sandbox
+
+Drill individual market skills, then run the concurrent market:
+
+```bash
+opennego drill select        # pick the most attainable deal (reputation traps)
+opennego drill walkaway      # cut losses fast, but not on a real concession
+opennego drill multithread   # shop competing threads vs working one listing
+opennego market-run --buyer me --buyer rival   # concurrent threads + clearing
+opennego market-run --level L2                 # staged autonomy L1/L2/L3
+opennego market-calibrate                       # sandbox vs real-market distributions
+```
+
+### Use the local web client
+
+```bash
+cd web && npm install && npm run build   # build the React + EUI client once
+opennego serve                            # http://127.0.0.1:8765
+```
+
+Define your agent (model + strategy prompt; the API key is sent only to the
+local server and never stored), run matches, read the coach report, accept or
+reject an evolved strategy, and watch your ratings — the whole loop in the
+browser. See [the web client section](#local-web-client) below.
 
 ### Build market datasets
 
@@ -164,6 +214,8 @@ exit codes `0` (success), `1` (completed with failures), `2` (usage error).
 | --- | --- |
 | Benchmark | `run`, `report`, `leaderboard`, `role-swap`, `arena-plan`, `arena-run` |
 | Demo | `demo`, `validate-demo`, `run-models` |
+| Client | `serve` |
+| Market skills | `drill`, `market-run`, `market-calibrate` |
 | Sparring & learning | `strategies`, `spar`, `learn`, `evolve`, `compare`, `train`, `apply-strategy`, `lineage`, `export-training-adapter`, `validate-training-adapter` |
 | Market data | `market-source-policy`, `validate-market-source`, `ingest-market`, `ingest-ebay`, `ingest-ebay-active`, `validate-market`, `scenarios` |
 | Strategy marketplace | `marketplace-export`, `validate-marketplace` |
@@ -178,6 +230,10 @@ exit codes `0` (success), `1` (completed with failures), `2` (usage error).
 | Run LLM-backed baselines through LiteLLM | [LLM Baselines](docs/llm_baselines.md) |
 | Understand artifacts and scoring | [Benchmark Contract](docs/benchmark_contract.md), [Benchmark Spec](docs/benchmark_spec.md) |
 | Use NPC sparring and policy learning | [Policy Learning](docs/policy_learning.md) |
+| Understand the coach and battle report v2 | [Coach design](docs/design/coach.md) |
+| Understand ratings and the arena | [Rating design](docs/design/rating.md) |
+| Understand the market sandbox | [Market design](docs/design/market.md) |
+| Run the local web client | [Serve design](docs/design/serve.md) |
 | Inspect transaction settlement rules | [Transaction Simulator](docs/transaction_simulator.md) |
 | Design real-market evaluation data | [Real-Market Benchmark Design](docs/real_market_benchmark_design.md) |
 | Schedule automated eBay ingestion | [GitHub Actions Ingestion](docs/github_actions_ingestion.md) |
