@@ -219,6 +219,16 @@ def apply_strategy_main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Apply even if held-out validation flagged the candidate train_only.",
     )
+    parser.add_argument(
+        "--lineage",
+        help="Optional opennego.strategy_lineage.v1 path to append this version to.",
+    )
+    parser.add_argument(
+        "--decision",
+        default="accepted",
+        choices=("accepted", "rejected"),
+        help="Decision recorded in the lineage for this version.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -230,18 +240,66 @@ def apply_strategy_main(argv: list[str] | None = None) -> int:
             allow_train_only=args.allow_train_only,
         )
         config = load_strategy_config(output_path)
+        lineage_path = None
+        if args.lineage:
+            from opennego.strategy_lineage import append_strategy_config
+
+            append_strategy_config(
+                args.lineage,
+                config,
+                output_path,
+                decision=args.decision,
+            )
+            lineage_path = args.lineage
     except (OSError, StrategyEvolutionError, StrategyConfigError) as exc:
         return common.print_error(exc)
 
+    payload = {
+        "strategy_config": str(output_path),
+        "strategy_id": config.strategy_id,
+        "version": config.version,
+        "role": config.role.value,
+    }
+    if lineage_path is not None:
+        payload["lineage"] = str(lineage_path)
+    common.print_json(payload)
+    return 0
+
+
+def lineage_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Print and validate a strategy evolution lineage chain."
+    )
+    parser.add_argument(
+        "--lineage",
+        required=True,
+        help="Path to an opennego.strategy_lineage.v1 artifact.",
+    )
+    args = parser.parse_args(argv)
+
+    from opennego.strategy_lineage import (
+        StrategyLineageError,
+        load_strategy_lineage,
+        validate_strategy_lineage,
+    )
+
+    try:
+        lineage = load_strategy_lineage(args.lineage)
+    except (OSError, StrategyLineageError) as exc:
+        return common.print_error(exc)
+
+    errors = validate_strategy_lineage(args.lineage)
     common.print_json(
         {
-            "strategy_config": str(output_path),
-            "strategy_id": config.strategy_id,
-            "version": config.version,
-            "role": config.role.value,
+            "schema_version": lineage.schema_version,
+            "strategy_id": lineage.strategy_id,
+            "node_count": len(lineage.nodes),
+            "chain": [to_jsonable(node) for node in lineage.nodes],
+            "status": "passed" if not errors else "failed",
+            "errors": list(errors),
         }
     )
-    return 0
+    return 0 if not errors else 1
 
 
 def export_training_adapter_main(argv: list[str] | None = None) -> int:

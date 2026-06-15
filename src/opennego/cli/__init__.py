@@ -49,6 +49,7 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, CommandMain, str], ...]], ...]
             ("compare", learning.compare_main, "Compare before/after battle reports."),
             ("train", learning.train_main, "Run the full sparring/patch/rerun training loop."),
             ("apply-strategy", learning.apply_strategy_main, "Apply a candidate into a strategy config."),
+            ("lineage", learning.lineage_main, "Print and validate a strategy evolution lineage."),
             (
                 "export-training-adapter",
                 learning.export_training_adapter_main,
