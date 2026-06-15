@@ -178,3 +178,45 @@ def _write_real_market_battle_report(tmp_path, tool_regime):
         opponent_profile_id="seller_hardline_anchor_v1",
     )
     return report_path
+
+
+def test_candidate_records_coach_provenance_from_v2_report(tmp_path):
+    battle_report = _write_real_market_battle_report(tmp_path, "no_tools")
+
+    candidate = generate_strategy_candidate(
+        battle_report, parent_strategy_id="buyer_baseline", iteration=1
+    )
+
+    assert candidate.metadata["source_report_version"] == "opennego.battle_report.v2"
+    assert candidate.metadata["coach"] == "rules"
+    assert "negotiation" in candidate.metadata["addressed_phases"]
+    assert candidate.metadata["addressed_turns"]
+
+
+def test_apply_strategy_rejects_base_layer_overwrite(tmp_path):
+    from opennego.evolution import StrategyCandidate, write_strategy_candidate
+    from opennego.strategy_config import (
+        StrategyConfigError,
+        base_prompt_for_role,
+        generate_strategy_config,
+    )
+    from opennego.schema import Role
+
+    battle_report = _write_real_market_battle_report(tmp_path, "no_tools")
+    candidate = generate_strategy_candidate(
+        battle_report, parent_strategy_id="buyer_baseline", iteration=1
+    )
+    # Forge a candidate whose strategy prompt overwrites the fixed base prompt.
+    forged = StrategyCandidate(
+        **{
+            **candidate.__dict__,
+            "strategy_prompt": base_prompt_for_role(Role.BUYER),
+        }
+    )
+    forged_path = tmp_path / "forged_candidate.json"
+    from opennego.artifacts import write_json
+
+    write_json(forged_path, forged)
+
+    with pytest.raises(StrategyConfigError, match="base prompt"):
+        generate_strategy_config(forged_path)

@@ -84,6 +84,16 @@ def generate_strategy_config(
         )
     resolved_strategy_id = strategy_id or candidate.candidate_id
     _require_non_empty_string(resolved_strategy_id, "strategy_id")
+    resolved_base_prompt = (
+        base_config.base_prompt
+        if base_config is not None
+        else base_prompt_for_role(candidate.user_role)
+    )
+    if candidate.strategy_prompt.strip() == resolved_base_prompt.strip():
+        raise StrategyConfigError(
+            "candidate strategy_prompt must not overwrite the fixed base "
+            "prompt: strategy evolution may only edit the strategy layer"
+        )
     version = _next_version(candidate, base_config)
     lineage_entry = _lineage_entry(candidate, candidate_path)
     lineage = (
@@ -102,11 +112,7 @@ def generate_strategy_config(
         strategy_id=resolved_strategy_id,
         version=version,
         role=candidate.user_role,
-        base_prompt=(
-            base_config.base_prompt
-            if base_config is not None
-            else base_prompt_for_role(candidate.user_role)
-        ),
+        base_prompt=resolved_base_prompt,
         strategy_prompt=candidate.strategy_prompt,
         prompt_layers=prompt_layer_contract(),
         source_candidate_id=candidate.candidate_id,
