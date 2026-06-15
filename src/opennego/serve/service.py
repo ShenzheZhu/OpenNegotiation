@@ -201,6 +201,7 @@ class ServeService:
                 config_path,
                 base_config_path=base,
                 strategy_id=agent["id"],
+                allow_train_only=bool(payload.get("allow_train_only", False)),
             )
         except Exception as exc:  # surface train_only and base-guard errors
             raise ServeError(str(exc)) from exc

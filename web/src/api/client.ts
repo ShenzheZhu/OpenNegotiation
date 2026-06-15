@@ -72,3 +72,76 @@ export const api = {
       (d) => d.events,
     ),
 };
+
+export interface BattleReport {
+  schema_version: string;
+  run_id: string;
+  user_role: string;
+  outcome: string;
+  deal_price: number | null;
+  score: number;
+  summary: string;
+  opponent_read: {
+    observed_tactics: string[];
+    archetype_guess: string | null;
+    confidence: string;
+  };
+  decision_points: {
+    turn: number;
+    phase: string;
+    situation: string;
+    action_taken: string;
+    assessment: string;
+    counterfactual: string;
+  }[];
+  weaknesses: {
+    id: string;
+    phase: string;
+    severity: string;
+    summary: string;
+    evidence_turns: number[];
+  }[];
+  lessons: { id: string; recommendation: string; suggested_strategy_patch: string | null }[];
+  safety: { passed: boolean; violations: string[] };
+}
+
+export interface EvolveResult {
+  candidate_path: string;
+  candidate_id: string;
+  strategy_prompt: string;
+  applied_lesson_ids: string[];
+  generalization_verdict: string | null;
+}
+
+export interface DecisionResult {
+  agent_id: string;
+  decision: string;
+  candidate_id?: string;
+  strategy_version?: number;
+  strategy_prompt?: string;
+  lineage?: string;
+}
+
+export const coachApi = {
+  report: (runId: string) =>
+    request<BattleReport>(`/api/runs/${runId}/report`),
+  evolve: (runId: string, parentStrategyId: string) =>
+    request<EvolveResult>(`/api/runs/${runId}/evolve`, {
+      method: "POST",
+      body: JSON.stringify({ parent_strategy_id: parentStrategyId }),
+    }),
+  decide: (
+    agentId: string,
+    candidatePath: string,
+    decision: string,
+    allowTrainOnly = false,
+  ) =>
+    request<DecisionResult>(`/api/agents/${agentId}/strategy`, {
+      method: "POST",
+      body: JSON.stringify({
+        candidate_path: candidatePath,
+        decision,
+        allow_train_only: allowTrainOnly,
+      }),
+    }),
+};

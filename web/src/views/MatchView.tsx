@@ -20,7 +20,11 @@ import {
   type TraceEvent,
 } from "../api/client";
 
-export function MatchView() {
+export function MatchView({
+  onMatch,
+}: {
+  onMatch?: (runId: string, agentId: string) => void;
+}) {
   const [agents, setAgents] = useState<AgentSummary[]>([]);
   const [profiles, setProfiles] = useState<ProfileCard[]>([]);
   const [agentId, setAgentId] = useState("");
@@ -50,6 +54,7 @@ export function MatchView() {
       const match = await api.runMatch(agentId, opponent);
       setResult(match);
       setEvents(await api.trace(match.run_id));
+      onMatch?.(match.run_id, agentId);
     } catch (e) {
       setError((e as Error).message);
     } finally {

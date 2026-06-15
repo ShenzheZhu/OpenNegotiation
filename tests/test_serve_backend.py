@@ -162,3 +162,40 @@ def test_resolve_static_dir_prefers_built_web_dist():
     if static_dir != PLACEHOLDER_STATIC_DIR:
         assert static_dir.name == "dist"
         assert static_dir.parent.name == "web"
+
+
+def test_decide_gates_train_only_candidate(tmp_path):
+    import json as _json
+
+    service = _service(tmp_path)
+    dispatch(service, "POST", "/api/agents",
+             {"id": "buyer1", "role": "buyer", "strategy_prompt": "p"})
+    _, match = dispatch(
+        service, "POST", "/api/matches",
+        {"agent_id": "buyer1", "opponent_profile_id": "seller_hardline_anchor_v1"},
+    )
+    _, candidate = dispatch(
+        service, "POST", f"/api/runs/{match['run_id']}/evolve",
+        {"parent_strategy_id": "buyer1"},
+    )
+    # Stamp a train_only verdict like held-out validation would.
+    cand_path = candidate["candidate_path"]
+    data = _json.loads(open(cand_path).read())
+    data["metadata"]["generalization_verdict"] = "train_only"
+    open(cand_path, "w").write(_json.dumps(data, indent=2) + "\n")
+
+    # Without override: refused.
+    status, payload = dispatch(
+        service, "POST", "/api/agents/buyer1/strategy",
+        {"candidate_path": cand_path, "decision": "accepted"},
+    )
+    assert status == 400
+    assert "train_only" in payload["error"]
+
+    # With override: applied.
+    status, ok = dispatch(
+        service, "POST", "/api/agents/buyer1/strategy",
+        {"candidate_path": cand_path, "decision": "accepted", "allow_train_only": True},
+    )
+    assert status == 200
+    assert ok["decision"] == "accepted"

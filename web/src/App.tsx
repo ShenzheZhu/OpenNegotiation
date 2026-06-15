@@ -10,16 +10,27 @@ import {
 } from "@elastic/eui";
 import { AgentView } from "./views/AgentView";
 import { MatchView } from "./views/MatchView";
+import { ReportView } from "./views/ReportView";
 
-type TabId = "agent" | "match";
+type TabId = "agent" | "match" | "coach";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "agent", label: "Agent" },
   { id: "match", label: "Match" },
+  { id: "coach", label: "Coach" },
 ];
 
 export function App() {
   const [tab, setTab] = useState<TabId>("agent");
+  const [lastRunId, setLastRunId] = useState<string | null>(null);
+  const [lastAgentId, setLastAgentId] = useState<string | null>(null);
+
+  const onMatch = (runId: string, agentId: string) => {
+    setLastRunId(runId);
+    setLastAgentId(agentId);
+    setTab("coach");
+  };
+
   return (
     <>
       <EuiHeader>
@@ -43,7 +54,11 @@ export function App() {
             ))}
           </EuiTabs>
           <EuiSpacer />
-          {tab === "agent" ? <AgentView /> : <MatchView />}
+          {tab === "agent" && <AgentView />}
+          {tab === "match" && <MatchView onMatch={onMatch} />}
+          {tab === "coach" && (
+            <ReportView runId={lastRunId} agentId={lastAgentId} />
+          )}
         </EuiPageTemplate.Section>
       </EuiPageTemplate>
     </>
