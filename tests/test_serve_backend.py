@@ -144,9 +144,21 @@ def test_unknown_run_is_400(tmp_path):
     assert "unknown run" in payload["error"]
 
 
-def test_static_index_is_served():
-    from opennego.serve.app import STATIC_DIR
+def test_placeholder_static_index_is_present():
+    from opennego.serve.app import PLACEHOLDER_STATIC_DIR
 
-    index = STATIC_DIR / "index.html"
+    index = PLACEHOLDER_STATIC_DIR / "index.html"
     assert index.is_file()
     assert "OpenNegotiation" in index.read_text()
+
+
+def test_resolve_static_dir_prefers_built_web_dist():
+    from opennego.serve.app import PLACEHOLDER_STATIC_DIR, resolve_static_dir
+
+    static_dir = resolve_static_dir()
+    # In a source checkout with the client built, web/dist wins; otherwise the
+    # packaged placeholder is used. Either way it holds an index.html.
+    assert (static_dir / "index.html").is_file()
+    if static_dir != PLACEHOLDER_STATIC_DIR:
+        assert static_dir.name == "dist"
+        assert static_dir.parent.name == "web"

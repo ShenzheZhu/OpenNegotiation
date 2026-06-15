@@ -16,3 +16,7 @@ artifacts/
 .env
 .env.*
 Config.py
+
+# Web client build outputs
+web/node_modules/
+web/dist/

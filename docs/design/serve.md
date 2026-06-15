@@ -20,26 +20,35 @@ the UI (#167–#169).
 - Market-mode UI (M5).
 - A frontend build toolchain (no npm, bundler, or framework).
 
-## Stack Decision: stdlib `http.server`
+## Stack Decision
 
-**Decision: stdlib `http.server` + `ThreadingHTTPServer`, vanilla
-no-build frontend. No FastAPI/uvicorn, no new runtime dependency.**
+**Backend: stdlib `http.server` + `ThreadingHTTPServer`. No FastAPI/uvicorn,
+no new Python runtime dependency.** The handler is thin — all work delegates
+to existing modules — and `dispatch()` is a pure function tested without a
+socket.
 
-Rationale:
+**Frontend: React + Vite + Elastic UI (EUI), TypeScript.** A separate
+`web/` subproject (not a Python dependency) built to static assets that the
+backend serves. Chosen for a polished, enterprise-grade client UI; EUI gives
+a mature component system out of the box.
 
-- The project ships zero runtime dependencies (only an optional `[llm]`
-  extra). A local single-user UI does not justify a web framework + ASGI
-  server in the default install. `http.server` is sufficient for localhost
-  JSON endpoints and serving a handful of static assets.
-- Keeping it dependency-free means `pip install opennego` gives you the full
-  client with no extras, matching the rest of the tool.
-- If a hosted multi-tenant arena is built later, that is a separate deployable
-  with its own (optional) framework dependency; it does not change the local
-  client.
+Consequences and how they are contained:
 
-Trade-off accepted: we hand-roll routing and JSON handling (small, tested)
-rather than get it from a framework. The handler stays thin because all work
-delegates to existing modules.
+- The Python package keeps its zero-runtime-dependency property: EUI/React
+  live only in `web/`, never in `pyproject.toml`. `opennego serve` is still
+  stdlib-only.
+- Build flow: `cd web && npm install && npm run build` emits `web/dist`.
+  `opennego serve` serves `web/dist` when present; otherwise it serves a
+  committed placeholder that tells the user to build the client. Built
+  bundles are **not** committed to git (`web/dist`, `web/node_modules` are
+  gitignored).
+- CI gains a frontend job (`npm ci && npm run build`, typecheck) so the build
+  is verified on every PR. The Python `pytest` gate stays Python-only.
+- A hosted multi-tenant arena, if ever built, is a separate deployable; the
+  local client API shapes are already tenant-agnostic.
+
+Trade-off accepted: a JS toolchain and a build step now exist for the client.
+This is deliberate — the UI is the product surface — and isolated to `web/`.
 
 ## Architecture
 
