@@ -13,8 +13,8 @@ from opennego.evolution import (
     write_strategy_candidate,
     write_strategy_comparison,
 )
+from opennego.coaching import BATTLE_REPORT_V2_SCHEMA_VERSION
 from opennego.learning import (
-    POLICY_LEARNING_SCHEMA_VERSION,
     load_strategy_registry,
     write_battle_report,
 )
@@ -91,13 +91,13 @@ def test_user_centric_workflow_contract_round_trips_artifacts(tmp_path):
     before_payload = json.loads(before_report.read_text())
     market_tool_payload = json.loads(market_tool_report.read_text())
 
-    assert before_payload["schema_version"] == POLICY_LEARNING_SCHEMA_VERSION
+    assert before_payload["schema_version"] == BATTLE_REPORT_V2_SCHEMA_VERSION
     assert before_payload["user_role"] == "buyer"
     assert before_payload["opponent_profile_id"] == "seller_hardline_anchor_v1"
     assert "buyer_overpaid_market" in {
         lesson["id"] for lesson in before_payload["lessons"]
     }
-    assert market_tool_payload["schema_version"] == POLICY_LEARNING_SCHEMA_VERSION
+    assert market_tool_payload["schema_version"] == BATTLE_REPORT_V2_SCHEMA_VERSION
     assert market_tool_payload["user_role"] == before_payload["user_role"]
 
     candidate_path = tmp_path / "strategy_candidate.json"

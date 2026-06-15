@@ -114,6 +114,7 @@ def generate_strategy_candidate(
             "strategy_prompt_editable": True,
             "source_policy_score": _required_number(report, "score"),
             "source_failure_modes": tuple(_string_list(report, "failure_modes")),
+            **_coach_provenance(report),
         },
     )
 
@@ -265,12 +266,19 @@ def write_strategy_comparison(
     return path
 
 
+ACCEPTED_BATTLE_REPORT_VERSIONS = (
+    POLICY_LEARNING_SCHEMA_VERSION,
+    "opennego.battle_report.v2",
+)
+
+
 def _load_battle_report(path: Path) -> Mapping[str, Any]:
     report = read_json(path)
     version = report.get("schema_version")
-    if version != POLICY_LEARNING_SCHEMA_VERSION:
+    if version not in ACCEPTED_BATTLE_REPORT_VERSIONS:
         raise StrategyEvolutionError(
-            f"{path}: expected {POLICY_LEARNING_SCHEMA_VERSION}, got {version!r}"
+            f"{path}: expected one of {ACCEPTED_BATTLE_REPORT_VERSIONS}, "
+            f"got {version!r}"
         )
     return report
 
@@ -314,6 +322,43 @@ def _lesson_items(report: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]:
 
 def _lesson_ids(report: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(_required_str(lesson, "id") for lesson in _lesson_items(report))
+
+
+def _coach_provenance(report: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Capture which coach produced the source report and what it addressed.
+
+    For v2 reports this records the coach kind, the addressed decision-point
+    phases, and the turns the analysis cited, so a candidate is auditable back
+    to the exact coaching that motivated it. v1 reports omit these sections and
+    yield an empty provenance block.
+    """
+
+    provenance: dict[str, Any] = {
+        "source_report_version": str(report.get("schema_version", "")),
+    }
+    coach = report.get("coach")
+    if isinstance(coach, Mapping) and coach.get("kind"):
+        provenance["coach"] = str(coach["kind"])
+    decision_points = report.get("decision_points")
+    if isinstance(decision_points, Sequence) and not isinstance(
+        decision_points, (str, bytes)
+    ):
+        phases = []
+        turns = []
+        for point in decision_points:
+            if not isinstance(point, Mapping):
+                continue
+            phase = point.get("phase")
+            if isinstance(phase, str):
+                phases.append(phase)
+            turn = point.get("turn")
+            if isinstance(turn, int):
+                turns.append(turn)
+        if phases:
+            provenance["addressed_phases"] = tuple(dict.fromkeys(phases))
+        if turns:
+            provenance["addressed_turns"] = tuple(turns)
+    return provenance
 
 
 def _expected_improvement(lesson: Mapping[str, Any]) -> str:

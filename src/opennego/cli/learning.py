@@ -95,7 +95,45 @@ def learn_main(argv: list[str] | None = None) -> int:
         "--opponent-profile",
         help="Optional NPC strategy profile id for the counterparty.",
     )
+    parser.add_argument(
+        "--coach",
+        default="rules",
+        choices=("rules", "llm"),
+        help="Coach implementation. 'rules' is the deterministic no-key default.",
+    )
+    parser.add_argument(
+        "--coach-model",
+        help="LiteLLM model id for --coach llm (required when --coach llm).",
+    )
+    parser.add_argument(
+        "--coach-temperature",
+        type=float,
+        default=0.0,
+        help="Temperature for --coach llm.",
+    )
+    parser.add_argument(
+        "--coach-max-tokens",
+        type=int,
+        default=1536,
+        help="Max tokens for --coach llm calls.",
+    )
     args = parser.parse_args(argv)
+
+    coach = None
+    if args.coach == "llm":
+        if not args.coach_model:
+            return common.print_error("--coach llm requires --coach-model")
+        preflight_error = common.llm_preflight_error((args.coach_model,))
+        if preflight_error is not None:
+            return common.print_error(preflight_error)
+        from opennego.coaching import LLMCoach
+
+        coach = LLMCoach(
+            llm=common.make_litellm_gateway(),
+            model=args.coach_model,
+            temperature=args.coach_temperature,
+            max_tokens=args.coach_max_tokens,
+        )
 
     try:
         output_path = write_battle_report(
@@ -104,11 +142,12 @@ def learn_main(argv: list[str] | None = None) -> int:
             user_role=args.user_role,
             npc_registry_path=args.registry,
             opponent_profile_id=args.opponent_profile,
+            coach=coach,
         )
-    except (OSError, ValueError, KeyError) as exc:
+    except (OSError, ValueError, KeyError, RuntimeError) as exc:
         return common.print_error(exc)
 
-    common.print_json({"battle_report": str(output_path)})
+    common.print_json({"battle_report": str(output_path), "coach": args.coach})
     return 0
 
 
@@ -175,6 +214,21 @@ def apply_strategy_main(argv: list[str] | None = None) -> int:
         "--strategy-id",
         help="Optional id for the resulting strategy config.",
     )
+    parser.add_argument(
+        "--allow-train-only",
+        action="store_true",
+        help="Apply even if held-out validation flagged the candidate train_only.",
+    )
+    parser.add_argument(
+        "--lineage",
+        help="Optional opennego.strategy_lineage.v1 path to append this version to.",
+    )
+    parser.add_argument(
+        "--decision",
+        default="accepted",
+        choices=("accepted", "rejected"),
+        help="Decision recorded in the lineage for this version.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -183,20 +237,69 @@ def apply_strategy_main(argv: list[str] | None = None) -> int:
             args.output,
             base_config_path=args.base_config,
             strategy_id=args.strategy_id,
+            allow_train_only=args.allow_train_only,
         )
         config = load_strategy_config(output_path)
+        lineage_path = None
+        if args.lineage:
+            from opennego.strategy_lineage import append_strategy_config
+
+            append_strategy_config(
+                args.lineage,
+                config,
+                output_path,
+                decision=args.decision,
+            )
+            lineage_path = args.lineage
     except (OSError, StrategyEvolutionError, StrategyConfigError) as exc:
         return common.print_error(exc)
 
+    payload = {
+        "strategy_config": str(output_path),
+        "strategy_id": config.strategy_id,
+        "version": config.version,
+        "role": config.role.value,
+    }
+    if lineage_path is not None:
+        payload["lineage"] = str(lineage_path)
+    common.print_json(payload)
+    return 0
+
+
+def lineage_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Print and validate a strategy evolution lineage chain."
+    )
+    parser.add_argument(
+        "--lineage",
+        required=True,
+        help="Path to an opennego.strategy_lineage.v1 artifact.",
+    )
+    args = parser.parse_args(argv)
+
+    from opennego.strategy_lineage import (
+        StrategyLineageError,
+        load_strategy_lineage,
+        validate_strategy_lineage,
+    )
+
+    try:
+        lineage = load_strategy_lineage(args.lineage)
+    except (OSError, StrategyLineageError) as exc:
+        return common.print_error(exc)
+
+    errors = validate_strategy_lineage(args.lineage)
     common.print_json(
         {
-            "strategy_config": str(output_path),
-            "strategy_id": config.strategy_id,
-            "version": config.version,
-            "role": config.role.value,
+            "schema_version": lineage.schema_version,
+            "strategy_id": lineage.strategy_id,
+            "node_count": len(lineage.nodes),
+            "chain": [to_jsonable(node) for node in lineage.nodes],
+            "status": "passed" if not errors else "failed",
+            "errors": list(errors),
         }
     )
-    return 0
+    return 0 if not errors else 1
 
 
 def export_training_adapter_main(argv: list[str] | None = None) -> int:
@@ -356,6 +459,20 @@ def train_main(argv: list[str] | None = None) -> int:
         default=1,
         help="Positive strategy iteration number.",
     )
+    parser.add_argument(
+        "--holdout-validation",
+        action="store_true",
+        help=(
+            "Split the opposite-role roster into train and held-out sets, patch "
+            "from train only, and report per-set generalization."
+        ),
+    )
+    parser.add_argument(
+        "--holdout-seed",
+        type=int,
+        default=0,
+        help="Deterministic seed for the train/held-out split.",
+    )
     parser.add_argument("--no-fail-fast", action="store_true")
     args = parser.parse_args(argv)
 
@@ -370,6 +487,8 @@ def train_main(argv: list[str] | None = None) -> int:
             parent_strategy_id=args.parent_strategy_id,
             iteration=args.iteration,
             fail_fast=not args.no_fail_fast,
+            holdout_validation=args.holdout_validation,
+            holdout_seed=args.holdout_seed,
         )
     except (OSError, ValueError, KeyError, ConfigValidationError) as exc:
         return common.print_error(exc)

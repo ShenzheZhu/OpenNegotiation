@@ -258,7 +258,7 @@ opennego learn \
 opennego report --input-dir /tmp/opennego-real-market-demo --output /tmp/opennegotiation-demo.html
 ```
 
-The JSON report uses schema version `opennego.policy_learning.v1` and contains:
+The JSON report uses schema version `opennego.battle_report.v2` and contains:
 
 - run id and scenario id
 - user role
@@ -271,10 +271,30 @@ The JSON report uses schema version `opennego.policy_learning.v1` and contains:
 - trace-grounded lessons
 - suggested strategy prompt patch
 - paths to the source benchmark artifacts
+- v2 analysis sections: `opponent_read`, phase-attributed `decision_points`
+  and `weaknesses`, and a `safety` verdict
 
 Lessons cite trace events through `event_index`, `turn`, `role`, `action_type`,
 and a short event summary. This keeps policy learning tied to benchmark
 evidence instead of creating a disconnected logging format.
+
+### Coaches
+
+`opennego learn` reviews the run through a coach. The default `--coach rules`
+is the deterministic, no-key `RuleBasedCoach`. `--coach llm --coach-model <id>`
+uses the BYOK `LLMCoach`, which runs on your configured LiteLLM endpoint:
+
+```bash
+export OPENROUTER_API_KEY=...
+opennego learn --input-dir <run_dir> --output battle_report.json \
+  --coach llm --coach-model openrouter/anthropic/claude-opus-4.8
+```
+
+Both coaches receive the same visibility-filtered case (only what the user
+agent could see, plus the opponent's public card), and every cited turn is
+validated against the visible trace before the report is written. The LLM
+coach never silently downgrades to rules: a parse or grounding failure after
+bounded retries surfaces a structured error.
 
 ## Strategy Evolution Artifacts
 

@@ -1,6 +1,7 @@
 import json
 
 from opennego.cli import main
+from opennego.coaching import BATTLE_REPORT_V2_SCHEMA_VERSION
 from opennego.learning import (
     POLICY_LEARNING_SCHEMA_VERSION,
     generate_battle_report,
@@ -32,7 +33,7 @@ def test_policy_learning_report_extracts_trace_grounded_lessons(tmp_path):
     )
 
     lesson_ids = {lesson.id for lesson in report.lessons}
-    assert report.schema_version == POLICY_LEARNING_SCHEMA_VERSION
+    assert report.schema_version == BATTLE_REPORT_V2_SCHEMA_VERSION
     assert report.user_role.value == "buyer"
     assert report.opponent_profile_id == "seller_hardline_anchor_v1"
     assert report.outcome == "deal"
@@ -57,7 +58,7 @@ def test_write_battle_report_writes_json_artifact(tmp_path):
     payload = json.loads(written.read_text())
 
     assert written == output_path
-    assert payload["schema_version"] == POLICY_LEARNING_SCHEMA_VERSION
+    assert payload["schema_version"] == BATTLE_REPORT_V2_SCHEMA_VERSION
     assert payload["run_id"] == "real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13"
     assert payload["lessons"]
     assert payload["artifacts"]["trace"].endswith("trace.jsonl")

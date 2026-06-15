@@ -3,7 +3,7 @@ import json
 from opennego.cli import main
 from opennego.evolution import STRATEGY_EVOLUTION_SCHEMA_VERSION
 from opennego.leaderboard import LEADERBOARD_SCHEMA_VERSION
-from opennego.learning import POLICY_LEARNING_SCHEMA_VERSION
+from opennego.coaching import BATTLE_REPORT_V2_SCHEMA_VERSION
 from opennego.demo import (
     DEMO_BUNDLE_SCHEMA_VERSION,
     DEMO_BUNDLE_VALIDATION_SCHEMA_VERSION,
@@ -47,7 +47,7 @@ def test_run_demo_generates_benchmark_learning_and_report(tmp_path):
     }
     assert bundle_manifest["artifact_schema_versions"] == {
         "leaderboard_summary": LEADERBOARD_SCHEMA_VERSION,
-        "battle_report": POLICY_LEARNING_SCHEMA_VERSION,
+        "battle_report": BATTLE_REPORT_V2_SCHEMA_VERSION,
         "strategy_candidate": STRATEGY_EVOLUTION_SCHEMA_VERSION,
     }
     assert bundle_manifest["expected_schema_versions"] == (
@@ -119,7 +119,7 @@ def test_validate_demo_bundle_passes_for_generated_demo(tmp_path):
     assert result.errors == ()
     assert result.artifact_schema_versions == {
         "leaderboard_summary": LEADERBOARD_SCHEMA_VERSION,
-        "battle_report": POLICY_LEARNING_SCHEMA_VERSION,
+        "battle_report": BATTLE_REPORT_V2_SCHEMA_VERSION,
         "strategy_candidate": STRATEGY_EVOLUTION_SCHEMA_VERSION,
     }
     assert result.artifacts["html_report"].endswith("opennegotiation_demo.html")

@@ -71,10 +71,18 @@ def generate_strategy_config(
     *,
     base_config_path: str | Path | None = None,
     strategy_id: str | None = None,
+    allow_train_only: bool = False,
 ) -> StrategyConfig:
     """Apply a strategy candidate into a versioned strategy config artifact."""
 
     candidate = load_strategy_candidate(candidate_path)
+    verdict = candidate.metadata.get("generalization_verdict")
+    if verdict == "train_only" and not allow_train_only:
+        raise StrategyConfigError(
+            "candidate failed held-out generalization (verdict=train_only): it "
+            "improved only against the profiles it trained on. Re-run training "
+            "or pass allow_train_only to apply it anyway."
+        )
     base_config = (
         load_strategy_config(base_config_path) if base_config_path is not None else None
     )
@@ -84,6 +92,16 @@ def generate_strategy_config(
         )
     resolved_strategy_id = strategy_id or candidate.candidate_id
     _require_non_empty_string(resolved_strategy_id, "strategy_id")
+    resolved_base_prompt = (
+        base_config.base_prompt
+        if base_config is not None
+        else base_prompt_for_role(candidate.user_role)
+    )
+    if candidate.strategy_prompt.strip() == resolved_base_prompt.strip():
+        raise StrategyConfigError(
+            "candidate strategy_prompt must not overwrite the fixed base "
+            "prompt: strategy evolution may only edit the strategy layer"
+        )
     version = _next_version(candidate, base_config)
     lineage_entry = _lineage_entry(candidate, candidate_path)
     lineage = (
@@ -102,11 +120,7 @@ def generate_strategy_config(
         strategy_id=resolved_strategy_id,
         version=version,
         role=candidate.user_role,
-        base_prompt=(
-            base_config.base_prompt
-            if base_config is not None
-            else base_prompt_for_role(candidate.user_role)
-        ),
+        base_prompt=resolved_base_prompt,
         strategy_prompt=candidate.strategy_prompt,
         prompt_layers=prompt_layer_contract(),
         source_candidate_id=candidate.candidate_id,
@@ -129,6 +143,7 @@ def write_strategy_config(
     *,
     base_config_path: str | Path | None = None,
     strategy_id: str | None = None,
+    allow_train_only: bool = False,
 ) -> Path:
     """Write an applied strategy config and return its path."""
 
@@ -136,6 +151,7 @@ def write_strategy_config(
         candidate_path,
         base_config_path=base_config_path,
         strategy_id=strategy_id,
+        allow_train_only=allow_train_only,
     )
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -227,6 +243,9 @@ def _metadata(
         "applied_patches": list(candidate.applied_patches),
         "expected_improvements": list(candidate.expected_improvements),
     }
+    verdict = candidate.metadata.get("generalization_verdict")
+    if verdict is not None:
+        metadata["candidate_generalization_verdict"] = verdict
     if base_config is not None:
         metadata["previous_strategy_id"] = base_config.strategy_id
         metadata["previous_strategy_version"] = base_config.version
