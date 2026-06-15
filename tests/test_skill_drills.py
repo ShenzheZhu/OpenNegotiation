@@ -81,3 +81,44 @@ def test_drill_cli(capsys):
     assert code == 0
     assert payload["drill"] == "listing_selection"
     assert payload["seed"] == 21
+
+
+def test_walkaway_drill_is_deterministic():
+    from opennego.skill_drills import run_walkaway_drill
+
+    a = run_walkaway_drill(seed=5, patience=1)
+    b = run_walkaway_drill(seed=5, patience=1)
+    assert a.score == b.score
+    assert a.unwinnable_outcome == b.unwinnable_outcome
+
+
+def test_decisive_policy_walks_unwinnable_without_timeout():
+    from opennego.skill_drills import run_walkaway_drill
+
+    decisive = run_walkaway_drill(seed=5, patience=1)
+    assert decisive.unwinnable_outcome in {"rejected", "ghosted"}
+    assert decisive.walk_score > 0.0
+
+
+def test_patient_policy_times_out_unwinnable():
+    from opennego.skill_drills import run_walkaway_drill
+
+    patient = run_walkaway_drill(seed=5, patience=50, max_turns=8)
+    assert patient.unwinnable_outcome == "timeout"
+    assert patient.walk_score == 0.0
+
+
+def test_decisive_beats_patient_overall():
+    from opennego.skill_drills import run_walkaway_drill
+
+    decisive = run_walkaway_drill(seed=5, patience=1)
+    patient = run_walkaway_drill(seed=5, patience=50)
+    assert decisive.score > patient.score
+
+
+def test_walkaway_cli(capsys):
+    code = main(["drill", "walkaway", "--seed", "9", "--patience", "1"])
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["drill"] == "walkaway"
+    assert "walk_score" in payload and "stay_score" in payload

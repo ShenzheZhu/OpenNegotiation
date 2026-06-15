@@ -5,7 +5,11 @@ from __future__ import annotations
 import argparse
 
 from opennego.artifacts import to_jsonable
-from opennego.skill_drills import SkillDrillError, run_selection_drill
+from opennego.skill_drills import (
+    SkillDrillError,
+    run_selection_drill,
+    run_walkaway_drill,
+)
 
 from . import common
 
@@ -31,10 +35,24 @@ def drill_main(argv: list[str] | None = None) -> int:
     )
     select.add_argument("--output", help="Optional path for the drill artifact.")
 
+    walkaway = subparsers.add_parser(
+        "walkaway", help="Walk-away drill: cut losses fast, but not on a real deal."
+    )
+    walkaway.add_argument("--seed", type=int, default=13)
+    walkaway.add_argument("--market-reference", type=float, default=575.0)
+    walkaway.add_argument("--max-turns", type=int, default=10)
+    walkaway.add_argument(
+        "--patience",
+        type=int,
+        default=2,
+        help="Non-conceding seller offers tolerated before walking.",
+    )
+    walkaway.add_argument("--output", help="Optional path for the drill artifact.")
+
     args = parser.parse_args(argv)
 
-    if args.skill == "select":
-        try:
+    try:
+        if args.skill == "select":
             result = run_selection_drill(
                 seed=args.seed,
                 count=args.count,
@@ -42,9 +60,18 @@ def drill_main(argv: list[str] | None = None) -> int:
                 policy=args.policy,
                 output_path=args.output,
             )
-        except (OSError, SkillDrillError) as exc:
-            return common.print_error(exc)
-        common.print_json(to_jsonable(result))
-        return 0
+        elif args.skill == "walkaway":
+            result = run_walkaway_drill(
+                seed=args.seed,
+                patience=args.patience,
+                market_reference=args.market_reference,
+                max_turns=args.max_turns,
+                output_path=args.output,
+            )
+        else:
+            return common.print_error(f"unknown drill: {args.skill}")
+    except (OSError, SkillDrillError) as exc:
+        return common.print_error(exc)
 
-    return common.print_error(f"unknown drill: {args.skill}")
+    common.print_json(to_jsonable(result))
+    return 0
