@@ -394,3 +394,149 @@ def run_walkaway_drill(
     if output_path is not None:
         write_json(Path(output_path), to_jsonable(result))
     return result
+
+
+# --- Multi-thread coordination drill ----------------------------------------
+
+
+@dataclass
+class _LowballConvergeBuyer:
+    """Opens with a lowball and steps up toward willingness each round.
+
+    Opening low (rather than at willingness) means each seller's distinct
+    reservation produces a distinct close, so shopping across threads beats
+    committing to one. The behavior is identical in every thread — the skill
+    being tested lives in *which* close the agent commits to, not in the
+    per-thread tactics.
+    """
+
+    name: str = "lowball_buyer"
+    role: Role = Role.BUYER
+
+    def act(self, context: AgentContext) -> AgentAction:
+        events = tuple(context.transcript)
+        scenario = context.scenario
+        reference = scenario.product.market_reference
+        anchor = reference.reference_price if reference else scenario.product.list_price
+        willingness = min(scenario.buyer_budget, anchor * 0.95)
+        seller_offer = None
+        own_offers = 0
+        for event in events:
+            if event.role == Role.SELLER and event.action_type == ActionType.OFFER:
+                if event.offer is not None:
+                    seller_offer = event.offer.price
+            elif event.role == Role.BUYER and event.action_type == ActionType.OFFER:
+                own_offers += 1
+        # Hold out for a disciplined target below willingness: only sellers
+        # whose reservation is at or below it will close, so distinct
+        # reservations produce distinct outcomes (cheap close vs dead-end).
+        target = min(willingness, anchor * 0.82)
+        if seller_offer is not None and seller_offer <= target:
+            return AgentAction.accept(f"Accepted at ${seller_offer:.2f}.")
+        floor = anchor * 0.72
+        offer = min(target, floor + (target - floor) * 0.34 * own_offers)
+        return AgentAction.offer_price(round(offer, 2), f"My offer is ${offer:.2f}.")
+
+
+@dataclass(frozen=True)
+class MultiThreadDrillResult:
+    schema_version: str
+    drill: str
+    seed: int
+    coordinated: bool
+    score: float
+    closed_price: float | None
+    best_attainable_price: float
+    thread_count: int
+    closed_prices: tuple[float, ...]
+
+
+def run_multithread_drill(
+    *,
+    seed: int = 13,
+    thread_count: int = 3,
+    market_reference: float = 575.0,
+    coordinate: bool = True,
+    max_turns: int = 12,
+    output_path: str | Path | None = None,
+) -> MultiThreadDrillResult:
+    """Interleave concurrent seller threads via ``step()`` and score the close.
+
+    ``coordinate=True`` shops every thread and commits to the best (lowest)
+    deal; ``coordinate=False`` works only the first listing and commits to its
+    deal — the no-coordination baseline. Shopping should never close worse.
+    """
+
+    from opennego.agents import ScriptedSeller
+
+    if thread_count < 2:
+        raise SkillDrillError("thread_count: expected at least two threads")
+    rng = random.Random(f"multithread:{seed}")
+
+    threads = []
+    reservations = []
+    for index in range(thread_count):
+        reservation = round(market_reference * rng.uniform(0.75, 0.92), 2)
+        reservations.append(reservation)
+        base = _drill_scenario(
+            market_reference=market_reference, winnable=True, max_turns=max_turns
+        )
+        scenario = Scenario(
+            product=base.product,
+            buyer_budget=base.buyer_budget,
+            seller_reservation_price=reservation,
+            max_turns=max_turns,
+        )
+        threads.append(
+            NegotiationEnvironment(
+                scenario=scenario,
+                buyer=_LowballConvergeBuyer(),
+                seller=ScriptedSeller(),
+            )
+        )
+
+    # Round-robin interleave: one step per live thread per round. This is the
+    # concurrency pattern the M5 scheduler generalizes.
+    while any(not env.is_complete for env in threads):
+        for env in threads:
+            if not env.is_complete:
+                env.step()
+
+    deal_prices = [
+        env.result.deal_price
+        for env in threads
+        if env.result is not None
+        and env.result.outcome == "deal"
+        and env.result.deal_price is not None
+    ]
+    first_thread = threads[0].result
+    first_close = (
+        first_thread.deal_price
+        if first_thread is not None and first_thread.outcome == "deal"
+        else None
+    )
+    closed_price = (
+        (min(deal_prices) if deal_prices else None) if coordinate else first_close
+    )
+    best_attainable_price = min(reservations)
+
+    if closed_price is None:
+        score = 0.0
+    else:
+        span = max(market_reference - best_attainable_price, 1.0)
+        score = round(max(0.0, min(1.0, (market_reference - closed_price) / span)), 4)
+
+    result = MultiThreadDrillResult(
+        schema_version=SKILL_DRILL_SCHEMA_VERSION,
+        drill="multithread",
+        seed=seed,
+        coordinated=coordinate,
+        score=score,
+        closed_price=closed_price,
+        best_attainable_price=best_attainable_price,
+        thread_count=thread_count,
+        closed_prices=tuple(round(p, 2) for p in deal_prices),
+    )
+    if output_path is not None:
+        write_json(Path(output_path), to_jsonable(result))
+    return result

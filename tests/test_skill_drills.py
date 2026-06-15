@@ -122,3 +122,48 @@ def test_walkaway_cli(capsys):
     assert code == 0
     assert payload["drill"] == "walkaway"
     assert "walk_score" in payload and "stay_score" in payload
+
+
+def test_multithread_drill_is_deterministic():
+    from opennego.skill_drills import run_multithread_drill
+
+    a = run_multithread_drill(seed=4, thread_count=3)
+    b = run_multithread_drill(seed=4, thread_count=3)
+    assert a.score == b.score
+    assert a.closed_prices == b.closed_prices
+
+
+def test_coordination_never_worse_and_often_better():
+    from opennego.skill_drills import run_multithread_drill
+
+    strictly_better = 0
+    for seed in range(20):
+        coord = run_multithread_drill(seed=seed, coordinate=True)
+        indep = run_multithread_drill(seed=seed, coordinate=False)
+        assert coord.score >= indep.score - 1e-9
+        strictly_better += coord.score > indep.score
+    # Shopping across threads should win outright on a meaningful share.
+    assert strictly_better >= 5
+
+
+def test_multithread_coordinated_takes_best_close():
+    from opennego.skill_drills import run_multithread_drill
+
+    result = run_multithread_drill(seed=5, coordinate=True)
+    if result.closed_prices:
+        assert result.closed_price == min(result.closed_prices)
+
+
+def test_multithread_requires_two_threads():
+    from opennego.skill_drills import SkillDrillError, run_multithread_drill
+
+    with pytest.raises(SkillDrillError, match="thread_count"):
+        run_multithread_drill(seed=1, thread_count=1)
+
+
+def test_multithread_cli(capsys):
+    code = main(["drill", "multithread", "--seed", "0", "--thread-count", "3"])
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["drill"] == "multithread"
+    assert payload["coordinated"] is True

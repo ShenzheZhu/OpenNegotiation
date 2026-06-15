@@ -7,6 +7,7 @@ import argparse
 from opennego.artifacts import to_jsonable
 from opennego.skill_drills import (
     SkillDrillError,
+    run_multithread_drill,
     run_selection_drill,
     run_walkaway_drill,
 )
@@ -49,6 +50,21 @@ def drill_main(argv: list[str] | None = None) -> int:
     )
     walkaway.add_argument("--output", help="Optional path for the drill artifact.")
 
+    multithread = subparsers.add_parser(
+        "multithread",
+        help="Multi-thread drill: shop concurrent threads vs working one.",
+    )
+    multithread.add_argument("--seed", type=int, default=13)
+    multithread.add_argument("--thread-count", type=int, default=3)
+    multithread.add_argument("--market-reference", type=float, default=575.0)
+    multithread.add_argument("--max-turns", type=int, default=12)
+    multithread.add_argument(
+        "--no-coordinate",
+        action="store_true",
+        help="Work only the first listing (no-coordination baseline).",
+    )
+    multithread.add_argument("--output", help="Optional path for the drill artifact.")
+
     args = parser.parse_args(argv)
 
     try:
@@ -65,6 +81,15 @@ def drill_main(argv: list[str] | None = None) -> int:
                 seed=args.seed,
                 patience=args.patience,
                 market_reference=args.market_reference,
+                max_turns=args.max_turns,
+                output_path=args.output,
+            )
+        elif args.skill == "multithread":
+            result = run_multithread_drill(
+                seed=args.seed,
+                thread_count=args.thread_count,
+                market_reference=args.market_reference,
+                coordinate=not args.no_coordinate,
                 max_turns=args.max_turns,
                 output_path=args.output,
             )
