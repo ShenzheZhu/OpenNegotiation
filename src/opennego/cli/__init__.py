@@ -15,7 +15,7 @@ from __future__ import annotations
 import sys
 from typing import Callable
 
-from . import benchmark, demo, learning, market, marketplace, scenarios, smoke
+from . import benchmark, demo, learning, market, marketplace, scenarios, serve, smoke
 
 CommandMain = Callable[[list[str]], int]
 
@@ -38,6 +38,12 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, CommandMain, str], ...]], ...]
             ("demo", demo.demo_main, "Generate the complete local demo bundle."),
             ("validate-demo", demo.validate_demo_main, "Validate a demo bundle manifest."),
             ("run-models", demo.run_models_main, "Run a small live-model demo via LiteLLM."),
+        ),
+    ),
+    (
+        "Client",
+        (
+            ("serve", serve.serve_main, "Launch the local web client."),
         ),
     ),
     (
