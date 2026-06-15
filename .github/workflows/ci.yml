@@ -30,3 +30,22 @@ jobs:
 
       - name: Run no-key benchmark smoke
         run: opennego run --config configs/no_key_smoke.yaml --output-dir /tmp/opennego-ci-smoke
+
+  web-client:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Typecheck and build web client
+        working-directory: web
+        run: npm run build

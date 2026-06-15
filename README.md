@@ -194,10 +194,24 @@ Curated example artifacts: [full demo report](examples/reports/full_demo.html),
 | --- | --- |
 | [src/opennego/](src/opennego/) | core environment, ports, adapters, agents, tools, transactions, metrics |
 | [src/opennego/cli/](src/opennego/cli/) | CLI command modules grouped by surface |
+| [src/opennego/serve/](src/opennego/serve/) | stdlib HTTP backend for the local web client |
+| [web/](web/) | React + Elastic UI client (Vite, TypeScript) |
 | [configs/](configs/) | fixture and live experiment configs |
 | [examples/](examples/) | small data fixtures, NPC registry, curated reports |
 | [docs/](docs/) | architecture, contracts, and integration guides |
 | [tests/](tests/) | deterministic regression tests (no API keys required) |
+
+### Local web client
+
+```bash
+cd web && npm install && npm run build   # build the React + EUI client once
+opennego serve                            # serve it at http://127.0.0.1:8765
+```
+
+The Python package has no JS runtime dependency; the client is a separate
+build under `web/`. Without a build, `opennego serve` shows a placeholder
+explaining the step. Your API key is sent only to the local server and is
+never written to disk or returned by any endpoint.
 
 ## Contributing
 

@@ -1,0 +1,104 @@
+:root {
+  --bg: #0d3b66;
+  --surface: #ffffff;
+  --ink: #1b1b1b;
+  --muted: #5b6b7b;
+  --line: #d7dee5;
+  --accent: #2d7d46;
+  --warn: #8a5a00;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: #f4f6f8;
+  line-height: 1.5;
+}
+
+header {
+  background: var(--bg);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+header h1 { font-size: 1.25rem; margin: 0; }
+
+nav button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+nav button.active { background: rgba(255, 255, 255, 0.18); }
+
+main { max-width: 760px; margin: 1.5rem auto; padding: 0 1.5rem; }
+
+.view { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem 1.5rem; }
+
+h2 { margin-top: 0; }
+
+label { display: block; margin: 0.75rem 0; font-weight: 600; }
+
+input, select, textarea {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 400;
+}
+
+textarea { resize: vertical; }
+
+button[type="submit"] {
+  margin-top: 0.5rem;
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font: inherit;
+}
+
+.base-prompt {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: #eef1f4;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+.base-prompt .locked { font-weight: 700; color: var(--muted); font-size: 0.85rem; }
+.base-prompt p { margin: 0.4rem 0 0; color: var(--muted); }
+
+.status { margin: 0.75rem 0; min-height: 1.2rem; }
+.status.ok { color: var(--accent); }
+.status.err { color: #a12; }
+
+ul, ol { padding-left: 1.2rem; }
+
+.trace { list-style: none; padding: 0; }
+.trace li {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  margin: 0.4rem 0;
+}
+.trace .role-buyer { border-left: 4px solid #2d7d46; }
+.trace .role-seller { border-left: 4px solid #0d3b66; }
+.trace .role-system { border-left: 4px solid var(--warn); }
+.trace .private { font-size: 0.8rem; color: var(--warn); }
+.trace .meta { font-size: 0.85rem; color: var(--muted); }

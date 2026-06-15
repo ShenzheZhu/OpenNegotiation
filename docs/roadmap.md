@@ -158,6 +158,7 @@ Milestone work that needs review-before-build records the decision under
 
 - [Coach contract and battle report v2](design/coach.md) (M2)
 - [Rating: normalized surplus to continuous rating](design/rating.md) (M3)
+- [Local web client: `opennego serve`](design/serve.md) (M4)
 
 ## Engineering Process
 

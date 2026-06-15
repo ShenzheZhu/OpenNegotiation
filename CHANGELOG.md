@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Web client (M4): a React + Elastic UI frontend in `web/` (Vite,
+  TypeScript) with agent definition (key write-only, read-only base
+  prompt) and match replay. `opennego serve` serves the built
+  `web/dist` when present, else a placeholder that explains the build.
+  Built bundles stay out of git; CI verifies the build.
+- Web client coach view: renders the v2 battle report (outcome,
+  opponent read, weaknesses, decision points, safety), generates an
+  evolved strategy candidate with its generalization verdict, and
+  accepts (writing a lineage node) or rejects it; a train_only candidate
+  is gated behind an explicit confirm.
+- Web client ratings page and match rating ingestion: `opennego serve`
+  matches are scored and recorded in a local rating store, and the
+  Ratings tab shows buyer/seller tracks with uncertainty and match
+  counts, highlighting the user's agent.
+
+- Local web client backend (M4): `opennego serve` starts a stdlib
+  `http.server` (zero new runtime deps) exposing JSON endpoints that
+  wrap the existing API (profiles, agents, matches, trace, battle
+  report, evolve, accept/reject with lineage, ratings). BYOK keys are
+  write-only: never persisted to disk or returned by any endpoint.
+
 - Rating layer (M3): per-match normalized-surplus score (`opennego.rating`) blending ZOPA split with market skill, non-deal and scam-safety handling per `docs/design/rating.md`, plus a SQLite `RatingStore` (`opennego.rating_store.v1`) with idempotent run-id ingestion and a continuous Bradley-Terry update on separate buyer and seller tracks with Glicko-style uncertainty.
 
 - Coach layer (M2): `CoachPort` contract, `opennego.battle_report.v2`
