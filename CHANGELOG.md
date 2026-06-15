@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Market skill drills (M5): `opennego drill select` runs a deterministic listing-selection drill (`opennego.skill_drill.v1`) scored by attainable surplus relative to the optimum, where the cheapest sticker is a trap when the seller's reputation is low.
+
 - Web client (M4): a React + Elastic UI frontend in `web/` (Vite,
   TypeScript) with agent definition (key write-only, read-only base
   prompt) and match replay. `opennego serve` serves the built
