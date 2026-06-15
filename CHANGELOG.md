@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `learn`/`train`/`demo`/sparring now emit v2 battle reports; evolution and
   HTML reports accept v1 and v2. Scam-NPC engagement produces a critical
   safety attribution. New `opennego learn --coach` flag (rules default).
+- BYOK `LLMCoach`: analyzes a visibility-filtered case through any
+  `LLMPort`, parses strict v2 JSON with bounded retries, grounds every
+  cited turn in the visible trace, and raises rather than silently
+  downgrading. `opennego learn --coach llm --coach-model <id>`.
 
 - Market-grounded scenario generator with BATNA structure
   (`opennego.batna.v1`): buyer budgets derive from next-best active listings
