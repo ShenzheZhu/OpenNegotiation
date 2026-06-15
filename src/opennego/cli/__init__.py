@@ -62,6 +62,7 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, CommandMain, str], ...]], ...]
         (
             ("drill", drills.drill_main, "Run a controlled market-skill drill."),
             ("market-run", market_sandbox.market_run_main, "Run a concurrent market episode."),
+            ("market-calibrate", market_sandbox.market_calibrate_main, "Compare market distributions to a reference."),
         ),
     ),
     (

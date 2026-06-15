@@ -1,0 +1,8 @@
+{
+  "source": "fixture_reference",
+  "description": "Representative real-market reference for no-key calibration: blended sold-comps clearing price, typical Best Offer round count, and observed deal rate.",
+  "as_of": "2026-01-15",
+  "mean_clearing_price": 520.0,
+  "mean_rounds": 3.0,
+  "deal_rate": 0.6
+}

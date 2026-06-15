@@ -269,6 +269,7 @@ def _ghost_walker(thread: _Thread) -> Role | None:
 
 
 def _thread_summary(thread: _Thread) -> Mapping[str, Any]:
+    result = thread.env.result
     return {
         "thread_id": thread.thread_id,
         "buyer_id": thread.buyer_id,
@@ -276,6 +277,7 @@ def _thread_summary(thread: _Thread) -> Mapping[str, Any]:
         "seller_id": thread.seller_id,
         "status": thread.status,
         "deal_price": thread.deal_price,
+        "completed_turns": result.completed_turns if result is not None else None,
         "cancel_reason": thread.cancel_reason,
     }
 
