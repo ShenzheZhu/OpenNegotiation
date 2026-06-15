@@ -1,4 +1,5 @@
 import json
+import pytest
 from pathlib import Path
 
 from opennego.cli import main
@@ -8,6 +9,7 @@ from opennego.evolution import (
 )
 from opennego.sparring import SPARRING_EXECUTION_MODE, SPARRING_SUITE_SCHEMA_VERSION
 from opennego.strategy_config import STRATEGY_CONFIG_SCHEMA_VERSION
+from opennego.runner import run_experiment_config
 from opennego.training import TRAINING_LOOP_SCHEMA_VERSION, run_training_loop
 
 
@@ -96,3 +98,79 @@ def test_train_cli_reports_profile_errors_without_traceback(tmp_path, capsys):
 
     assert status == 2
     assert "expected seller profile" in payload["error"]
+
+
+def test_split_opponent_roster_is_deterministic_with_safety_in_both():
+    from opennego.schema import Role
+    from opennego.training import split_opponent_roster
+
+    train_a, heldout_a = split_opponent_roster(
+        registry_path="examples/data/npc_strategies.json",
+        user_role=Role.BUYER,
+        seed=7,
+    )
+    train_b, heldout_b = split_opponent_roster(
+        registry_path="examples/data/npc_strategies.json",
+        user_role=Role.BUYER,
+        seed=7,
+    )
+
+    assert (train_a, heldout_a) == (train_b, heldout_b)
+    # Safety/scam seller profile must appear in both sets.
+    assert "seller_scam_offplatform_v1" in train_a
+    assert "seller_scam_offplatform_v1" in heldout_a
+    # Non-safety profiles are partitioned, not duplicated.
+    non_safety_train = set(train_a) - {"seller_scam_offplatform_v1"}
+    non_safety_heldout = set(heldout_a) - {"seller_scam_offplatform_v1"}
+    assert non_safety_train.isdisjoint(non_safety_heldout)
+
+
+def test_training_loop_reports_generalization(tmp_path):
+    output_dir = tmp_path / "holdout_training"
+
+    summary = run_training_loop(
+        output_dir=output_dir,
+        parent_strategy_id="buyer_baseline",
+        holdout_validation=True,
+        holdout_seed=7,
+    )
+
+    assert summary.generalization is not None
+    verdict = summary.generalization["verdict"]
+    assert verdict in {"improved", "train_only", "regressed"}
+    assert summary.generalization["train"]["profile_count"] >= 1
+    assert summary.generalization["held_out"]["profile_count"] >= 1
+    candidate = json.loads((output_dir / "strategy_candidate.json").read_text())
+    assert candidate["metadata"]["generalization_verdict"] == verdict
+    payload = json.loads((output_dir / "training_loop.json").read_text())
+    assert payload["generalization"]["verdict"] == verdict
+
+
+def test_apply_strategy_refuses_train_only_without_override(tmp_path):
+    from opennego.artifacts import write_json
+    from opennego.evolution import generate_strategy_candidate, write_strategy_candidate
+    from opennego.strategy_config import StrategyConfigError, write_strategy_config
+
+    runs_dir = tmp_path / "runs"
+    run_experiment_config("configs/real_market_demo.yaml", output_dir=runs_dir)
+    run_dir = runs_dir / "real_market_demo-iphone_14_pro_128gb_unlocked_good-no_tools-seed-13"
+    from opennego.learning import write_battle_report
+
+    report_path = tmp_path / "battle_report.json"
+    write_battle_report(run_dir, report_path, user_role="buyer",
+                        opponent_profile_id="seller_hardline_anchor_v1")
+    candidate_path = tmp_path / "candidate.json"
+    write_strategy_candidate(report_path, candidate_path, parent_strategy_id="buyer_baseline")
+
+    # Stamp a train_only verdict like held-out validation would.
+    candidate = json.loads(candidate_path.read_text())
+    candidate["metadata"]["generalization_verdict"] = "train_only"
+    candidate_path.write_text(json.dumps(candidate, indent=2) + "\n")
+
+    config_path = tmp_path / "config.json"
+    with pytest.raises(StrategyConfigError, match="train_only"):
+        write_strategy_config(candidate_path, config_path)
+
+    # Override applies it.
+    written = write_strategy_config(candidate_path, config_path, allow_train_only=True)
+    assert written.exists()

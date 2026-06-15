@@ -71,10 +71,18 @@ def generate_strategy_config(
     *,
     base_config_path: str | Path | None = None,
     strategy_id: str | None = None,
+    allow_train_only: bool = False,
 ) -> StrategyConfig:
     """Apply a strategy candidate into a versioned strategy config artifact."""
 
     candidate = load_strategy_candidate(candidate_path)
+    verdict = candidate.metadata.get("generalization_verdict")
+    if verdict == "train_only" and not allow_train_only:
+        raise StrategyConfigError(
+            "candidate failed held-out generalization (verdict=train_only): it "
+            "improved only against the profiles it trained on. Re-run training "
+            "or pass allow_train_only to apply it anyway."
+        )
     base_config = (
         load_strategy_config(base_config_path) if base_config_path is not None else None
     )
@@ -135,6 +143,7 @@ def write_strategy_config(
     *,
     base_config_path: str | Path | None = None,
     strategy_id: str | None = None,
+    allow_train_only: bool = False,
 ) -> Path:
     """Write an applied strategy config and return its path."""
 
@@ -142,6 +151,7 @@ def write_strategy_config(
         candidate_path,
         base_config_path=base_config_path,
         strategy_id=strategy_id,
+        allow_train_only=allow_train_only,
     )
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)

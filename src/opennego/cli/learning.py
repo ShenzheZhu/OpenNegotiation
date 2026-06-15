@@ -214,6 +214,11 @@ def apply_strategy_main(argv: list[str] | None = None) -> int:
         "--strategy-id",
         help="Optional id for the resulting strategy config.",
     )
+    parser.add_argument(
+        "--allow-train-only",
+        action="store_true",
+        help="Apply even if held-out validation flagged the candidate train_only.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -222,6 +227,7 @@ def apply_strategy_main(argv: list[str] | None = None) -> int:
             args.output,
             base_config_path=args.base_config,
             strategy_id=args.strategy_id,
+            allow_train_only=args.allow_train_only,
         )
         config = load_strategy_config(output_path)
     except (OSError, StrategyEvolutionError, StrategyConfigError) as exc:
@@ -395,6 +401,20 @@ def train_main(argv: list[str] | None = None) -> int:
         default=1,
         help="Positive strategy iteration number.",
     )
+    parser.add_argument(
+        "--holdout-validation",
+        action="store_true",
+        help=(
+            "Split the opposite-role roster into train and held-out sets, patch "
+            "from train only, and report per-set generalization."
+        ),
+    )
+    parser.add_argument(
+        "--holdout-seed",
+        type=int,
+        default=0,
+        help="Deterministic seed for the train/held-out split.",
+    )
     parser.add_argument("--no-fail-fast", action="store_true")
     args = parser.parse_args(argv)
 
@@ -409,6 +429,8 @@ def train_main(argv: list[str] | None = None) -> int:
             parent_strategy_id=args.parent_strategy_id,
             iteration=args.iteration,
             fail_fast=not args.no_fail_fast,
+            holdout_validation=args.holdout_validation,
+            holdout_seed=args.holdout_seed,
         )
     except (OSError, ValueError, KeyError, ConfigValidationError) as exc:
         return common.print_error(exc)
