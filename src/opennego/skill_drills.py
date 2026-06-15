@@ -1,10 +1,14 @@
 """Market skill drills (see docs/design/market.md).
 
 Controlled, seed-reproducible, no-key exercises that score one market skill in
-isolation before the agent faces the live sandbox. The first drill is listing
-selection: pick the listing with the most *attainable* surplus, which is not
-always the lowest asking price — a too-cheap listing from a low-reputation
-seller carries risk that eats the apparent bargain.
+isolation before the agent faces the live sandbox.
+
+- Listing selection: pick the listing with the most *attainable* surplus,
+  which is not always the lowest asking price — a too-cheap listing from a
+  low-reputation seller carries risk that eats the apparent bargain.
+- Walk-away timing: cut losses fast against an unwinnable seller, but do not
+  bail on a seller who is actually conceding. A trigger-happy policy wins the
+  unwinnable case and fails the winnable one; a patient policy times out.
 """
 
 from __future__ import annotations
@@ -15,6 +19,16 @@ from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
 from opennego.artifacts import to_jsonable, write_json
+from opennego.environment import NegotiationEnvironment
+from opennego.schema import (
+    ActionType,
+    AgentAction,
+    AgentContext,
+    MarketReference,
+    Product,
+    Role,
+    Scenario,
+)
 
 SKILL_DRILL_SCHEMA_VERSION = "opennego.skill_drill.v1"
 
@@ -211,6 +225,171 @@ def run_selection_drill(
             drill.listings[drill.optimal_index].attainable_surplus
         ),
         policy=policy_name,
+    )
+    if output_path is not None:
+        write_json(Path(output_path), to_jsonable(result))
+    return result
+
+
+# --- Walk-away timing drill -------------------------------------------------
+
+
+@dataclass
+class WalkawayBuyer:
+    """A buyer that walks when the seller is stuck, but stays when it concedes.
+
+    ``patience`` is how many consecutive non-conceding seller offers it
+    tolerates before walking away (reject). Low patience cuts losses fast but
+    risks bailing on a slow-but-real concession; high patience risks timing
+    out against a firm seller. The skill is choosing it well.
+    """
+
+    patience: int = 2
+    name: str = "walkaway_buyer"
+    role: Role = Role.BUYER
+
+    def act(self, context: AgentContext) -> AgentAction:
+        events = tuple(context.transcript)
+        scenario = context.scenario
+        reference = scenario.product.market_reference
+        anchor = reference.reference_price if reference else scenario.product.list_price
+        willingness = min(scenario.buyer_budget, anchor * 0.95)
+        seller_offers = [
+            event.offer.price
+            for event in events
+            if event.role == Role.SELLER
+            and event.action_type == ActionType.OFFER
+            and event.offer is not None
+        ]
+        latest = seller_offers[-1] if seller_offers else None
+
+        if latest is not None and latest <= willingness:
+            return AgentAction.accept(f"Accepted at ${latest:.2f}.")
+
+        if len(seller_offers) > self.patience:
+            recent = seller_offers[-(self.patience + 1):]
+            # "Stuck" = no meaningful downward movement over the window.
+            if recent[0] - recent[-1] < anchor * 0.01:
+                return AgentAction.reject(
+                    "Seller is not moving; walking away to avoid wasted turns."
+                )
+
+        counter = min(willingness, (latest or anchor) * 0.9)
+        return AgentAction.offer_price(round(counter, 2), f"My offer is ${counter:.2f}.")
+
+
+@dataclass
+class _FirmSeller:
+    """Never concedes: always restates the list price. Unwinnable."""
+
+    name: str = "firm_seller"
+    role: Role = Role.SELLER
+
+    def act(self, context: AgentContext) -> AgentAction:
+        list_price = context.scenario.product.list_price
+        return AgentAction.offer_price(round(list_price, 2), "Price is firm.")
+
+
+def _drill_scenario(*, market_reference: float, winnable: bool, max_turns: int) -> Scenario:
+    list_price = round(market_reference * 1.2, 2)
+    reservation = (
+        round(market_reference * 0.85, 2)
+        if winnable
+        else round(market_reference * 1.15, 2)
+    )
+    product = Product(
+        id="walkaway_item",
+        name="Walk-away drill item",
+        description="Drill fixture.",
+        list_price=list_price,
+        wholesale_price=round(market_reference * 0.7, 2),
+        condition="used_good",
+        market_reference=MarketReference(reference_price=market_reference),
+    )
+    return Scenario(
+        product=product,
+        buyer_budget=round(market_reference * 0.95, 2),
+        seller_reservation_price=reservation,
+        max_turns=max_turns,
+    )
+
+
+@dataclass(frozen=True)
+class WalkawayDrillResult:
+    schema_version: str
+    drill: str
+    seed: int
+    patience: int
+    score: float
+    unwinnable_outcome: str
+    unwinnable_turns: int
+    winnable_outcome: str
+    walk_score: float
+    stay_score: float
+
+
+def run_walkaway_drill(
+    *,
+    seed: int = 13,
+    patience: int = 2,
+    market_reference: float = 575.0,
+    max_turns: int = 10,
+    output_path: str | Path | None = None,
+) -> WalkawayDrillResult:
+    """Score a walk-away policy across an unwinnable and a winnable seller."""
+
+    if patience < 0:
+        raise SkillDrillError("patience: expected non-negative")
+
+    unwinnable = _drill_scenario(
+        market_reference=market_reference, winnable=False, max_turns=max_turns
+    )
+    unwinnable_env = NegotiationEnvironment(
+        scenario=unwinnable,
+        buyer=WalkawayBuyer(patience=patience),
+        seller=_FirmSeller(),
+    )
+    unwinnable_result = unwinnable_env.run()
+
+    winnable = _drill_scenario(
+        market_reference=market_reference, winnable=True, max_turns=max_turns
+    )
+    from opennego.agents import ScriptedSeller
+
+    winnable_env = NegotiationEnvironment(
+        scenario=winnable,
+        buyer=WalkawayBuyer(patience=patience),
+        seller=ScriptedSeller(),
+    )
+    winnable_result = winnable_env.run()
+
+    # Unwinnable: reward a decisive early walk; timeout is the worst.
+    if unwinnable_result.outcome in {"rejected", "ghosted"}:
+        walk_score = round(
+            (max_turns - unwinnable_result.completed_turns) / max_turns, 4
+        )
+        walk_score = max(0.0, min(1.0, walk_score))
+    else:
+        walk_score = 0.0
+    # Winnable: reward closing; bailing forfeits a real deal.
+    if winnable_result.outcome == "deal":
+        stay_score = 1.0
+    elif winnable_result.outcome == "timeout":
+        stay_score = 0.5
+    else:
+        stay_score = 0.0
+
+    result = WalkawayDrillResult(
+        schema_version=SKILL_DRILL_SCHEMA_VERSION,
+        drill="walkaway",
+        seed=seed,
+        patience=patience,
+        score=round(0.5 * walk_score + 0.5 * stay_score, 4),
+        unwinnable_outcome=unwinnable_result.outcome,
+        unwinnable_turns=unwinnable_result.completed_turns,
+        winnable_outcome=winnable_result.outcome,
+        walk_score=walk_score,
+        stay_score=stay_score,
     )
     if output_path is not None:
         write_json(Path(output_path), to_jsonable(result))
