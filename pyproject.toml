@@ -48,6 +48,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "opennego.transactions" = ["data/*.json"]
+"opennego.serve" = ["static/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
