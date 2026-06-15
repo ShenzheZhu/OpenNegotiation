@@ -145,3 +145,22 @@ export const coachApi = {
       }),
     }),
 };
+
+export interface RatingEntry {
+  rank: number;
+  participant_id: string;
+  rating: number;
+  uncertainty: number;
+  match_count: number;
+}
+
+export interface RatingLeaderboard {
+  schema_version: string;
+  match_count: number;
+  buyer_track: RatingEntry[];
+  seller_track: RatingEntry[];
+}
+
+export const ratingsApi = {
+  get: () => request<RatingLeaderboard>("/api/ratings"),
+};

@@ -119,6 +119,13 @@ class ServeService:
                 f"match against {opponent} did not complete: {result.error}"
             )
         run_dir = Path(result.learning_input_dir)
+        self._ingest_rating(
+            run_dir=run_dir,
+            run_id=run_dir.name,
+            user_role=role,
+            agent_id=agent["id"],
+            opponent=opponent,
+        )
         return {
             "run_id": run_dir.name,
             "agent_id": agent["id"],
@@ -129,6 +136,61 @@ class ServeService:
             "battle_report": result.battle_report,
             "run_dir": str(run_dir),
         }
+
+    def _ingest_rating(
+        self,
+        *,
+        run_dir: Path,
+        run_id: str,
+        user_role: Role,
+        agent_id: str,
+        opponent: str,
+    ) -> None:
+        """Score the match and record it in the local rating store.
+
+        Keeps the ratings page populated from real matches. Idempotent by
+        run id, so replaying a match never double-counts.
+        """
+
+        from opennego.artifacts import (
+            load_metric_report,
+            load_scenario_artifact,
+            load_trace,
+        )
+        from opennego.rating import compute_match_score
+        from opennego.schema import ActionType
+
+        scenario = load_scenario_artifact(run_dir / "scenario.json")
+        metrics = load_metric_report(run_dir / "metrics.json")
+        reference = scenario.product.market_reference
+        ghost_walker = None
+        for event in reversed(load_trace(run_dir / "trace.jsonl")):
+            if event.action_type == ActionType.GHOST:
+                ghost_walker = event.role
+                break
+        score = compute_match_score(
+            outcome=metrics.outcome,
+            deal_price=metrics.deal_price,
+            buyer_budget=scenario.buyer_budget,
+            seller_reservation=scenario.seller_reservation_price,
+            market_reference=reference.reference_price if reference else None,
+            ghost_walker=ghost_walker,
+        )
+        buyer_id = agent_id if user_role == Role.BUYER else opponent
+        seller_id = opponent if user_role == Role.BUYER else agent_id
+        store = RatingStore(self.data_dir / "ratings.db")
+        try:
+            store.ingest_match(
+                run_id=run_id,
+                scenario_id=scenario.scenario_id,
+                buyer_participant_id=buyer_id,
+                seller_participant_id=seller_id,
+                outcome=metrics.outcome,
+                deal_price=metrics.deal_price,
+                score=score,
+            )
+        finally:
+            store.close()
 
     def get_trace(self, run_id: str) -> Mapping[str, Any]:
         run_dir = self._run_dir(run_id)
