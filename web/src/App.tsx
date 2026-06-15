@@ -11,13 +11,15 @@ import {
 import { AgentView } from "./views/AgentView";
 import { MatchView } from "./views/MatchView";
 import { ReportView } from "./views/ReportView";
+import { RatingsView } from "./views/RatingsView";
 
-type TabId = "agent" | "match" | "coach";
+type TabId = "agent" | "match" | "coach" | "ratings";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "agent", label: "Agent" },
   { id: "match", label: "Match" },
   { id: "coach", label: "Coach" },
+  { id: "ratings", label: "Ratings" },
 ];
 
 export function App() {
@@ -59,6 +61,7 @@ export function App() {
           {tab === "coach" && (
             <ReportView runId={lastRunId} agentId={lastAgentId} />
           )}
+          {tab === "ratings" && <RatingsView agentId={lastAgentId} />}
         </EuiPageTemplate.Section>
       </EuiPageTemplate>
     </>

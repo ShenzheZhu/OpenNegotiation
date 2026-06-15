@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   evolved strategy candidate with its generalization verdict, and
   accepts (writing a lineage node) or rejects it; a train_only candidate
   is gated behind an explicit confirm.
+- Web client ratings page and match rating ingestion: `opennego serve`
+  matches are scored and recorded in a local rating store, and the
+  Ratings tab shows buyer/seller tracks with uncertainty and match
+  counts, highlighting the user's agent.
 
 - Local web client backend (M4): `opennego serve` starts a stdlib
   `http.server` (zero new runtime deps) exposing JSON endpoints that

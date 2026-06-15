@@ -199,3 +199,39 @@ def test_decide_gates_train_only_candidate(tmp_path):
     )
     assert status == 200
     assert ok["decision"] == "accepted"
+
+
+def test_match_ingests_into_ratings(tmp_path):
+    service = _service(tmp_path)
+    dispatch(service, "POST", "/api/agents",
+             {"id": "buyer1", "role": "buyer", "strategy_prompt": "p"})
+
+    _, before = dispatch(service, "GET", "/api/ratings")
+    assert before["match_count"] == 0
+
+    dispatch(
+        service, "POST", "/api/matches",
+        {"agent_id": "buyer1", "opponent_profile_id": "seller_hardline_anchor_v1"},
+    )
+
+    _, after = dispatch(service, "GET", "/api/ratings")
+    assert after["match_count"] == 1
+    buyer_ids = {e["participant_id"] for e in after["buyer_track"]}
+    assert "buyer1" in buyer_ids
+    # The opponent profile is rated on the seller track.
+    seller_ids = {e["participant_id"] for e in after["seller_track"]}
+    assert "seller_hardline_anchor_v1" in seller_ids
+
+
+def test_match_rating_ingestion_is_idempotent(tmp_path):
+    service = _service(tmp_path)
+    dispatch(service, "POST", "/api/agents",
+             {"id": "buyer1", "role": "buyer", "strategy_prompt": "p"})
+    for _ in range(2):
+        dispatch(
+            service, "POST", "/api/matches",
+            {"agent_id": "buyer1", "opponent_profile_id": "seller_hardline_anchor_v1"},
+        )
+    _, board = dispatch(service, "GET", "/api/ratings")
+    # Same deterministic run id → ingested once.
+    assert board["match_count"] == 1
