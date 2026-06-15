@@ -307,7 +307,129 @@ def test_rule_coach_flags_scam_engagement(tmp_path):
     assert "safety" in report.failure_modes
 
 
-def test_learn_cli_rejects_llm_coach_until_available(tmp_path, capsys):
+class _FakeLLM:
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.requests = []
+
+    def complete(self, request):
+        from opennego.ports import LLMResponse
+
+        self.requests.append(request)
+        if not self.responses:
+            raise AssertionError("fake coach LLM exhausted")
+        return LLMResponse(model=request.model, content=self.responses.pop(0))
+
+
+def _llm_analysis(turn, *, safety_passed=True, lesson_id="buyer_overpaid_market"):
+    return json.dumps(
+        {
+            "summary": "Paid above market reference.",
+            "opponent_read": {
+                "observed_tactics": ["high opening anchor"],
+                "archetype_guess": "hardline_anchor",
+                "confidence": "high",
+            },
+            "decision_points": [
+                {
+                    "turn": turn,
+                    "phase": "negotiation",
+                    "situation": "seller anchored above market",
+                    "action_taken": "countered low",
+                    "assessment": "ok",
+                    "counterfactual": "could have cited retrieved median",
+                }
+            ],
+            "lessons": [
+                {
+                    "id": lesson_id,
+                    "phase": "negotiation",
+                    "severity": "high",
+                    "category": "price_discipline",
+                    "finding": "accepted above market reference",
+                    "recommendation": "anchor on comps",
+                    "suggested_strategy_patch": "never exceed market_reference * 1.05",
+                    "evidence_turns": [turn],
+                }
+            ],
+            "safety": {"passed": safety_passed, "violations": []},
+        }
+    )
+
+
+def test_llm_coach_produces_valid_v2_report(tmp_path):
+    from opennego.coaching import LLMCoach, review_run
+
+    run_dir = _write_run(tmp_path, opponent_profile_id="seller_hardline_anchor_v1")
+    case = build_coach_case(run_dir, user_role=Role.BUYER)
+    grounded_turn = case.visible_turns[-1]
+    fake = _FakeLLM([_llm_analysis(grounded_turn)])
+    coach = LLMCoach(llm=fake, model="openrouter/fake/coach")
+
+    report = review_run(run_dir, user_role=Role.BUYER, coach=coach)
+
+    assert report.schema_version == BATTLE_REPORT_V2_SCHEMA_VERSION
+    assert report.coach == {"kind": "llm:openrouter/fake/coach"}
+    assert report.opponent_read.archetype_guess == "hardline_anchor"
+    assert any(lesson.id == "buyer_overpaid_market" for lesson in report.lessons)
+    assert report.weaknesses[0].evidence_turns == (grounded_turn,)
+
+
+def test_llm_coach_retries_on_malformed_then_succeeds(tmp_path):
+    from opennego.coaching import LLMCoach, review_run
+
+    run_dir = _write_run(tmp_path)
+    case = build_coach_case(run_dir, user_role=Role.BUYER)
+    grounded_turn = case.visible_turns[-1]
+    fake = _FakeLLM(["not json at all", _llm_analysis(grounded_turn)])
+    coach = LLMCoach(llm=fake, model="m")
+
+    report = review_run(run_dir, user_role=Role.BUYER, coach=coach)
+
+    assert len(fake.requests) == 2
+    assert report.lessons
+
+
+def test_llm_coach_raises_after_exhausting_retries(tmp_path):
+    from opennego.coaching import CoachReviewError, LLMCoach, review_run
+
+    run_dir = _write_run(tmp_path)
+    fake = _FakeLLM(["nope", "still nope"])
+    coach = LLMCoach(llm=fake, model="m", max_repair_attempts=1)
+
+    with pytest.raises(CoachReviewError):
+        review_run(run_dir, user_role=Role.BUYER, coach=coach)
+
+
+def test_llm_coach_rejects_ungrounded_turn(tmp_path):
+    from opennego.coaching import CoachReviewError, LLMCoach, review_run
+
+    run_dir = _write_run(tmp_path)
+    fake = _FakeLLM([_llm_analysis(999), _llm_analysis(998)])
+    coach = LLMCoach(llm=fake, model="m", max_repair_attempts=1)
+
+    with pytest.raises(CoachReviewError):
+        review_run(run_dir, user_role=Role.BUYER, coach=coach)
+
+
+def test_llm_coach_prompt_excludes_counterpart_private_state(tmp_path):
+    from opennego.coaching import LLMCoach
+
+    run_dir = _write_run(tmp_path)
+    case = build_coach_case(run_dir, user_role=Role.BUYER)
+    grounded_turn = case.visible_turns[-1]
+    fake = _FakeLLM([_llm_analysis(grounded_turn)])
+    coach = LLMCoach(llm=fake, model="m")
+
+    coach.review(case)
+    prompt = json.dumps([dict(m) for m in fake.requests[0].messages])
+
+    assert "seller_reservation_price" not in prompt
+    assert "relist_and_wait" not in prompt
+    assert "seller_profit_vs_reservation" not in prompt
+
+
+def test_learn_cli_llm_coach_requires_model(tmp_path, capsys):
     from opennego.cli import main
 
     code = main(
@@ -324,4 +446,4 @@ def test_learn_cli_rejects_llm_coach_until_available(tmp_path, capsys):
     payload = json.loads(capsys.readouterr().out)
 
     assert code == 2
-    assert "issue #144" in payload["error"]
+    assert "--coach-model" in payload["error"]

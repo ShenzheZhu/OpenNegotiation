@@ -101,11 +101,38 @@ def learn_main(argv: list[str] | None = None) -> int:
         choices=("rules", "llm"),
         help="Coach implementation. 'rules' is the deterministic no-key default.",
     )
+    parser.add_argument(
+        "--coach-model",
+        help="LiteLLM model id for --coach llm (required when --coach llm).",
+    )
+    parser.add_argument(
+        "--coach-temperature",
+        type=float,
+        default=0.0,
+        help="Temperature for --coach llm.",
+    )
+    parser.add_argument(
+        "--coach-max-tokens",
+        type=int,
+        default=1536,
+        help="Max tokens for --coach llm calls.",
+    )
     args = parser.parse_args(argv)
 
+    coach = None
     if args.coach == "llm":
-        return common.print_error(
-            "coach 'llm' is not available yet (issue #144); use --coach rules"
+        if not args.coach_model:
+            return common.print_error("--coach llm requires --coach-model")
+        preflight_error = common.llm_preflight_error((args.coach_model,))
+        if preflight_error is not None:
+            return common.print_error(preflight_error)
+        from opennego.coaching import LLMCoach
+
+        coach = LLMCoach(
+            llm=common.make_litellm_gateway(),
+            model=args.coach_model,
+            temperature=args.coach_temperature,
+            max_tokens=args.coach_max_tokens,
         )
 
     try:
@@ -115,11 +142,12 @@ def learn_main(argv: list[str] | None = None) -> int:
             user_role=args.user_role,
             npc_registry_path=args.registry,
             opponent_profile_id=args.opponent_profile,
+            coach=coach,
         )
-    except (OSError, ValueError, KeyError) as exc:
+    except (OSError, ValueError, KeyError, RuntimeError) as exc:
         return common.print_error(exc)
 
-    common.print_json({"battle_report": str(output_path)})
+    common.print_json({"battle_report": str(output_path), "coach": args.coach})
     return 0
 
 
