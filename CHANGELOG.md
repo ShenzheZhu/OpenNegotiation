@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `LLMPort`, parses strict v2 JSON with bounded retries, grounds every
   cited turn in the visible trace, and raises rather than silently
   downgrading. `opennego learn --coach llm --coach-model <id>`.
+- Strategy candidates record coach provenance (coach kind, source report
+  version, addressed phases and turns), and applying a candidate now
+  rejects any attempt to overwrite the fixed base prompt.
 
 - Market-grounded scenario generator with BATNA structure
   (`opennego.batna.v1`): buyer budgets derive from next-best active listings
