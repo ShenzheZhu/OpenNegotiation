@@ -111,18 +111,54 @@ def report_main(argv: list[str] | None = None) -> int:
 
 def leaderboard_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Aggregate benchmark artifacts into leaderboard JSON."
+        description="Aggregate benchmark artifacts or a rating store into a leaderboard."
     )
     parser.add_argument(
         "--input-dir",
-        required=True,
-        help="Directory containing benchmark run artifact subdirectories.",
+        help="Directory containing benchmark run artifact subdirectories (v1 scorecard).",
+    )
+    parser.add_argument(
+        "--store",
+        help="Path to a rating store for the v2 rating leaderboard.",
     )
     parser.add_argument(
         "--output",
-        help="Optional path to write leaderboard_summary.json.",
+        help="Optional path to write the leaderboard JSON.",
+    )
+    parser.add_argument(
+        "--report",
+        help="Optional HTML path for the rating leaderboard (requires --store).",
     )
     args = parser.parse_args(argv)
+
+    if not args.input_dir and not args.store:
+        return common.print_error("provide --input-dir (v1) or --store (v2)")
+
+    if args.store:
+        from opennego.leaderboard import (
+            build_rating_leaderboard,
+            render_rating_leaderboard_html,
+            write_rating_leaderboard,
+        )
+        from opennego.rating import RatingStore
+
+        store = RatingStore(args.store)
+        try:
+            leaderboard = build_rating_leaderboard(store)
+        finally:
+            store.close()
+        if args.output:
+            write_rating_leaderboard(args.store, args.output)
+        if args.report:
+            from pathlib import Path as _Path
+
+            report_path = _Path(args.report)
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(
+                render_rating_leaderboard_html(leaderboard), encoding="utf-8"
+            )
+        common.print_json(to_jsonable(leaderboard))
+        return 0
 
     try:
         summary = build_leaderboard(args.input_dir)
