@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Web client (M4): a React + Elastic UI frontend in `web/` (Vite,
+  TypeScript) with agent definition (key write-only, read-only base
+  prompt) and match replay. `opennego serve` serves the built
+  `web/dist` when present, else a placeholder that explains the build.
+  Built bundles stay out of git; CI verifies the build.
+
 - Local web client backend (M4): `opennego serve` starts a stdlib
   `http.server` (zero new runtime deps) exposing JSON endpoints that
   wrap the existing API (profiles, agents, matches, trace, battle

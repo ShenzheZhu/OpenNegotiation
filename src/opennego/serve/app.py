@@ -1,7 +1,8 @@
 """Stdlib HTTP transport for the local web client.
 
-Thin routing over ``ServeService``; no business logic. Static assets (added
-in #167) are served from ``opennego/serve/static/``.
+Thin routing over ``ServeService``; no business logic. Static assets come
+from the built React/EUI client (``web/dist``) when present, otherwise from a
+packaged placeholder that tells the user to build the client.
 """
 
 from __future__ import annotations
@@ -14,13 +15,34 @@ from typing import Any, Callable, Mapping
 
 from opennego.serve.service import ServeError, ServeService
 
-STATIC_DIR = Path(__file__).parent / "static"
+PLACEHOLDER_STATIC_DIR = Path(__file__).parent / "static"
 _CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".css": "text/css; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
     ".json": "application/json; charset=utf-8",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
 }
+
+
+def resolve_static_dir() -> Path:
+    """Prefer the built React client (``web/dist``); else the placeholder.
+
+    Walks up from this file to find a sibling ``web/dist`` in a source
+    checkout. A pip-installed package without a build falls back to the
+    packaged placeholder page.
+    """
+
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "web" / "dist"
+        if (candidate / "index.html").is_file():
+            return candidate
+        if (parent / "pyproject.toml").is_file():
+            break
+    return PLACEHOLDER_STATIC_DIR
 
 # (method, compiled path) -> handler(service, match, body) -> (status, payload)
 Route = Callable[[ServeService, "re.Match[str]", Mapping[str, Any]], Any]
@@ -119,8 +141,15 @@ def dispatch(
     return 404, {"error": f"no route for {method} {path}"}
 
 
-def make_handler(service: ServeService) -> type[BaseHTTPRequestHandler]:
+def make_handler(
+    service: ServeService,
+    static_dir: Path | None = None,
+) -> type[BaseHTTPRequestHandler]:
+    resolved_static = static_dir or resolve_static_dir()
+
     class Handler(BaseHTTPRequestHandler):
+        static_dir = resolved_static
+
         def log_message(self, *args: Any) -> None:  # quiet by default
             pass
 
@@ -148,11 +177,18 @@ def make_handler(service: ServeService) -> type[BaseHTTPRequestHandler]:
             self._send_json(status, payload)
 
         def _static(self) -> None:
-            rel = self.path.lstrip("/") or "index.html"
-            target = (STATIC_DIR / rel).resolve()
-            if STATIC_DIR not in target.parents or not target.is_file():
+            root = self.static_dir.resolve()
+            rel = self.path.lstrip("/").split("?", 1)[0] or "index.html"
+            target = (root / rel).resolve()
+            if root != target and root not in target.parents:
                 self._send_json(404, {"error": "not found"})
                 return
+            if not target.is_file():
+                # SPA fallback: unknown non-asset paths serve index.html.
+                target = root / "index.html"
+                if not target.is_file():
+                    self._send_json(404, {"error": "not found"})
+                    return
             content = target.read_bytes()
             self.send_response(200)
             self.send_header(
@@ -184,9 +220,14 @@ def run_server(
     config_path: str = "configs/real_market_demo.yaml",
 ) -> None:
     service = ServeService.create(data_dir, config_path=config_path)
-    server = ThreadingHTTPServer((host, port), make_handler(service))
-    scheme = "http"
-    print(f"opennego serve on {scheme}://{host}:{port} (data-dir={data_dir})")
+    static_dir = resolve_static_dir()
+    server = ThreadingHTTPServer((host, port), make_handler(service, static_dir))
+    print(f"opennego serve on http://{host}:{port} (data-dir={data_dir})")
+    if static_dir == PLACEHOLDER_STATIC_DIR:
+        print(
+            "Web client not built; serving placeholder. Build it with: "
+            "cd web && npm install && npm run build"
+        )
     if host not in ("127.0.0.1", "localhost"):
         print(
             "WARNING: binding off localhost. BYOK keys are sent to this server; "
