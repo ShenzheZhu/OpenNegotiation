@@ -151,6 +151,14 @@ concurrency scheduler, thread dashboard, clearing), then staged autonomy
 L1 to L3, closing with the realism calibration report (sandbox distributions vs
 real eBay distributions).
 
+## Design Docs
+
+Milestone work that needs review-before-build records the decision under
+`docs/design/`:
+
+- [Coach contract and battle report v2](design/coach.md) (M2)
+- [Rating: normalized surplus to continuous rating](design/rating.md) (M3)
+
 ## Engineering Process
 
 Work follows the issue-per-unit discipline: one integration train per
