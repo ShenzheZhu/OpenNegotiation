@@ -12,8 +12,11 @@ from opennego.artifacts import (
     load_metric_report,
 )
 from opennego.artifacts import write_json
+from opennego.rating import RatingStore
+from opennego.schema import Role
 
 LEADERBOARD_SCHEMA_VERSION = "opennego.leaderboard.v1"
+LEADERBOARD_V2_SCHEMA_VERSION = "opennego.leaderboard.v2"
 
 
 @dataclass(frozen=True)
@@ -112,6 +115,111 @@ def write_leaderboard(input_dir: str | Path, output_path: str | Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     write_json(path, build_leaderboard(input_dir))
     return path
+
+
+@dataclass(frozen=True)
+class RatingLeaderboardEntry:
+    rank: int
+    participant_id: str
+    rating: float
+    uncertainty: float
+    match_count: int
+
+
+@dataclass(frozen=True)
+class RatingLeaderboard:
+    schema_version: str
+    store_path: str
+    match_count: int
+    buyer_track: tuple[RatingLeaderboardEntry, ...]
+    seller_track: tuple[RatingLeaderboardEntry, ...]
+
+
+def build_rating_leaderboard(store: RatingStore) -> RatingLeaderboard:
+    """Rank participants by buyer-track and seller-track rating."""
+
+    return RatingLeaderboard(
+        schema_version=LEADERBOARD_V2_SCHEMA_VERSION,
+        store_path=store.path,
+        match_count=store.match_count(),
+        buyer_track=_rating_track(store, Role.BUYER),
+        seller_track=_rating_track(store, Role.SELLER),
+    )
+
+
+def write_rating_leaderboard(
+    store_path: str | Path,
+    output_path: str | Path,
+) -> Path:
+    """Write an opennego.leaderboard.v2 rating leaderboard from a store."""
+
+    store = RatingStore(store_path)
+    try:
+        leaderboard = build_rating_leaderboard(store)
+    finally:
+        store.close()
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_json(path, leaderboard)
+    return path
+
+
+def _rating_track(store: RatingStore, role: Role) -> tuple[RatingLeaderboardEntry, ...]:
+    return tuple(
+        RatingLeaderboardEntry(
+            rank=index,
+            participant_id=snapshot.participant_id,
+            rating=snapshot.rating,
+            uncertainty=snapshot.uncertainty,
+            match_count=snapshot.match_count,
+        )
+        for index, snapshot in enumerate(store.ratings_for_role(role), start=1)
+    )
+
+
+def render_rating_leaderboard_html(leaderboard: RatingLeaderboard) -> str:
+    """Render a standalone HTML page with the buyer/seller rating tables."""
+
+    def _rows(track: Sequence[RatingLeaderboardEntry]) -> str:
+        if not track:
+            return '<tr><td colspan="4">No rated participants yet.</td></tr>'
+        return "\n".join(
+            "<tr>"
+            f"<td>{entry.rank}</td>"
+            f"<td>{_escape(entry.participant_id)}</td>"
+            f"<td>{entry.rating:.1f} &plusmn; {entry.uncertainty:.0f}</td>"
+            f"<td>{entry.match_count}</td>"
+            "</tr>"
+            for entry in track
+        )
+
+    def _table(title: str, track: Sequence[RatingLeaderboardEntry]) -> str:
+        return (
+            f"<h2>{_escape(title)}</h2>"
+            "<table><thead><tr><th>Rank</th><th>Participant</th>"
+            "<th>Rating</th><th>Matches</th></tr></thead>"
+            f"<tbody>{_rows(track)}</tbody></table>"
+        )
+
+    return (
+        "<!doctype html><html><head><meta charset=\"utf-8\">"
+        "<title>OpenNegotiation Ratings</title></head><body>"
+        "<h1>OpenNegotiation rating leaderboard</h1>"
+        f"<p>Schema {_escape(leaderboard.schema_version)}; "
+        f"{leaderboard.match_count} matches.</p>"
+        f"{_table('Buyer track', leaderboard.buyer_track)}"
+        f"{_table('Seller track', leaderboard.seller_track)}"
+        "</body></html>\n"
+    )
+
+
+def _escape(value: str) -> str:
+    return (
+        str(value)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
 
 
 def _load_runs(base: Path) -> list[dict]:
