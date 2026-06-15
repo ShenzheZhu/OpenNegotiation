@@ -53,6 +53,12 @@ Required fields:
 - `seller_reservation_price`
 - `max_turns`
 
+An optional `seller_true_condition` records the item's hidden true quality
+(the lemon-market dimension). `product.condition` is the public claim both
+sides see; `seller_true_condition` is routed only into the seller's private
+state at runtime and into a seller-side coach case — a buyer (or a buyer-side
+coach) never sees it. Scenarios without the field behave exactly as before.
+
 ## Manifest
 
 `manifest.json` records how the run was produced.

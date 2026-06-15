@@ -208,6 +208,10 @@ class Scenario:
     buyer_budget: float
     seller_reservation_price: float
     max_turns: int = 12
+    # Optional hidden item quality known only to the seller. Product.condition
+    # is the public claim; this is the truth, routed only into seller private
+    # state. The buyer (and a buyer-side coach) never sees it.
+    seller_true_condition: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

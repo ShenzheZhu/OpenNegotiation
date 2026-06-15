@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Information asymmetry (M6, in progress): scenarios gain an optional `seller_true_condition` — the item's hidden true quality routed only into the seller's private state (and a seller-side coach case), never visible to the buyer or a buyer-side coach. `product.condition` remains the public claim. Fully additive.
+
 - Market runtime (M5): `opennego.market` builds a deterministic listings pool (`opennego.market_state.v1`) from product fixtures, advances it with a lifecycle step (age, price-drop on stale listings, expire/relist), and serves a discovery query of ranked listing cards.
 
 - Market skill drills (M5): `opennego drill select` runs a deterministic listing-selection drill (`opennego.skill_drill.v1`) scored by attainable surplus relative to the optimum, where the cheapest sticker is a trap when the seller's reputation is low.

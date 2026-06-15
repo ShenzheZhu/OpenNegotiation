@@ -888,6 +888,10 @@ def _user_private(scenario: Any, role: Role) -> Mapping[str, Any]:
         private["budget"] = scenario.buyer_budget
     else:
         private["reservation_price"] = scenario.seller_reservation_price
+        true_condition = getattr(scenario, "seller_true_condition", None)
+        if true_condition is not None:
+            # Seller-only knowledge; never enters a buyer-side case.
+            private["true_condition"] = true_condition
     if isinstance(batna, Mapping) and isinstance(batna.get(side_key), Mapping):
         private["outside_option"] = dict(batna[side_key])
     return private
