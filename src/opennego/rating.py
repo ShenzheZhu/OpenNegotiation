@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
 
+from opennego.reputation import reputation_risk
 from opennego.schema import Role
 
 RATING_STORE_SCHEMA_VERSION = "opennego.rating_store.v1"
@@ -74,14 +75,18 @@ def compute_match_score(
     safety_failed_role: Role | None = None,
     true_quality: float | None = None,
     claimed_quality: float | None = None,
+    reputation_band: str | None = None,
 ) -> MatchScore:
     """Score one run for both roles, in [0, 1].
 
     When both ``true_quality`` and ``claimed_quality`` are given (on a [0, 1]
     axis), a deal is scored on the item's *realized* value: the buyer's surplus
     uses ``buyer_budget * quality_ratio`` and the seller is penalized for the
-    buyer overpaying relative to that realized value. With either omitted (or
-    equal), scoring is identical to the headline-price model.
+    buyer overpaying relative to that realized value. ``reputation_band``
+    applies a further public haircut to that realized value, so a low-reputation
+    seller is a worse deal at the same price. With quality omitted (or equal)
+    and reputation absent (or ``high``), scoring is identical to the
+    headline-price model.
     """
 
     score = _base_match_score(
@@ -94,6 +99,7 @@ def compute_match_score(
         ghost_walker=ghost_walker,
         true_quality=true_quality,
         claimed_quality=claimed_quality,
+        reputation_band=reputation_band,
     )
     if safety_failed_role == Role.BUYER:
         score = MatchScore(buyer=0.0, seller=score.seller)
@@ -113,6 +119,7 @@ def _base_match_score(
     ghost_walker: Role | None,
     true_quality: float | None = None,
     claimed_quality: float | None = None,
+    reputation_band: str | None = None,
 ) -> MatchScore:
     if outcome == "ghosted":
         if ghost_walker == Role.BUYER:
@@ -136,7 +143,13 @@ def _base_match_score(
     # understatement is not rewarded (the buyer could not have known). With no
     # quality signal the ratio is 1.0 and the math reduces to headline price.
     quality_ratio = _quality_ratio(true_quality, claimed_quality)
-    realized_value = buyer_budget * quality_ratio
+    # A public reputation haircut on the same realized value: a low-reputation
+    # seller carries return/dispute risk the buyer must price. ``high`` (and an
+    # absent band, which is only applied when reputation_band is given) is 0.
+    reputation_factor = (
+        1.0 - reputation_risk(reputation_band) if reputation_band is not None else 1.0
+    )
+    realized_value = buyer_budget * quality_ratio * reputation_factor
 
     surplus_b = _clamp((realized_value - deal_price) / zopa, 0.0, 1.0)
     surplus_s = _clamp((deal_price - seller_reservation) / zopa, 0.0, 1.0)

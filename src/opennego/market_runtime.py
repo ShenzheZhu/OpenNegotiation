@@ -249,6 +249,11 @@ def _ingest(
             ghost_walker=ghost_walker,
             true_quality=scenario.seller_true_quality,
             claimed_quality=condition_to_quality(scenario.product.condition),
+            reputation_band=(
+                scenario.seller_reputation.band
+                if scenario.seller_reputation is not None
+                else None
+            ),
         )
         store.ingest_match(
             run_id=f"{episode_id}::{thread.thread_id}",

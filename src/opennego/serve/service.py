@@ -178,6 +178,11 @@ class ServeService:
             ghost_walker=ghost_walker,
             true_quality=scenario.seller_true_quality,
             claimed_quality=condition_to_quality(scenario.product.condition),
+            reputation_band=(
+                scenario.seller_reputation.band
+                if scenario.seller_reputation is not None
+                else None
+            ),
         )
         buyer_id = agent_id if user_role == Role.BUYER else opponent
         seller_id = opponent if user_role == Role.BUYER else agent_id
