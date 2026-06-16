@@ -24,6 +24,7 @@ from opennego.adapters.ebay_marketplace_insights import (
 )
 from opennego.artifacts import write_json
 from opennego.market_sources import require_live_market_source_policy
+from opennego.reputation import band_from_feedback_pct
 from opennego.schema import parse_price
 
 EBAY_BROWSE_SOURCE = "ebay_browse"
@@ -264,8 +265,5 @@ def _seller_rating_band(seller: Any) -> str:
         score = float(feedback)
     except (TypeError, ValueError):
         return "unknown"
-    if score >= 99.0:
-        return "high"
-    if score >= 95.0:
-        return "medium"
-    return "low"
+    # Single source of truth for the band thresholds (see opennego.reputation).
+    return band_from_feedback_pct(score)

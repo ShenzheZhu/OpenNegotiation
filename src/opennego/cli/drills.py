@@ -9,6 +9,7 @@ from opennego.skill_drills import (
     SkillDrillError,
     run_multithread_drill,
     run_quality_drill,
+    run_reputation_drill,
     run_selection_drill,
     run_walkaway_drill,
 )
@@ -81,6 +82,21 @@ def drill_main(argv: list[str] | None = None) -> int:
     quality.add_argument("--max-turns", type=int, default=10)
     quality.add_argument("--output", help="Optional path for the drill artifact.")
 
+    reputation = subparsers.add_parser(
+        "reputation",
+        help="Reputation drill: discount a risky seller vs. ignoring reputation.",
+    )
+    reputation.add_argument("--seed", type=int, default=13)
+    reputation.add_argument("--market-reference", type=float, default=575.0)
+    reputation.add_argument(
+        "--band",
+        default="low",
+        choices=("high", "medium", "low", "unknown"),
+        help="Seller reputation band the buyer faces.",
+    )
+    reputation.add_argument("--max-turns", type=int, default=10)
+    reputation.add_argument("--output", help="Optional path for the drill artifact.")
+
     args = parser.parse_args(argv)
 
     try:
@@ -114,6 +130,14 @@ def drill_main(argv: list[str] | None = None) -> int:
                 seed=args.seed,
                 market_reference=args.market_reference,
                 true_quality=args.true_quality,
+                max_turns=args.max_turns,
+                output_path=args.output,
+            )
+        elif args.skill == "reputation":
+            result = run_reputation_drill(
+                seed=args.seed,
+                market_reference=args.market_reference,
+                band=args.band,
                 max_turns=args.max_turns,
                 output_path=args.output,
             )

@@ -17,6 +17,7 @@ from opennego.schema import (
     Role,
     RunResult,
     Scenario,
+    SellerReputation,
     ToolCall,
     TransactionOutcome,
     TranscriptEvent,
@@ -39,6 +40,7 @@ class ScenarioArtifact:
     max_turns: int
     seller_true_condition: str | None = None
     seller_true_quality: float | None = None
+    seller_reputation: SellerReputation | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -56,6 +58,7 @@ class ScenarioArtifact:
             max_turns=scenario.max_turns,
             seller_true_condition=scenario.seller_true_condition,
             seller_true_quality=scenario.seller_true_quality,
+            seller_reputation=scenario.seller_reputation,
             metadata=scenario.metadata,
         )
 
@@ -86,6 +89,12 @@ class ScenarioArtifact:
                 raise ArtifactValidationError(
                     "seller_true_quality: expected number within [0, 1]"
                 )
+        reputation_data = data.get("seller_reputation")
+        seller_reputation = None
+        if reputation_data is not None:
+            if not isinstance(reputation_data, Mapping):
+                raise ArtifactValidationError("seller_reputation: expected an object")
+            seller_reputation = SellerReputation.from_mapping(reputation_data)
         return cls(
             schema_version=ARTIFACT_SCHEMA_VERSION,
             scenario_id=scenario_id,
@@ -97,6 +106,7 @@ class ScenarioArtifact:
                 str(true_condition) if true_condition is not None else None
             ),
             seller_true_quality=true_quality,
+            seller_reputation=seller_reputation,
             metadata=metadata,
         )
 
@@ -108,6 +118,7 @@ class ScenarioArtifact:
             max_turns=self.max_turns,
             seller_true_condition=self.seller_true_condition,
             seller_true_quality=self.seller_true_quality,
+            seller_reputation=self.seller_reputation,
             metadata=self.metadata,
         )
 

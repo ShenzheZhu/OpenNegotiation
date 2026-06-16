@@ -17,6 +17,7 @@ from opennego.evolution import StrategyCandidate
 from opennego.learning import StrategyProfile
 from opennego.ports import AgentPort
 from opennego.quality import condition_to_quality
+from opennego.reputation import reputation_risk
 from opennego.schema import ActionType, AgentAction, AgentContext, Role, TranscriptEvent
 
 
@@ -90,6 +91,8 @@ class SellerPolicy:
     disclose_true_condition: bool = False
     quality_adjust_opening: bool = False
     quality_note: str | None = None
+    # Reputation: legal messaging that justifies a premium with a track record.
+    reputation_note: str | None = None
 
 
 SELLER_POLICIES: dict[str, SellerPolicy] = {
@@ -160,6 +163,15 @@ SELLER_POLICIES: dict[str, SellerPolicy] = {
             "in this condition for less."
         ),
     ),
+    "reputation_premium_seller": SellerPolicy(
+        opening_markup=0.99,
+        concession_fraction=0.3,
+        floor_reference_multiplier=1.0,
+        reputation_note=(
+            " Top-rated seller with thousands of positive reviews and full "
+            "buyer protection — the price reflects that reliability."
+        ),
+    ),
 }
 
 
@@ -182,6 +194,8 @@ class BuyerPolicy:
     # flat distrust discount applied when no inspection evidence is available.
     inspect_before_offer: bool = False
     quality_skepticism: float = 0.0
+    # Reputation: lower willingness by the public seller-reputation risk band.
+    reputation_aware: bool = False
 
 
 BUYER_POLICIES: dict[str, BuyerPolicy] = {
@@ -227,6 +241,12 @@ BUYER_POLICIES: dict[str, BuyerPolicy] = {
         willingness_multiplier=0.95,
         inspect_before_offer=True,
         quality_skepticism=0.15,
+    ),
+    "reputation_discount_buyer": BuyerPolicy(
+        opening_discount=0.8,
+        counter_fraction=0.85,
+        willingness_multiplier=0.95,
+        reputation_aware=True,
     ),
 }
 
@@ -334,6 +354,8 @@ class ProfileBackedSeller:
             return " I'll be upfront about any flaws with this item."
         if policy.quality_note:
             return policy.quality_note
+        if policy.reputation_note:
+            return policy.reputation_note
         return ""
 
     def _opening_price(
@@ -429,6 +451,7 @@ class ProfileBackedBuyer:
             market_anchor * policy.willingness_multiplier,
         )
         willingness *= self._quality_discount(events, policy)
+        willingness *= self._reputation_discount(context, policy)
 
         if seller_offer and seller_offer.offer:
             seller_price = seller_offer.offer.price
@@ -506,6 +529,20 @@ class ProfileBackedBuyer:
             # No inspection evidence: discount the unverified claim outright.
             return 1.0 - policy.quality_skepticism
         return 1.0
+
+    def _reputation_discount(
+        self,
+        context: AgentContext,
+        policy: BuyerPolicy,
+    ) -> float:
+        if not policy.reputation_aware:
+            return 1.0
+        reputation = context.scenario.seller_reputation
+        if reputation is None:
+            return 1.0
+        # Lower willingness by the band's public risk weight: a risky seller is
+        # worth less at the same price.
+        return 1.0 - reputation_risk(reputation.band)
 
 
 def _seller_quality_ratio(context: AgentContext) -> float:
