@@ -137,7 +137,7 @@ def test_marketplace_validation_accepts_curated_registry():
 
     assert result.schema_version == MARKETPLACE_VALIDATION_SCHEMA_VERSION
     assert result.status == "passed"
-    assert result.profile_count == 20
+    assert result.profile_count == 22
     assert result.errors == ()
 
 
