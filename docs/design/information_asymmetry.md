@@ -93,19 +93,52 @@ call site. Quality is threaded from the scenario (`seller_true_quality`,
 `condition_to_quality(product.condition)`) through the arena, market runtime,
 and serve scoring paths.
 
-## Open questions for the maintainer
+## Reputation visibility (M7)
 
-1. Go/no-go: is this the next milestone (M6), or deferred behind protocol v2 /
-   the hosted arena?
-2. Reputation source: synthesize a `feedback_score` into fixtures, or pull a
-   (non-PII) seller reputation band from the eBay Browse adapter under the
-   existing source-policy gates?
-3. How hard should misrepresentation bite — a soft surplus discount, or a
-   hard dispute-failure path through the transaction simulator?
+The condition work (M6) covered *hidden* quality. Reputation is the other half
+of the design and the opposite kind of signal: **public but noisy**. Both sides
+see a seller's feedback band; at the same price a low-reputation seller is a
+worse deal because of return/dispute risk the buyer must price in. The
+trainable skills are a buyer **demanding a discount from a risky seller** and a
+high-reputation seller **defending a justified premium**.
 
-## Why this is only a proposal
+Resolved decisions (maintainer approved 2026-06-16):
 
-This document exists so the direction is reviewable before any code. Nothing
-is implemented; opening or closing this PR is the go/no-go. If accepted it
-becomes milestone M6 with issues per component, following the same
-design-doc-first, integration-train discipline as M1–M5.
+- **Public, not private.** Reputation lives on the scenario and is visible to
+  both roles through `AgentContext.scenario` — no private routing, the opposite
+  of `seller_true_condition`. It is not something to elicit; it is something to
+  price.
+- **Source: fixtures by default, live eBay band behind the existing gates.**
+  Mirrors active listings / sold comps: a synthesized `seller_reputation` in
+  fixtures gives the deterministic no-key path, and the eBay Browse adapter's
+  existing `seller_rating_band` (derived from `feedbackPercentage`: ≥99 high,
+  ≥95 medium, else low) feeds it under the source-policy gates. No PII.
+- **Bite: a haircut on realized value, reusing the M6 scoring.** Reputation is
+  folded into the same `realized_value` the quality score already uses —
+  `realized_value = buyer_budget * quality_ratio * (1 - reputation_risk(band))`
+  with `reputation_risk = {high: 0, medium: 0.06, low: 0.18, unknown: 0.10}`
+  (the weights the M5 selection drill already uses, consolidated into a shared
+  `opennego.reputation` module). The existing buyer-surplus and seller-overpay
+  penalty then price reputation automatically: a buyer overpaying a low-rep
+  seller loses surplus, and that seller carries the dispute exposure. Fully
+  additive — `unknown`/absent reputation is a no-op.
+
+### Scope (M7)
+
+- `schema`/`opennego.reputation`: a public `seller_reputation` (band +
+  feedback signals) on the scenario; a shared band→risk map; artifact
+  round-trip; scenario-generator and eBay-adapter wiring.
+- `rating`: a `reputation_band` argument to `compute_match_score` that haircuts
+  realized value, threaded through arena / market / serve.
+- NPC archetypes: a reputation-premium seller and a reputation-discount buyer.
+- A `reputation` skill drill: discounting for a low-rep seller beats ignoring
+  it (the public-signal analogue of the quality-elicitation drill).
+
+Out: protocol v2, hosted arena, anything that re-opens the M6 condition work.
+
+## History
+
+This document began as a proposal (PR #194) covering both condition and
+reputation. The condition half shipped as **M6** (#196, #198, #200, #202, #204)
+and the reputation half is **M7**, both following the design-doc-first,
+integration-train discipline of M1–M5.
