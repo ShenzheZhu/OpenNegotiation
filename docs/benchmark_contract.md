@@ -59,6 +59,15 @@ sides see; `seller_true_condition` is routed only into the seller's private
 state at runtime and into a seller-side coach case — a buyer (or a buyer-side
 coach) never sees it. Scenarios without the field behave exactly as before.
 
+An optional `seller_true_quality` is its numeric companion on a `[0, 1]`
+quality axis (`1.0` = flawless / matches the claim, lower = a hidden defect),
+routed seller-private the same way. The buyer can elicit it through the
+`inspect` tool, which returns a *noisy* private estimate on that axis (and the
+claimed quality derived from `product.condition` for reference); repeating the
+inspection tightens the estimate at the cost of a turn. The raw value never
+crosses to the buyer — only the noisy estimate. When the field is absent the
+item is "as described" and the estimate centers on the public claim.
+
 ## Manifest
 
 `manifest.json` records how the run was produced.

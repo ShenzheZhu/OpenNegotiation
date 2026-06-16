@@ -1,6 +1,7 @@
 """Built-in OpenNegotiation tools."""
 
 from .active_listings import ActiveListing, ActiveListingTool
+from .inspect import QualityInspectionTool
 from .market import MarketComparable, MarketPriceTool
 
 __all__ = [
@@ -8,4 +9,5 @@ __all__ = [
     "ActiveListingTool",
     "MarketComparable",
     "MarketPriceTool",
+    "QualityInspectionTool",
 ]
