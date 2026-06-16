@@ -38,6 +38,7 @@ class ScenarioArtifact:
     seller_reservation_price: float
     max_turns: int
     seller_true_condition: str | None = None
+    seller_true_quality: float | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -54,6 +55,7 @@ class ScenarioArtifact:
             seller_reservation_price=scenario.seller_reservation_price,
             max_turns=scenario.max_turns,
             seller_true_condition=scenario.seller_true_condition,
+            seller_true_quality=scenario.seller_true_quality,
             metadata=scenario.metadata,
         )
 
@@ -77,6 +79,13 @@ class ScenarioArtifact:
             raise ArtifactValidationError("max_turns: expected positive integer")
         metadata = _optional_mapping(data, "metadata")
         true_condition = data.get("seller_true_condition")
+        true_quality = data.get("seller_true_quality")
+        if true_quality is not None:
+            true_quality = float(true_quality)
+            if not (0.0 <= true_quality <= 1.0):
+                raise ArtifactValidationError(
+                    "seller_true_quality: expected number within [0, 1]"
+                )
         return cls(
             schema_version=ARTIFACT_SCHEMA_VERSION,
             scenario_id=scenario_id,
@@ -87,6 +96,7 @@ class ScenarioArtifact:
             seller_true_condition=(
                 str(true_condition) if true_condition is not None else None
             ),
+            seller_true_quality=true_quality,
             metadata=metadata,
         )
 
@@ -97,6 +107,7 @@ class ScenarioArtifact:
             seller_reservation_price=self.seller_reservation_price,
             max_turns=self.max_turns,
             seller_true_condition=self.seller_true_condition,
+            seller_true_quality=self.seller_true_quality,
             metadata=self.metadata,
         )
 
