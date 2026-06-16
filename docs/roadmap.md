@@ -64,13 +64,14 @@ The layers feed each other:
 
 Gap analysis between textbook bilateral bargaining and real C2C markets,
 ordered by impact. M1 closes the structural gaps inside the single-issue
-protocol; M5 closes the market-level gaps.
+protocol; M5 closes the market-level gaps; M6 closes the information-asymmetry
+(lemon-market) gap.
 
 | Gap | Reality | Fix |
 | --- | --- | --- |
 | Outside options (BATNA) | Leverage comes from competing listings and competing buyers, not from given constants | scenario generator derives private constraints from next-best alternatives (M1) |
 | Time structure | Most real bargaining ends in 2-3 rounds; offers expire and bind; silence is the common rejection | offer expiry, counter limits, turn costs, ghosting outcomes (M1) |
-| Information surface | Active-listing spread, days-on-market, and reputation drive bargaining power | active listings tool, listing-age signals (M1); condition asymmetry and reputation visibility (post-M2 design doc) |
+| Information surface | Active-listing spread, days-on-market, and reputation drive bargaining power | active listings tool, listing-age signals (M1); hidden condition asymmetry, an `inspect` tool, quality-aware scoring, and quality NPC archetypes (M6) |
 | Counterpart population | Humans split the difference, ignore lowballs, sell at firm prices, ghost, and sometimes scam | NPC population calibrated on CraigslistBargain dialogues and eBay best-offer field evidence (M1) |
 | Settlement economics | Platform fees, payment fees, and marketplace tax are real published schedules | real fee schedule pack with provenance (M1) |
 | Multi-issue deals | Price, shipping, bundles, and extras trade off | deferred to protocol v2 (post-M5) |
@@ -151,6 +152,16 @@ concurrency scheduler, thread dashboard, clearing), then staged autonomy
 L1 to L3, closing with the realism calibration report (sandbox distributions vs
 real eBay distributions).
 
+### M6 — Information asymmetry
+
+The lemon-market gap, inside the single-issue protocol. Design doc first, then:
+a hidden `seller_true_condition` routed only to the seller; a numeric
+`seller_true_quality` axis with a buyer `inspect` tool returning a noisy
+private estimate; quality-aware match scoring (the buyer's realized value falls
+with hidden quality, the seller carries the dispute exposure of a buyer who
+overpaid); `honest_discloser` / `quality_overstater` / `quality_skeptic` NPC
+archetypes; and a quality-elicitation skill drill. Does not touch protocol v2.
+
 ## Design Docs
 
 Milestone work that needs review-before-build records the decision under
@@ -160,6 +171,7 @@ Milestone work that needs review-before-build records the decision under
 - [Rating: normalized surplus to continuous rating](design/rating.md) (M3)
 - [Local web client: `opennego serve`](design/serve.md) (M4)
 - [Market skills and sandbox](design/market.md) (M5)
+- [Information asymmetry: condition and reputation](design/information_asymmetry.md) (M6)
 
 ## Engineering Process
 
