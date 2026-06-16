@@ -49,10 +49,17 @@ improvement:
   continuous Bradley-Terry ladder with separate buyer and seller tracks;
   engaging a scam zeroes the score, so a price-only optimizer that ignores
   safety ranks last.
-- **A real market sandbox.** Skill drills (selection, walk-away, multi-thread)
-  train competencies in isolation; a concurrency scheduler then runs many
-  buyer-seller threads at once with clearing, staged autonomy L1–L3, and a
-  calibration report that checks the sandbox against real eBay distributions.
+- **A real market sandbox.** Skill drills (selection, walk-away, multi-thread,
+  quality, reputation) train competencies in isolation; a concurrency scheduler
+  then runs many buyer-seller threads at once with clearing, staged autonomy
+  L1–L3, and a calibration report that checks the sandbox against real eBay
+  distributions.
+- **Information asymmetry, priced in.** A seller can hide an item's true
+  condition behind a public claim; the buyer spends a turn on the `inspect`
+  tool for a noisy private quality estimate. Seller reputation is the opposite
+  kind of signal — public but noisy. Both feed the score: overpaying for a
+  lemon or a low-feedback seller wipes out buyer surplus, and a seller who
+  exploited the gap carries the dispute exposure.
 - **Local web client.** `opennego serve` gives a browser UI for the whole
   loop; your API key is sent only to the local server and never stored.
 - **Provider-neutral, zero-dependency core.** Agents, tools, LLM gateways, and
@@ -162,6 +169,8 @@ Drill individual market skills, then run the concurrent market:
 opennego drill select        # pick the most attainable deal (reputation traps)
 opennego drill walkaway      # cut losses fast, but not on a real concession
 opennego drill multithread   # shop competing threads vs working one listing
+opennego drill quality       # inspect a lemon and discount, vs paying the claim
+opennego drill reputation    # discount a low-feedback seller, vs ignoring it
 opennego market-run --buyer me --buyer rival   # concurrent threads + clearing
 opennego market-run --level L2                 # staged autonomy L1/L2/L3
 opennego market-calibrate                       # sandbox vs real-market distributions
@@ -233,6 +242,7 @@ exit codes `0` (success), `1` (completed with failures), `2` (usage error).
 | Understand the coach and battle report v2 | [Coach design](docs/design/coach.md) |
 | Understand ratings and the arena | [Rating design](docs/design/rating.md) |
 | Understand the market sandbox | [Market design](docs/design/market.md) |
+| Understand hidden condition and seller reputation | [Information asymmetry design](docs/design/information_asymmetry.md) |
 | Run the local web client | [Serve design](docs/design/serve.md) |
 | Inspect transaction settlement rules | [Transaction Simulator](docs/transaction_simulator.md) |
 | Design real-market evaluation data | [Real-Market Benchmark Design](docs/real_market_benchmark_design.md) |
