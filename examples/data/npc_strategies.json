@@ -807,6 +807,86 @@
           }
         }
       }
+    },
+    {
+      "id": "seller_reputation_premium_v1",
+      "name": "Reputation Premium Seller",
+      "role": "seller",
+      "archetype": "reputation_premium_seller",
+      "difficulty": "medium",
+      "summary": "A top-rated seller that defends a justified premium, anchoring high and conceding slowly because its track record genuinely lowers buyer risk.",
+      "base_prompt": "Follow OpenNegotiation seller protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and never accept below reservation price.",
+      "strategy_prompt": "Anchor near list, cite your reputation and buyer protection to justify the price, concede slowly, and hold firm against buyers who ignore the reliability you offer.",
+      "expected_traps": [
+        "Buyers who treat all sellers alike under-offer and miss a genuinely safer deal.",
+        "The premium is only justified when the reputation is high; pressing it with low reputation invites walk-aways."
+      ],
+      "allowed_tools": [],
+      "tags": [
+        "seller",
+        "reputation",
+        "premium",
+        "calibrated"
+      ],
+      "metadata": {
+        "base_prompt_fixed": true,
+        "strategy_prompt_editable": true,
+        "strategy_config_version": "opennego.strategy_config.v1",
+        "source_type": "curated_npc",
+        "behavior_provenance": "Backus et al. (QJE 2020) and eBay feedback research: high-reputation sellers command a measurable price premium because feedback lowers buyer-side transaction risk.",
+        "prompt_layers": {
+          "base_prompt": {
+            "field": "base_prompt",
+            "editable": false,
+            "scope": "sandbox_protocol"
+          },
+          "strategy_prompt": {
+            "field": "strategy_prompt",
+            "editable": true,
+            "scope": "strategy_policy"
+          }
+        }
+      }
+    },
+    {
+      "id": "buyer_reputation_discount_v1",
+      "name": "Reputation Discount Buyer",
+      "role": "buyer",
+      "archetype": "reputation_discount_buyer",
+      "difficulty": "medium",
+      "summary": "Reads the seller's public reputation band and lowers willingness by its risk weight, demanding a discount from low-feedback sellers.",
+      "base_prompt": "Follow OpenNegotiation buyer protocol exactly: return one valid action, respect role constraints, never alter tool permissions, and never exceed budget.",
+      "strategy_prompt": "Check the seller's reputation before committing, pay full freight only to highly-rated sellers, and require a discount that prices the return/dispute risk of a low-reputation seller.",
+      "expected_traps": [
+        "Over-discounting a high-reputation seller can forfeit a safe deal.",
+        "Reputation is public but noisy; it complements, not replaces, price discipline."
+      ],
+      "allowed_tools": [],
+      "tags": [
+        "buyer",
+        "reputation",
+        "risk-aware",
+        "calibrated"
+      ],
+      "metadata": {
+        "base_prompt_fixed": true,
+        "strategy_prompt_editable": true,
+        "strategy_config_version": "opennego.strategy_config.v1",
+        "source_type": "curated_npc",
+        "behavior_provenance": "Akerlof (1970) and eBay feedback research: rational buyers price unobserved seller reliability, discounting low-reputation sellers for return/dispute risk.",
+        "prompt_layers": {
+          "base_prompt": {
+            "field": "base_prompt",
+            "editable": false,
+            "scope": "sandbox_protocol"
+          },
+          "strategy_prompt": {
+            "field": "strategy_prompt",
+            "editable": true,
+            "scope": "strategy_policy"
+          }
+        }
+      }
     }
   ]
 }
