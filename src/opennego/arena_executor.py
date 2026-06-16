@@ -18,6 +18,7 @@ from opennego.arena import ArenaPlan, load_arena_plan
 from opennego.artifacts import write_json
 from opennego.environment import NegotiationEnvironment
 from opennego.ports import AgentPort
+from opennego.quality import condition_to_quality
 from opennego.rating import RatingStore, compute_match_score
 from opennego.schema import ActionType, Role, Scenario
 
@@ -82,6 +83,8 @@ def run_arena(
             seller_reservation=scenario.seller_reservation_price,
             market_reference=_market_reference(scenario),
             ghost_walker=ghost_walker,
+            true_quality=scenario.seller_true_quality,
+            claimed_quality=condition_to_quality(scenario.product.condition),
         )
         is_self_play = (
             matchup.buyer_participant_id == matchup.seller_participant_id

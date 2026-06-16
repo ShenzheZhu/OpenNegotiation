@@ -1,9 +1,14 @@
-# Information Asymmetry: Condition and Reputation (Proposal)
+# Information Asymmetry: Condition and Reputation
 
-Status: **proposal, awaiting maintainer go/no-go.** Not started. This is
-post-roadmap scope flagged in the realism model (the "lemon market" gap). It
-extends the single-issue price protocol — it does **not** introduce multi-issue
-bargaining (that remains the separate protocol-v2 track).
+Status: **accepted — milestone M6, in progress.** This is post-roadmap scope
+flagged in the realism model (the "lemon market" gap). It extends the
+single-issue price protocol — it does **not** introduce multi-issue bargaining
+(that remains the separate protocol-v2 track).
+
+Shipped so far: hidden `seller_true_condition` + private routing (#196); the
+numeric `seller_true_quality` axis and the buyer `inspect` tool (#198);
+quality-aware match scoring (#200, see below). Remaining: disclosure/skeptic
+NPC archetypes and a quality-elicitation skill drill.
 
 ## Why
 
@@ -58,6 +63,32 @@ Out (deliberately):
 - A new realism drill: "quality elicitation" — the buyer that inspects and
   discounts beats the one that takes the claim at face value, analogous to the
   existing skill drills.
+
+## Scoring model (#200, shipped)
+
+`compute_match_score` takes optional `true_quality`/`claimed_quality` on the
+`[0, 1]` axis. On a deal:
+
+- `quality_ratio = clamp(true_quality / claimed_quality, 0, 1)` — overstatement
+  discounts the buyer's realized value; understatement is not rewarded (the
+  buyer could not have known).
+- The buyer's surplus uses `realized_value = buyer_budget * quality_ratio`
+  rather than the raw budget, so overpaying for a lemon drives buyer surplus
+  toward zero.
+- The seller is penalized by the buyer's *overpay vs. realized value*:
+  `seller_score *= 1 - DISPUTE_PENALTY_WEIGHT * clamp((deal_price -
+  realized_value) / zopa, 0, 1)`. The penalty is **endogenous** — a seller who
+  sold a lemon at a fair (low) price to an inspecting buyer is spared; one who
+  exploited a face-value buyer is not. This is the dispute/return exposure the
+  transaction simulator would otherwise have to realize.
+- The market term is unchanged: the public reference does not move with hidden
+  quality.
+
+With either argument omitted, or `true == claimed`, scoring is byte-for-byte
+the headline-price model — so the change is fully additive at every existing
+call site. Quality is threaded from the scenario (`seller_true_quality`,
+`condition_to_quality(product.condition)`) through the arena, market runtime,
+and serve scoring paths.
 
 ## Open questions for the maintainer
 

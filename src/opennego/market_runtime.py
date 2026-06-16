@@ -19,6 +19,7 @@ from opennego.agents import ScriptedSeller, ToolAwareBuyer
 from opennego.artifacts import to_jsonable, write_json
 from opennego.environment import NegotiationEnvironment
 from opennego.market import Listing, MarketState, mark_sold
+from opennego.quality import condition_to_quality
 from opennego.rating import RatingStore, compute_match_score
 from opennego.schema import (
     ActionType,
@@ -246,6 +247,8 @@ def _ingest(
             seller_reservation=scenario.seller_reservation_price,
             market_reference=reference.reference_price if reference else None,
             ghost_walker=ghost_walker,
+            true_quality=scenario.seller_true_quality,
+            claimed_quality=condition_to_quality(scenario.product.condition),
         )
         store.ingest_match(
             run_id=f"{episode_id}::{thread.thread_id}",

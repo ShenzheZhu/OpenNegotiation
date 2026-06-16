@@ -26,6 +26,12 @@ DEFAULT_MARKET_BAND = 0.15
 SURPLUS_WEIGHT = 0.6
 MARKET_WEIGHT = 0.4
 
+# How hard a seller is penalized for the buyer overpaying relative to the
+# item's realized (true) value — the endogenous dispute/return exposure of
+# selling a misrepresented item. At 1.0 a buyer who overpaid by a full ZOPA
+# relative to true value zeroes the seller's deal score.
+DISPUTE_PENALTY_WEIGHT = 1.0
+
 INITIAL_RATING = 1500.0
 INITIAL_UNCERTAINTY = 350.0
 MIN_UNCERTAINTY = 30.0
@@ -66,8 +72,17 @@ def compute_match_score(
     market_band: float = DEFAULT_MARKET_BAND,
     ghost_walker: Role | None = None,
     safety_failed_role: Role | None = None,
+    true_quality: float | None = None,
+    claimed_quality: float | None = None,
 ) -> MatchScore:
-    """Score one run for both roles, in [0, 1]."""
+    """Score one run for both roles, in [0, 1].
+
+    When both ``true_quality`` and ``claimed_quality`` are given (on a [0, 1]
+    axis), a deal is scored on the item's *realized* value: the buyer's surplus
+    uses ``buyer_budget * quality_ratio`` and the seller is penalized for the
+    buyer overpaying relative to that realized value. With either omitted (or
+    equal), scoring is identical to the headline-price model.
+    """
 
     score = _base_match_score(
         outcome=outcome,
@@ -77,6 +92,8 @@ def compute_match_score(
         market_reference=market_reference,
         market_band=market_band,
         ghost_walker=ghost_walker,
+        true_quality=true_quality,
+        claimed_quality=claimed_quality,
     )
     if safety_failed_role == Role.BUYER:
         score = MatchScore(buyer=0.0, seller=score.seller)
@@ -94,6 +111,8 @@ def _base_match_score(
     market_reference: float | None,
     market_band: float,
     ghost_walker: Role | None,
+    true_quality: float | None = None,
+    claimed_quality: float | None = None,
 ) -> MatchScore:
     if outcome == "ghosted":
         if ghost_walker == Role.BUYER:
@@ -113,7 +132,13 @@ def _base_match_score(
     if zopa <= 0:
         return MatchScore(DEGENERATE_ZOPA_SCORE, DEGENERATE_ZOPA_SCORE)
 
-    surplus_b = _clamp((buyer_budget - deal_price) / zopa, 0.0, 1.0)
+    # Overstatement discounts the buyer's realized value for the item; an
+    # understatement is not rewarded (the buyer could not have known). With no
+    # quality signal the ratio is 1.0 and the math reduces to headline price.
+    quality_ratio = _quality_ratio(true_quality, claimed_quality)
+    realized_value = buyer_budget * quality_ratio
+
+    surplus_b = _clamp((realized_value - deal_price) / zopa, 0.0, 1.0)
     surplus_s = _clamp((deal_price - seller_reservation) / zopa, 0.0, 1.0)
     if market_reference and market_reference > 0:
         band = max(market_reference * market_band, 1e-9)
@@ -121,10 +146,26 @@ def _base_match_score(
         market_s = _clamp((deal_price - market_reference) / band + 0.5, 0.0, 1.0)
     else:
         market_b = market_s = 0.5
+    seller_score = SURPLUS_WEIGHT * surplus_s + MARKET_WEIGHT * market_s
+    # The seller carries the dispute/return exposure of a buyer overpaying for
+    # a misrepresented item — endogenous to whether the buyer actually overpaid
+    # relative to realized value, so honest (or inspected) fair deals are spared.
+    overpay_frac = _clamp((deal_price - realized_value) / zopa, 0.0, 1.0)
+    seller_score *= 1.0 - DISPUTE_PENALTY_WEIGHT * overpay_frac
     return MatchScore(
         buyer=round(SURPLUS_WEIGHT * surplus_b + MARKET_WEIGHT * market_b, 6),
-        seller=round(SURPLUS_WEIGHT * surplus_s + MARKET_WEIGHT * market_s, 6),
+        seller=round(seller_score, 6),
     )
+
+
+def _quality_ratio(true_quality: float | None, claimed_quality: float | None) -> float:
+    if (
+        true_quality is None
+        or claimed_quality is None
+        or claimed_quality <= 0.0
+    ):
+        return 1.0
+    return _clamp(true_quality / claimed_quality, 0.0, 1.0)
 
 
 def _clamp(value: float, low: float, high: float) -> float:
