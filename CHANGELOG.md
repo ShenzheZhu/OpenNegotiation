@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Information asymmetry (M6, in progress): `compute_match_score` is now quality-aware. On a deal the buyer's surplus is scored on the item's *realized* value (`buyer_budget * quality_ratio`), and the seller is penalized for the buyer overpaying relative to that realized value — an endogenous dispute/return exposure that spares honest or inspected fair deals. Threaded through the arena, market runtime, and serve scoring. Fully additive: with quality omitted or `true == claimed`, scores are identical to the previous headline-price model.
 
+- Information asymmetry (M6, in progress): three quality-aware NPC archetypes (within legal bounds, distinct from the scam/safety archetypes) — `honest_discloser` (states the true condition and prices the defect in), `quality_overstater` (legal puffery, anchors high, never discloses; punished endogenously by the dispute penalty), and `quality_skeptic` (inspects when allowed and discounts willingness toward the estimated quality). Curated registry profiles added to `examples/data/npc_strategies.json` with provenance.
+
 - Market runtime (M5): `opennego.market` builds a deterministic listings pool (`opennego.market_state.v1`) from product fixtures, advances it with a lifecycle step (age, price-drop on stale listings, expire/relist), and serves a discovery query of ranked listing cards.
 
 - Market skill drills (M5): `opennego drill select` runs a deterministic listing-selection drill (`opennego.skill_drill.v1`) scored by attainable surplus relative to the optimum, where the cheapest sticker is a trap when the seller's reputation is low.
