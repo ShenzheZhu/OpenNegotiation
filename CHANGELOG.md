@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Information asymmetry (M6, in progress): three quality-aware NPC archetypes (within legal bounds, distinct from the scam/safety archetypes) — `honest_discloser` (states the true condition and prices the defect in), `quality_overstater` (legal puffery, anchors high, never discloses; punished endogenously by the dispute penalty), and `quality_skeptic` (inspects when allowed and discounts willingness toward the estimated quality). Curated registry profiles added to `examples/data/npc_strategies.json` with provenance.
 
+- Information asymmetry (M6, in progress): a `quality` skill drill (`opennego drill quality`, `opennego.skill_drill.v1`) — the lemon-market analogue of the M5 drills. It runs the same buyer twice against a conceding seller on a lemon, once inspecting-and-discounting and once at face value, scores both with the quality-aware match score, and reports the `elicitation_edge`. The inspecting buyer wins.
+
 - Market runtime (M5): `opennego.market` builds a deterministic listings pool (`opennego.market_state.v1`) from product fixtures, advances it with a lifecycle step (age, price-drop on stale listings, expire/relist), and serves a discovery query of ranked listing cards.
 
 - Market skill drills (M5): `opennego drill select` runs a deterministic listing-selection drill (`opennego.skill_drill.v1`) scored by attainable surplus relative to the optimum, where the cheapest sticker is a trap when the seller's reputation is low.
