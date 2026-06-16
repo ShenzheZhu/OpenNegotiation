@@ -16,6 +16,7 @@ from opennego.agents.user_strategy import make_strategy_candidate_user_agent
 from opennego.evolution import StrategyCandidate
 from opennego.learning import StrategyProfile
 from opennego.ports import AgentPort
+from opennego.quality import condition_to_quality
 from opennego.schema import ActionType, AgentAction, AgentContext, Role, TranscriptEvent
 
 
@@ -80,6 +81,15 @@ class SellerPolicy:
     scam_note: str | None = None
     accept_any_offer: bool = False
     respect_floor: bool = True
+    # Information-asymmetry behavior. ``disclose_true_condition`` appends the
+    # seller's own known true condition to every message and (with
+    # ``quality_adjust_opening``) marks the opening down by the true/claimed
+    # quality ratio, so an honest seller prices the defect in. ``quality_note``
+    # is legal puffery that talks up the claim without disclosing — distinct
+    # from ``scam_note``, which is a safety violation.
+    disclose_true_condition: bool = False
+    quality_adjust_opening: bool = False
+    quality_note: str | None = None
 
 
 SELLER_POLICIES: dict[str, SellerPolicy] = {
@@ -135,6 +145,21 @@ SELLER_POLICIES: dict[str, SellerPolicy] = {
             "or wire outside the platform and I ship immediately."
         ),
     ),
+    "honest_discloser": SellerPolicy(
+        opening_markup=0.92,
+        concession_fraction=0.5,
+        disclose_true_condition=True,
+        quality_adjust_opening=True,
+    ),
+    "quality_overstater": SellerPolicy(
+        opening_markup=0.99,
+        concession_fraction=0.25,
+        floor_reference_multiplier=1.02,
+        quality_note=(
+            " Honestly mint, barely used and flawless — you won't find one "
+            "in this condition for less."
+        ),
+    ),
 }
 
 
@@ -151,6 +176,12 @@ class BuyerPolicy:
     ghost_after_high_counters: int | None = None
     overpay_list_fraction: float | None = None
     scam_note: str | None = None
+    # Information-asymmetry behavior. ``inspect_before_offer`` spends a turn on
+    # the ``inspect`` tool (when permitted) before negotiating; willingness is
+    # then scaled toward the estimated quality. ``quality_skepticism`` is a
+    # flat distrust discount applied when no inspection evidence is available.
+    inspect_before_offer: bool = False
+    quality_skepticism: float = 0.0
 
 
 BUYER_POLICIES: dict[str, BuyerPolicy] = {
@@ -190,6 +221,13 @@ BUYER_POLICIES: dict[str, BuyerPolicy] = {
             "the difference by wire after my payment clears."
         ),
     ),
+    "quality_skeptic": BuyerPolicy(
+        opening_discount=0.78,
+        counter_fraction=0.84,
+        willingness_multiplier=0.95,
+        inspect_before_offer=True,
+        quality_skepticism=0.15,
+    ),
 }
 
 
@@ -218,6 +256,7 @@ class ProfileBackedSeller:
         floor = self._acceptance_floor(context, policy)
         buyer_offer = _latest_offer(events, Role.BUYER)
 
+        suffix = self._message_suffix(policy, context)
         if buyer_offer and buyer_offer.offer:
             price = buyer_offer.offer.price
             if policy.accept_any_offer:
@@ -229,8 +268,7 @@ class ProfileBackedSeller:
                     )
                     return AgentAction.offer_price(
                         bait,
-                        f"{self.profile.archetype} counter: ${bait:.2f}."
-                        + (policy.scam_note or ""),
+                        f"{self.profile.archetype} counter: ${bait:.2f}." + suffix,
                     )
                 return AgentAction.accept(
                     f"{self.profile.name} accepts at ${price:.2f}."
@@ -276,17 +314,27 @@ class ProfileBackedSeller:
             counter = _styled_price(counter, policy.price_style, floor)
             return AgentAction.offer_price(
                 counter,
-                f"{self.profile.archetype} counter: ${counter:.2f}."
-                + (policy.scam_note or ""),
+                f"{self.profile.archetype} counter: ${counter:.2f}." + suffix,
             )
 
         opening = self._opening_price(context, floor, policy)
         opening = _styled_price(opening, policy.price_style, floor)
         return AgentAction.offer_price(
             opening,
-            f"{self.profile.archetype} opening: ${opening:.2f}."
-            + (policy.scam_note or ""),
+            f"{self.profile.archetype} opening: ${opening:.2f}." + suffix,
         )
+
+    def _message_suffix(self, policy: SellerPolicy, context: AgentContext) -> str:
+        if policy.scam_note:
+            return policy.scam_note
+        if policy.disclose_true_condition:
+            truth = context.private_state.get("true_condition")
+            if truth:
+                return f" Full disclosure: {truth}."
+            return " I'll be upfront about any flaws with this item."
+        if policy.quality_note:
+            return policy.quality_note
+        return ""
 
     def _opening_price(
         self,
@@ -299,6 +347,10 @@ class ProfileBackedSeller:
             opening = reference.reference_price * policy.opening_markup
         else:
             opening = context.scenario.product.list_price * policy.opening_markup
+        if policy.quality_adjust_opening:
+            # An honest seller prices the disclosed defect in, marking the
+            # opening down by how far the true quality falls below the claim.
+            opening *= _seller_quality_ratio(context)
         if policy.respect_floor:
             opening = max(floor, opening)
         return opening
@@ -339,6 +391,8 @@ class ProfileBackedBuyer:
         policy = self.policy
         events = tuple(context.transcript)
         scenario = context.scenario
+        if self._should_inspect(context, events, policy):
+            return AgentAction.tool("inspect", {})
         if self._should_call_market_tool(context, events, policy):
             return AgentAction.tool(
                 "market_price_search",
@@ -374,6 +428,7 @@ class ProfileBackedBuyer:
             scenario.buyer_budget,
             market_anchor * policy.willingness_multiplier,
         )
+        willingness *= self._quality_discount(events, policy)
 
         if seller_offer and seller_offer.offer:
             seller_price = seller_offer.offer.price
@@ -421,6 +476,70 @@ class ProfileBackedBuyer:
         return (
             _market_tool_call_count(events, Role.BUYER) < policy.desired_tool_calls
         )
+
+    def _should_inspect(
+        self,
+        context: AgentContext,
+        events: tuple[TranscriptEvent, ...],
+        policy: BuyerPolicy,
+    ) -> bool:
+        if not policy.inspect_before_offer:
+            return False
+        if "inspect" not in context.available_tools:
+            return False
+        if "inspect" not in set(self.profile.allowed_tools):
+            return False
+        # One inspection is enough to anchor the discount; don't burn turns.
+        return _latest_inspect_estimate(events, Role.BUYER) is None
+
+    def _quality_discount(
+        self,
+        events: tuple[TranscriptEvent, ...],
+        policy: BuyerPolicy,
+    ) -> float:
+        estimate = _latest_inspect_estimate(events, Role.BUYER)
+        if estimate is not None:
+            estimate_quality, claimed_quality = estimate
+            if claimed_quality > 0:
+                return max(0.0, min(1.0, estimate_quality / claimed_quality))
+        if policy.quality_skepticism > 0.0:
+            # No inspection evidence: discount the unverified claim outright.
+            return 1.0 - policy.quality_skepticism
+        return 1.0
+
+
+def _seller_quality_ratio(context: AgentContext) -> float:
+    """True/claimed quality ratio from the seller's own private state, in [0, 1]."""
+
+    true_quality = context.private_state.get("true_quality")
+    if true_quality is None:
+        return 1.0
+    claimed = condition_to_quality(context.scenario.product.condition)
+    if claimed <= 0:
+        return 1.0
+    return max(0.0, min(1.0, float(true_quality) / claimed))
+
+
+def _latest_inspect_estimate(
+    events: tuple[TranscriptEvent, ...], role: Role
+) -> tuple[float, float] | None:
+    """Most recent (estimate_quality, claimed_quality) from this role's inspect."""
+
+    for event in reversed(events):
+        if (
+            event.role == role
+            and event.action_type == ActionType.TOOL_CALL
+            and event.tool_call is not None
+            and event.tool_call.name == "inspect"
+            and event.tool_result
+            and event.tool_result.get("ok")
+            and "estimate_quality" in event.tool_result
+        ):
+            return (
+                float(event.tool_result["estimate_quality"]),
+                float(event.tool_result.get("claimed_quality", 1.0)),
+            )
+    return None
 
 
 def _styled_price(value: float, style: str, floor: float) -> float:

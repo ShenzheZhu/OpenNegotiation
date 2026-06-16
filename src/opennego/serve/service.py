@@ -157,6 +157,7 @@ class ServeService:
             load_scenario_artifact,
             load_trace,
         )
+        from opennego.quality import condition_to_quality
         from opennego.rating import compute_match_score
         from opennego.schema import ActionType
 
@@ -175,6 +176,8 @@ class ServeService:
             seller_reservation=scenario.seller_reservation_price,
             market_reference=reference.reference_price if reference else None,
             ghost_walker=ghost_walker,
+            true_quality=scenario.seller_true_quality,
+            claimed_quality=condition_to_quality(scenario.product.condition),
         )
         buyer_id = agent_id if user_role == Role.BUYER else opponent
         seller_id = opponent if user_role == Role.BUYER else agent_id

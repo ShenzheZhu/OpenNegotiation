@@ -229,6 +229,13 @@ class NegotiationEnvironment:
             private_state["budget"] = self.scenario.buyer_budget
         else:
             private_state["reservation_price"] = self.scenario.seller_reservation_price
+            if self.scenario.seller_true_condition is not None:
+                # The seller alone knows the item's true condition; the buyer
+                # sees only the public claim on the product.
+                private_state["true_condition"] = self.scenario.seller_true_condition
+            if self.scenario.seller_true_quality is not None:
+                # Numeric truth on the same [0, 1] axis the inspect tool reports.
+                private_state["true_quality"] = self.scenario.seller_true_quality
         outside_option = self._own_side_batna(role)
         if outside_option is not None:
             private_state["outside_option"] = outside_option

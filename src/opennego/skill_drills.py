@@ -9,6 +9,9 @@ isolation before the agent faces the live sandbox.
 - Walk-away timing: cut losses fast against an unwinnable seller, but do not
   bail on a seller who is actually conceding. A trigger-happy policy wins the
   unwinnable case and fails the winnable one; a patient policy times out.
+- Quality elicitation: on a lemon (public claim above the true condition), a
+  buyer that inspects and discounts realizes more surplus than one that pays
+  for the headline claim. Scored with the quality-aware match score.
 """
 
 from __future__ import annotations
@@ -536,6 +539,194 @@ def run_multithread_drill(
         best_attainable_price=best_attainable_price,
         thread_count=thread_count,
         closed_prices=tuple(round(p, 2) for p in deal_prices),
+    )
+    if output_path is not None:
+        write_json(Path(output_path), to_jsonable(result))
+    return result
+
+
+# --- Quality elicitation drill ----------------------------------------------
+
+
+def _drill_inspect_estimate(
+    events: tuple[TranscriptEvent, ...],
+) -> tuple[float, float] | None:
+    """Latest (estimate_quality, claimed_quality) from the buyer's inspect call."""
+
+    for event in reversed(events):
+        if (
+            event.role == Role.BUYER
+            and event.action_type == ActionType.TOOL_CALL
+            and event.tool_call is not None
+            and event.tool_call.name == "inspect"
+            and event.tool_result
+            and event.tool_result.get("ok")
+            and "estimate_quality" in event.tool_result
+        ):
+            return (
+                float(event.tool_result["estimate_quality"]),
+                float(event.tool_result.get("claimed_quality", 1.0)),
+            )
+    return None
+
+
+@dataclass
+class _QualityDrillBuyer:
+    """Anchors to estimated quality when it inspects, to the claim when it does not.
+
+    The two modes share identical bargaining tactics; the only difference is
+    whether the buyer spends a turn on ``inspect`` and discounts toward the
+    estimate. That isolates the skill under test: eliciting hidden quality.
+    """
+
+    inspect: bool
+    name: str = "quality_drill_buyer"
+    role: Role = Role.BUYER
+
+    def act(self, context: AgentContext) -> AgentAction:
+        events = tuple(context.transcript)
+        scenario = context.scenario
+        if (
+            self.inspect
+            and "inspect" in context.available_tools
+            and _drill_inspect_estimate(events) is None
+        ):
+            return AgentAction.tool("inspect", {})
+
+        reference = scenario.product.market_reference
+        anchor = reference.reference_price if reference else scenario.product.list_price
+        willingness = min(scenario.buyer_budget, anchor * 0.95)
+        estimate = _drill_inspect_estimate(events)
+        if estimate is not None:
+            estimate_quality, claimed_quality = estimate
+            if claimed_quality > 0:
+                willingness *= max(0.0, min(1.0, estimate_quality / claimed_quality))
+
+        seller_offer = None
+        own_offers = 0
+        for event in events:
+            if event.role == Role.SELLER and event.action_type == ActionType.OFFER:
+                if event.offer is not None:
+                    seller_offer = event.offer.price
+            elif event.role == Role.BUYER and event.action_type == ActionType.OFFER:
+                own_offers += 1
+
+        if seller_offer is not None and seller_offer <= willingness:
+            return AgentAction.accept(f"Accepted at ${seller_offer:.2f}.")
+        # Open below willingness and step up, so a conceding seller closes below
+        # the buyer's cap and the discount actually translates into surplus.
+        floor = willingness * 0.7
+        offer = min(willingness, floor + (willingness - floor) * 0.4 * own_offers)
+        return AgentAction.offer_price(round(offer, 2), f"My offer is ${offer:.2f}.")
+
+
+@dataclass(frozen=True)
+class QualityDrillResult:
+    schema_version: str
+    drill: str
+    seed: int
+    score: float
+    inspect_score: float
+    face_value_score: float
+    elicitation_edge: float
+    inspect_deal_price: float | None
+    face_value_deal_price: float | None
+    true_quality: float
+    claimed_quality: float
+
+
+def run_quality_drill(
+    *,
+    seed: int = 13,
+    market_reference: float = 575.0,
+    true_quality: float = 0.45,
+    max_turns: int = 10,
+    output_path: str | Path | None = None,
+) -> QualityDrillResult:
+    """Score eliciting hidden quality: inspect-and-discount vs. face value.
+
+    Both buyers face the same lemon (public claim "like new", lower true
+    quality) and the same conceding seller. The inspecting buyer learns the
+    truth and discounts; the face-value buyer pays for the claim. Scored with
+    the quality-aware match score, the inspecting buyer should win.
+    """
+
+    from opennego.agents import ScriptedSeller
+    from opennego.environment import ToolRuntimeConfig
+    from opennego.quality import condition_to_quality
+    from opennego.rating import compute_match_score
+    from opennego.tools import QualityInspectionTool
+
+    if not 0.0 <= true_quality <= 1.0:
+        raise SkillDrillError("true_quality: expected a value within [0, 1]")
+
+    product = Product(
+        id="quality_drill_item",
+        name="Quality elicitation drill item",
+        description="Listed as like-new; the true condition is lower.",
+        list_price=round(market_reference * 1.1, 2),
+        wholesale_price=round(market_reference * 0.55, 2),
+        condition="Used - Like New",
+        market_reference=MarketReference(
+            reference_price=market_reference, source="drill"
+        ),
+    )
+    claimed_quality = condition_to_quality(product.condition)
+    scenario = Scenario(
+        product=product,
+        buyer_budget=round(market_reference, 2),
+        # The seller acquired the lemon cheaply, so a ZOPA exists at the true
+        # value: an inspecting buyer can still strike a fair deal, while a
+        # face-value buyer overpays for the claim.
+        seller_reservation_price=round(market_reference * 0.3, 2),
+        max_turns=max_turns,
+        seller_true_condition="below the like-new claim",
+        seller_true_quality=true_quality,
+    )
+
+    def _score_for(inspect: bool) -> tuple[float, float | None]:
+        env = NegotiationEnvironment(
+            scenario=scenario,
+            buyer=_QualityDrillBuyer(inspect=inspect),
+            seller=ScriptedSeller(),
+            tools=(QualityInspectionTool.from_scenario(scenario, base_seed=seed),)
+            if inspect
+            else (),
+            tool_configs=(
+                ToolRuntimeConfig(
+                    name="inspect", roles=(Role.BUYER,), visibility="private"
+                ),
+            )
+            if inspect
+            else None,
+        )
+        result = env.run()
+        score = compute_match_score(
+            outcome=result.outcome,
+            deal_price=result.deal_price,
+            buyer_budget=scenario.buyer_budget,
+            seller_reservation=scenario.seller_reservation_price,
+            market_reference=market_reference,
+            true_quality=true_quality,
+            claimed_quality=claimed_quality,
+        )
+        return score.buyer, result.deal_price
+
+    inspect_score, inspect_price = _score_for(True)
+    face_value_score, face_value_price = _score_for(False)
+
+    result = QualityDrillResult(
+        schema_version=SKILL_DRILL_SCHEMA_VERSION,
+        drill="quality_elicitation",
+        seed=seed,
+        score=round(inspect_score, 4),
+        inspect_score=round(inspect_score, 4),
+        face_value_score=round(face_value_score, 4),
+        elicitation_edge=round(inspect_score - face_value_score, 4),
+        inspect_deal_price=inspect_price,
+        face_value_deal_price=face_value_price,
+        true_quality=true_quality,
+        claimed_quality=claimed_quality,
     )
     if output_path is not None:
         write_json(Path(output_path), to_jsonable(result))

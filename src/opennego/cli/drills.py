@@ -8,6 +8,7 @@ from opennego.artifacts import to_jsonable
 from opennego.skill_drills import (
     SkillDrillError,
     run_multithread_drill,
+    run_quality_drill,
     run_selection_drill,
     run_walkaway_drill,
 )
@@ -65,6 +66,21 @@ def drill_main(argv: list[str] | None = None) -> int:
     )
     multithread.add_argument("--output", help="Optional path for the drill artifact.")
 
+    quality = subparsers.add_parser(
+        "quality",
+        help="Quality drill: inspect and discount a lemon vs. paying the claim.",
+    )
+    quality.add_argument("--seed", type=int, default=13)
+    quality.add_argument("--market-reference", type=float, default=575.0)
+    quality.add_argument(
+        "--true-quality",
+        type=float,
+        default=0.45,
+        help="Hidden true quality in [0, 1]; the public claim is 'like new'.",
+    )
+    quality.add_argument("--max-turns", type=int, default=10)
+    quality.add_argument("--output", help="Optional path for the drill artifact.")
+
     args = parser.parse_args(argv)
 
     try:
@@ -90,6 +106,14 @@ def drill_main(argv: list[str] | None = None) -> int:
                 thread_count=args.thread_count,
                 market_reference=args.market_reference,
                 coordinate=not args.no_coordinate,
+                max_turns=args.max_turns,
+                output_path=args.output,
+            )
+        elif args.skill == "quality":
+            result = run_quality_drill(
+                seed=args.seed,
+                market_reference=args.market_reference,
+                true_quality=args.true_quality,
                 max_turns=args.max_turns,
                 output_path=args.output,
             )

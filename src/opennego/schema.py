@@ -208,6 +208,15 @@ class Scenario:
     buyer_budget: float
     seller_reservation_price: float
     max_turns: int = 12
+    # Optional hidden item quality known only to the seller. Product.condition
+    # is the public claim; this is the truth, routed only into seller private
+    # state. The buyer (and a buyer-side coach) never sees it.
+    seller_true_condition: str | None = None
+    # Optional numeric companion to seller_true_condition on a [0, 1] quality
+    # axis (1.0 = flawless, matches the public claim; lower = a hidden defect).
+    # Also seller-private. When None the item is "as described": the inspect
+    # tool centers on the claimed quality derived from product.condition.
+    seller_true_quality: float | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -217,6 +226,10 @@ class Scenario:
             raise ValueError("seller_reservation_price must be positive")
         if self.max_turns <= 0:
             raise ValueError("max_turns must be positive")
+        if self.seller_true_quality is not None and not (
+            0.0 <= self.seller_true_quality <= 1.0
+        ):
+            raise ValueError("seller_true_quality must be within [0, 1]")
 
 
 @dataclass(frozen=True)
