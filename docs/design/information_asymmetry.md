@@ -5,10 +5,13 @@ flagged in the realism model (the "lemon market" gap). It extends the
 single-issue price protocol — it does **not** introduce multi-issue bargaining
 (that remains the separate protocol-v2 track).
 
-Shipped so far: hidden `seller_true_condition` + private routing (#196); the
-numeric `seller_true_quality` axis and the buyer `inspect` tool (#198);
-quality-aware match scoring (#200, see below). Remaining: disclosure/skeptic
-NPC archetypes and a quality-elicitation skill drill.
+Shipped: hidden `seller_true_condition` + private routing (#196); the numeric
+`seller_true_quality` axis and the buyer `inspect` tool (#198); quality-aware
+match scoring (#200, see below); the `honest_discloser` / `quality_overstater`
+/ `quality_skeptic` NPC archetypes (#202); and the `quality` skill drill (#204,
+`opennego drill quality`) showing that an inspecting-and-discounting buyer
+out-scores a face-value buyer on a lemon. The remaining step is the M6 release
+train to `main`.
 
 ## Why
 
