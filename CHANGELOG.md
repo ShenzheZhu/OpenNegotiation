@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Reputation visibility (M7, in progress): a public seller-reputation signal. New `opennego.reputation` module is the single source of truth for the band vocabulary and its realized-value risk weight (`{high:0, medium:0.06, low:0.18, unknown:0.10}`, the weights the M5 selection drill already used, now consolidated) plus `band_from_feedback_pct` (shared with the eBay Browse adapter). `Scenario.seller_reputation` (`SellerReputation`: band + optional feedback pct/count) is **public** — visible to both roles through the scenario, the opposite of the hidden condition — round-trips through `ScenarioArtifact`, and is carried from a product record by the scenario generator. Fully additive.
+
 - Information asymmetry (M6, in progress): scenarios gain an optional `seller_true_condition` — the item's hidden true quality routed only into the seller's private state (and a seller-side coach case), never visible to the buyer or a buyer-side coach. `product.condition` remains the public claim. Fully additive.
 
 - Information asymmetry (M6, in progress): a buyer `inspect` tool (`opennego.tools.QualityInspectionTool`) returns a deterministic, *noisy* private estimate of the item's true quality on a `[0, 1]` axis; repeating it tightens the estimate at the cost of a turn. Backed by a new numeric `seller_true_quality` scenario field (seller-private, round-trips through `ScenarioArtifact`, seen by a seller-side coach only) and `opennego.quality.condition_to_quality`, which maps eBay-style condition claims to the same axis. The raw truth never crosses to the buyer.
