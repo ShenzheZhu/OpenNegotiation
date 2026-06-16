@@ -203,6 +203,41 @@ class Product:
 
 
 @dataclass(frozen=True)
+class SellerReputation:
+    """Public seller reputation signal (visible to both roles).
+
+    Unlike ``Scenario.seller_true_condition`` this is not hidden: it is a noisy
+    public signal the buyer is expected to price. ``band`` is the canonical
+    field; ``feedback_pct`` / ``feedback_count`` are optional supporting detail.
+    """
+
+    band: str = "unknown"
+    feedback_pct: float | None = None
+    feedback_count: int | None = None
+    source: str = "unknown"
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "SellerReputation":
+        from .reputation import band_from_feedback_pct, normalize_band
+
+        feedback_pct = data.get("feedback_pct")
+        feedback_pct = float(feedback_pct) if feedback_pct is not None else None
+        raw_band = data.get("band")
+        band = (
+            normalize_band(raw_band)
+            if raw_band is not None
+            else band_from_feedback_pct(feedback_pct)
+        )
+        count = data.get("feedback_count")
+        return cls(
+            band=band,
+            feedback_pct=feedback_pct,
+            feedback_count=int(count) if count is not None else None,
+            source=str(data.get("source", "unknown")),
+        )
+
+
+@dataclass(frozen=True)
 class Scenario:
     product: Product
     buyer_budget: float
@@ -217,6 +252,10 @@ class Scenario:
     # Also seller-private. When None the item is "as described": the inspect
     # tool centers on the claimed quality derived from product.condition.
     seller_true_quality: float | None = None
+    # Optional public seller reputation. Unlike the hidden condition/quality
+    # above, this is visible to both roles through AgentContext.scenario; the
+    # buyer is expected to price its risk rather than elicit it.
+    seller_reputation: "SellerReputation | None" = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

@@ -22,9 +22,10 @@ import json
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Mapping, Sequence
 
-from opennego.schema import MarketReference, Product, Scenario
+from opennego.reputation import normalize_band
+from opennego.schema import MarketReference, Product, Scenario, SellerReputation
 
 BATNA_SCHEMA_VERSION = "opennego.batna.v1"
 
@@ -152,12 +153,29 @@ def _generate_one(
         buyer_budget=buyer_budget,
         seller_reservation_price=seller_reservation,
         max_turns=settings.max_turns,
+        seller_reputation=_seller_reputation(product),
         metadata={
             "scenario_id": f"{product.id}-batna-s{seed}-{index}",
             "generator": "opennego.scenario_generator",
             "batna": batna,
         },
     )
+
+
+def _seller_reputation(product: Product) -> SellerReputation | None:
+    """Carry a public reputation signal from the product record, if present.
+
+    A product fixture (or ingestion output) may supply ``seller_reputation`` as
+    an object (band/feedback_pct/...) or a bare band string. Absent it, the
+    scenario simply has no reputation signal — fully additive.
+    """
+
+    raw = product.attributes.get("seller_reputation")
+    if isinstance(raw, Mapping):
+        return SellerReputation.from_mapping(raw)
+    if isinstance(raw, str):
+        return SellerReputation(band=normalize_band(raw))
+    return None
 
 
 def _reference_band(reference: MarketReference) -> tuple[float, float]:

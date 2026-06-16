@@ -33,11 +33,9 @@ from opennego.schema import (
     Scenario,
 )
 
-SKILL_DRILL_SCHEMA_VERSION = "opennego.skill_drill.v1"
+from opennego.reputation import reputation_risk
 
-# Realizable-surplus discount by seller reputation: low reputation means return
-# and dispute risk that erodes the apparent bargain.
-_RATING_RISK = {"high": 0.0, "medium": 0.06, "low": 0.18, "unknown": 0.10}
+SKILL_DRILL_SCHEMA_VERSION = "opennego.skill_drill.v1"
 
 
 class SkillDrillError(ValueError):
@@ -124,7 +122,7 @@ def generate_selection_drill(
         rating = rng.choice(("high", "high", "medium", "low"))
         # Older listings = more motivated sellers = more room to negotiate.
         age_motivation = market_reference * 0.0015 * age
-        risk = market_reference * _RATING_RISK[rating]
+        risk = market_reference * reputation_risk(rating)
         attainable = max(
             0.0,
             (market_reference - asking) + age_motivation - risk,
@@ -177,7 +175,7 @@ def risk_aware_policy(cards: Sequence[Mapping[str, object]]) -> int:
         return (
             (reference - asking)
             + reference * 0.0015 * age
-            - reference * _RATING_RISK.get(rating, 0.10)
+            - reference * reputation_risk(rating)
         )
 
     return max(range(len(cards)), key=lambda i: estimate(cards[i]))
