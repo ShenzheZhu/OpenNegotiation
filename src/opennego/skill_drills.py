@@ -12,6 +12,9 @@ isolation before the agent faces the live sandbox.
 - Quality elicitation: on a lemon (public claim above the true condition), a
   buyer that inspects and discounts realizes more surplus than one that pays
   for the headline claim. Scored with the quality-aware match score.
+- Reputation: against a low-reputation seller, a buyer that discounts for the
+  public feedback band beats one that ignores it. Scored with the
+  reputation-aware match score.
 """
 
 from __future__ import annotations
@@ -31,6 +34,7 @@ from opennego.schema import (
     Product,
     Role,
     Scenario,
+    SellerReputation,
 )
 
 from opennego.reputation import reputation_risk
@@ -725,6 +729,137 @@ def run_quality_drill(
         face_value_deal_price=face_value_price,
         true_quality=true_quality,
         claimed_quality=claimed_quality,
+    )
+    if output_path is not None:
+        write_json(Path(output_path), to_jsonable(result))
+    return result
+
+
+# --- Reputation drill -------------------------------------------------------
+
+
+@dataclass
+class _ReputationDrillBuyer:
+    """Discounts willingness by the seller's public reputation risk when aware.
+
+    Both modes share identical tactics; the only difference is whether the
+    buyer reads ``scenario.seller_reputation`` and prices its risk. That
+    isolates the skill: discounting a risky seller.
+    """
+
+    aware: bool
+    name: str = "reputation_drill_buyer"
+    role: Role = Role.BUYER
+
+    def act(self, context: AgentContext) -> AgentAction:
+        events = tuple(context.transcript)
+        scenario = context.scenario
+        reference = scenario.product.market_reference
+        anchor = reference.reference_price if reference else scenario.product.list_price
+        willingness = min(scenario.buyer_budget, anchor * 0.95)
+        if self.aware and scenario.seller_reputation is not None:
+            willingness *= 1.0 - reputation_risk(scenario.seller_reputation.band)
+
+        seller_offer = None
+        own_offers = 0
+        for event in events:
+            if event.role == Role.SELLER and event.action_type == ActionType.OFFER:
+                if event.offer is not None:
+                    seller_offer = event.offer.price
+            elif event.role == Role.BUYER and event.action_type == ActionType.OFFER:
+                own_offers += 1
+
+        if seller_offer is not None and seller_offer <= willingness:
+            return AgentAction.accept(f"Accepted at ${seller_offer:.2f}.")
+        floor = willingness * 0.7
+        offer = min(willingness, floor + (willingness - floor) * 0.4 * own_offers)
+        return AgentAction.offer_price(round(offer, 2), f"My offer is ${offer:.2f}.")
+
+
+@dataclass(frozen=True)
+class ReputationDrillResult:
+    schema_version: str
+    drill: str
+    seed: int
+    band: str
+    score: float
+    aware_score: float
+    blind_score: float
+    reputation_edge: float
+    aware_deal_price: float | None
+    blind_deal_price: float | None
+
+
+def run_reputation_drill(
+    *,
+    seed: int = 13,
+    market_reference: float = 575.0,
+    band: str = "low",
+    max_turns: int = 10,
+    output_path: str | Path | None = None,
+) -> ReputationDrillResult:
+    """Score pricing reputation: discount the risky seller vs. ignore it.
+
+    Both buyers face the same low-reputation seller. The aware buyer discounts
+    its willingness by the band risk and closes lower; the blind buyer pays
+    more. Scored with the reputation-aware match score, the aware buyer wins.
+    """
+
+    from opennego.agents import ScriptedSeller
+    from opennego.rating import compute_match_score
+
+    product = Product(
+        id="reputation_drill_item",
+        name="Reputation drill item",
+        description="A fairly-described item sold by a risky seller.",
+        list_price=round(market_reference * 1.1, 2),
+        wholesale_price=round(market_reference * 0.55, 2),
+        condition="Used - Good",
+        market_reference=MarketReference(
+            reference_price=market_reference, source="drill"
+        ),
+    )
+    scenario = Scenario(
+        product=product,
+        buyer_budget=round(market_reference, 2),
+        # The risky seller is willing to move cheaply, so a disciplined buyer
+        # can capture the reputation discount as surplus.
+        seller_reservation_price=round(market_reference * 0.3, 2),
+        max_turns=max_turns,
+        seller_reputation=SellerReputation(band=band),
+    )
+
+    def _score_for(aware: bool) -> tuple[float, float | None]:
+        env = NegotiationEnvironment(
+            scenario=scenario,
+            buyer=_ReputationDrillBuyer(aware=aware),
+            seller=ScriptedSeller(),
+        )
+        result = env.run()
+        score = compute_match_score(
+            outcome=result.outcome,
+            deal_price=result.deal_price,
+            buyer_budget=scenario.buyer_budget,
+            seller_reservation=scenario.seller_reservation_price,
+            market_reference=market_reference,
+            reputation_band=band,
+        )
+        return score.buyer, result.deal_price
+
+    aware_score, aware_price = _score_for(True)
+    blind_score, blind_price = _score_for(False)
+
+    result = ReputationDrillResult(
+        schema_version=SKILL_DRILL_SCHEMA_VERSION,
+        drill="reputation",
+        seed=seed,
+        band=band,
+        score=round(aware_score, 4),
+        aware_score=round(aware_score, 4),
+        blind_score=round(blind_score, 4),
+        reputation_edge=round(aware_score - blind_score, 4),
+        aware_deal_price=aware_price,
+        blind_deal_price=blind_price,
     )
     if output_path is not None:
         write_json(Path(output_path), to_jsonable(result))
