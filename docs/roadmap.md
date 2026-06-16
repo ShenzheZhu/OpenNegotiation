@@ -64,14 +64,14 @@ The layers feed each other:
 
 Gap analysis between textbook bilateral bargaining and real C2C markets,
 ordered by impact. M1 closes the structural gaps inside the single-issue
-protocol; M5 closes the market-level gaps; M6 closes the information-asymmetry
-(lemon-market) gap.
+protocol; M5 closes the market-level gaps; M6 closes the hidden-condition
+information-asymmetry (lemon-market) gap; M7 closes the public-reputation gap.
 
 | Gap | Reality | Fix |
 | --- | --- | --- |
 | Outside options (BATNA) | Leverage comes from competing listings and competing buyers, not from given constants | scenario generator derives private constraints from next-best alternatives (M1) |
 | Time structure | Most real bargaining ends in 2-3 rounds; offers expire and bind; silence is the common rejection | offer expiry, counter limits, turn costs, ghosting outcomes (M1) |
-| Information surface | Active-listing spread, days-on-market, and reputation drive bargaining power | active listings tool, listing-age signals (M1); hidden condition asymmetry, an `inspect` tool, quality-aware scoring, and quality NPC archetypes (M6) |
+| Information surface | Active-listing spread, days-on-market, and reputation drive bargaining power | active listings tool, listing-age signals (M1); hidden condition asymmetry, an `inspect` tool, quality-aware scoring, and quality NPC archetypes (M6); public seller-reputation signal, reputation-aware scoring, and reputation NPC archetypes (M7) |
 | Counterpart population | Humans split the difference, ignore lowballs, sell at firm prices, ghost, and sometimes scam | NPC population calibrated on CraigslistBargain dialogues and eBay best-offer field evidence (M1) |
 | Settlement economics | Platform fees, payment fees, and marketplace tax are real published schedules | real fee schedule pack with provenance (M1) |
 | Multi-issue deals | Price, shipping, bundles, and extras trade off | deferred to protocol v2 (post-M5) |
@@ -161,6 +161,16 @@ private estimate; quality-aware match scoring (the buyer's realized value falls
 with hidden quality, the seller carries the dispute exposure of a buyer who
 overpaid); `honest_discloser` / `quality_overstater` / `quality_skeptic` NPC
 archetypes; and a quality-elicitation skill drill. Does not touch protocol v2.
+
+### M7 — Reputation visibility
+
+The public half of the information-asymmetry gap. A public `seller_reputation`
+on the scenario (visible to both roles, not elicited), a shared
+`opennego.reputation` band→risk map (consolidating the M5 selection-drill
+weights), reputation-aware scoring that haircuts the same realized value the M6
+quality score uses, `reputation_premium_seller` / `reputation_discount_buyer`
+NPC archetypes, and a reputation skill drill. Fixtures by default with the live
+eBay band behind the existing source gates. Does not touch protocol v2.
 
 ## Design Docs
 
