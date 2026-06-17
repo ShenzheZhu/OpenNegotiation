@@ -1,6 +1,7 @@
 """Training-season weakness aggregation (#221)."""
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -122,3 +123,51 @@ def test_load_battle_reports_skips_missing(tmp_path):
     loaded = load_battle_reports([path, tmp_path / "missing.json"])
     assert len(loaded) == 1
     assert loaded[0].opponent_profile_id == "a"
+
+
+# --- season runner (#222) --------------------------------------------------
+
+
+def test_run_training_season_produces_ranked_validated_slate(tmp_path):
+    from opennego.training_season import (
+        TRAINING_SEASON_SCHEMA_VERSION,
+        run_training_season,
+    )
+
+    season = run_training_season(output_dir=tmp_path / "season", user_role="buyer", k=2)
+
+    assert season.schema_version == TRAINING_SEASON_SCHEMA_VERSION
+    assert season.user_role == "buyer"
+    assert season.weakness_profile.matches_analyzed >= 1
+    assert 1 <= len(season.slate) <= 2
+    assert season.train_profile_ids and season.heldout_profile_ids
+
+    # Ranks are sequential and every entry carries a held-out verdict.
+    assert [e.rank for e in season.slate] == list(range(1, len(season.slate) + 1))
+    for entry in season.slate:
+        assert entry.verdict in {"improved", "train_only", "regressed"}
+        assert (tmp_path / "season").as_posix() in entry.candidate_path
+        assert Path(entry.candidate_path).exists()
+
+    # Invariant: no overfit/regressed candidate is ranked above a generalizing one.
+    generalizing_flags = [e.generalizes for e in season.slate]
+    assert generalizing_flags == sorted(generalizing_flags, reverse=True)
+
+    # The recommendation is exactly the top entry iff it generalizes.
+    if season.recommended_candidate_id is not None:
+        assert season.slate[0].generalizes
+        assert season.recommended_candidate_id == season.slate[0].candidate_id
+    else:
+        assert not season.slate[0].generalizes
+
+    # Artifact is written and self-describing.
+    payload = json.loads((tmp_path / "season" / "training_season.json").read_text())
+    assert payload["schema_version"] == TRAINING_SEASON_SCHEMA_VERSION
+    assert "trajectory" in payload and "baseline_mean_score" in payload["trajectory"]
+
+
+def test_run_training_season_rejects_bad_k(tmp_path):
+    from opennego.training_season import TrainingSeasonError, run_training_season
+
+    with pytest.raises(TrainingSeasonError):
+        run_training_season(output_dir=tmp_path / "s", k=0)
