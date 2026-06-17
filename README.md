@@ -191,9 +191,12 @@ opennego serve                            # http://127.0.0.1:8765
 ```
 
 Define your agent (model + strategy prompt; the API key is sent only to the
-local server and never stored), run matches, read the coach report, accept or
-reject an evolved strategy, and watch your ratings — the whole loop in the
-browser. See [the web client section](#local-web-client) below.
+local server and never stored), run matches (with the seller's reputation band
+and your `inspect` estimates shown in the trace), read the coach report, accept
+or reject an evolved strategy, run a **training season** (ranked weaknesses +
+validated candidate slate), watch a **co-evolution** run, and track your
+ratings — the whole loop in the browser. See
+[the web client section](#local-web-client) below.
 
 ### Build market datasets
 

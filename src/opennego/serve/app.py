@@ -110,6 +110,16 @@ def _evolve(service, match, body):
     return service.evolve(match.group("run_id"), parent_strategy_id=parent)
 
 
+@_route("POST", r"/api/train-season")
+def _train_season(service, match, body):
+    return service.run_season(body)
+
+
+@_route("POST", r"/api/coevolve")
+def _coevolve(service, match, body):
+    return service.run_coevolution_session(body)
+
+
 @_route("GET", r"/api/ratings")
 def _ratings(service, match, body):
     return service.ratings()

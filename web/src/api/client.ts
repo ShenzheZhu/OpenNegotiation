@@ -24,7 +24,15 @@ export interface TraceEvent {
   action_type: string;
   content: string;
   offer?: { price: number; note: string } | null;
+  tool_call?: { name: string; arguments: Record<string, unknown> } | null;
+  tool_result?: Record<string, unknown> | null;
   private: boolean;
+}
+
+export interface ScenarioSignals {
+  condition_claim: string;
+  reputation_band: string | null;
+  reputation_feedback_pct: number | null;
 }
 
 export interface MatchResult {
@@ -34,6 +42,7 @@ export interface MatchResult {
   outcome: string;
   deal_price: number | null;
   policy_score: number | null;
+  scenario_signals?: ScenarioSignals;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -163,4 +172,87 @@ export interface RatingLeaderboard {
 
 export const ratingsApi = {
   get: () => request<RatingLeaderboard>("/api/ratings"),
+};
+
+export interface AggregatedWeakness {
+  phase: string;
+  category: string;
+  frequency: number;
+  severity_weight: number;
+  mean_policy_score: number;
+  priority: number;
+  opponents: string[];
+}
+
+export interface CandidateSlateEntry {
+  rank: number;
+  phase: string;
+  category: string;
+  candidate_id: string;
+  candidate_path: string;
+  strategy_config_path: string;
+  verdict: string;
+  train_score_delta: number;
+  heldout_score_delta: number;
+  rerun_mean_score: number;
+  generalizes: boolean;
+}
+
+export interface TrainingSeason {
+  schema_version: string;
+  user_role: string;
+  baseline_mean_score: number;
+  weakness_profile: { matches_analyzed: number; weaknesses: AggregatedWeakness[] };
+  slate: CandidateSlateEntry[];
+  recommended_candidate_id: string | null;
+  recommended_heldout_delta: number;
+  trajectory: { baseline_mean_score: number; best_mean_score: number; delta: number };
+}
+
+export const seasonApi = {
+  run: (agentId: string, k = 3) =>
+    request<TrainingSeason>("/api/train-season", {
+      method: "POST",
+      body: JSON.stringify({ agent_id: agentId, k }),
+    }),
+};
+
+export interface GenomeScore {
+  genome_id: string;
+  fitness: number;
+  genes: Record<string, number>;
+  parent_ids: string[];
+}
+
+export interface GenerationRecord {
+  generation: number;
+  buyer_best_fitness: number;
+  buyer_mean_fitness: number;
+  seller_best_fitness: number;
+  seller_mean_fitness: number;
+  buyer_leaderboard: GenomeScore[];
+  seller_leaderboard: GenomeScore[];
+}
+
+export interface Coevolution {
+  schema_version: string;
+  seed: number;
+  generations: number;
+  population_size: number;
+  scenario_count: number;
+  evolve_roles: string[];
+  generation_records: GenerationRecord[];
+  buyer_champion: GenomeScore;
+  seller_champion: GenomeScore;
+  buyer_champion_lineage: { genome_id: string; parent_ids: string[] }[];
+  seller_champion_lineage: { genome_id: string; parent_ids: string[] }[];
+  trajectory: { buyer_best_by_generation: number[]; seller_best_by_generation: number[] };
+}
+
+export const coevolveApi = {
+  run: (payload: Record<string, unknown> = {}) =>
+    request<Coevolution>("/api/coevolve", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 };

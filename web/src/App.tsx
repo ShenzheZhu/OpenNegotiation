@@ -12,13 +12,17 @@ import { AgentView } from "./views/AgentView";
 import { MatchView } from "./views/MatchView";
 import { ReportView } from "./views/ReportView";
 import { RatingsView } from "./views/RatingsView";
+import { TrainingSeasonView } from "./views/TrainingSeasonView";
+import { CoevolutionView } from "./views/CoevolutionView";
 
-type TabId = "agent" | "match" | "coach" | "ratings";
+type TabId = "agent" | "match" | "coach" | "season" | "coevolve" | "ratings";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "agent", label: "Agent" },
   { id: "match", label: "Match" },
   { id: "coach", label: "Coach" },
+  { id: "season", label: "Training season" },
+  { id: "coevolve", label: "Co-evolution" },
   { id: "ratings", label: "Ratings" },
 ];
 
@@ -61,6 +65,8 @@ export function App() {
           {tab === "coach" && (
             <ReportView runId={lastRunId} agentId={lastAgentId} />
           )}
+          {tab === "season" && <TrainingSeasonView agentId={lastAgentId} />}
+          {tab === "coevolve" && <CoevolutionView />}
           {tab === "ratings" && <RatingsView agentId={lastAgentId} />}
         </EuiPageTemplate.Section>
       </EuiPageTemplate>

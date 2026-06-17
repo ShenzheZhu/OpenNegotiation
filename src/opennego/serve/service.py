@@ -135,6 +135,26 @@ class ServeService:
             "policy_score": result.policy_score,
             "battle_report": result.battle_report,
             "run_dir": str(run_dir),
+            "scenario_signals": self._scenario_signals(run_dir),
+        }
+
+    def _scenario_signals(self, run_dir: Path) -> Mapping[str, Any]:
+        """Public M6/M7 signals for the match: condition claim + reputation band.
+
+        Both are public (the buyer sees them in the negotiation); the hidden
+        true condition/quality is never surfaced here.
+        """
+
+        from opennego.artifacts import load_scenario_artifact
+
+        scenario = load_scenario_artifact(run_dir / "scenario.json")
+        reputation = scenario.seller_reputation
+        return {
+            "condition_claim": scenario.product.condition,
+            "reputation_band": reputation.band if reputation is not None else None,
+            "reputation_feedback_pct": (
+                reputation.feedback_pct if reputation is not None else None
+            ),
         }
 
     def _ingest_rating(
@@ -286,6 +306,53 @@ class ServeService:
             "strategy_prompt": config.strategy_prompt,
             "lineage": str(lineage_path),
         }
+
+    # -- training season ----------------------------------------------------
+
+    def run_season(self, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        agent = self.get_agent(self._require_id(payload.get("agent_id"), "agent_id"))
+        k = int(payload.get("k", 3))
+        if k < 1:
+            raise ServeError("k: expected at least one candidate")
+        holdout_seed = int(payload.get("holdout_seed", 0))
+        from opennego.training_season import run_training_season
+
+        try:
+            season = run_training_season(
+                output_dir=self.data_dir / "seasons" / agent["id"],
+                config_path=self.config_path,
+                registry_path=self.registry_path,
+                user_role=agent["role"],
+                k=k,
+                holdout_seed=holdout_seed,
+            )
+        except Exception as exc:
+            raise ServeError(str(exc)) from exc
+        return to_jsonable(season)
+
+    # -- co-evolution -------------------------------------------------------
+
+    def run_coevolution_session(self, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        from opennego.coevolution import run_coevolution
+
+        generations = int(payload.get("generations", 5))
+        population = int(payload.get("population", 6))
+        scenario_count = int(payload.get("scenario_count", 2))
+        seed = int(payload.get("seed", 13))
+        evolve_raw = str(payload.get("evolve", "both"))
+        evolve = ("buyer", "seller") if evolve_raw == "both" else (evolve_raw,)
+        try:
+            result = run_coevolution(
+                output_dir=self.data_dir / "coevolution",
+                generations=generations,
+                population=population,
+                scenario_count=scenario_count,
+                seed=seed,
+                evolve=evolve,
+            )
+        except Exception as exc:
+            raise ServeError(str(exc)) from exc
+        return to_jsonable(result)
 
     # -- ratings ------------------------------------------------------------
 

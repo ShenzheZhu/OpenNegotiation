@@ -117,6 +117,36 @@ export function MatchView({
               />
             </EuiFlexItem>
           </EuiFlexGroup>
+          {result.scenario_signals && (
+            <>
+              <EuiSpacer />
+              <EuiFlexGroup gutterSize="s" alignItems="center" wrap>
+                <EuiFlexItem grow={false}>
+                  <EuiBadge color="hollow">
+                    Claimed: {result.scenario_signals.condition_claim}
+                  </EuiBadge>
+                </EuiFlexItem>
+                {result.scenario_signals.reputation_band && (
+                  <EuiFlexItem grow={false}>
+                    <EuiBadge
+                      color={
+                        result.scenario_signals.reputation_band === "high"
+                          ? "success"
+                          : result.scenario_signals.reputation_band === "low"
+                            ? "danger"
+                            : "warning"
+                      }
+                    >
+                      Seller reputation: {result.scenario_signals.reputation_band}
+                      {result.scenario_signals.reputation_feedback_pct != null
+                        ? ` (${result.scenario_signals.reputation_feedback_pct}%)`
+                        : ""}
+                    </EuiBadge>
+                  </EuiFlexItem>
+                )}
+              </EuiFlexGroup>
+            </>
+          )}
           <EuiSpacer />
           <EuiText>
             <h3>Trace replay</h3>
@@ -133,8 +163,16 @@ export function MatchView({
               },
               {
                 name: "Detail",
-                render: (e: TraceEvent) =>
-                  e.offer ? `offer $${e.offer.price}` : e.content || "—",
+                render: (e: TraceEvent) => {
+                  if (e.offer) return `offer $${e.offer.price}`;
+                  if (e.tool_call?.name === "inspect" && e.tool_result) {
+                    const est = e.tool_result["estimate_quality"];
+                    const claim = e.tool_result["claimed_quality"];
+                    return `inspect: est quality ${est} vs claim ${claim}`;
+                  }
+                  if (e.tool_call) return `tool: ${e.tool_call.name}`;
+                  return e.content || "—";
+                },
               },
               {
                 field: "private",
