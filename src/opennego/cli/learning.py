@@ -32,6 +32,11 @@ from opennego.strategy_config import (
     load_strategy_config,
     write_strategy_config,
 )
+from opennego.coevolution import (
+    CoevolutionError,
+    render_coevolution_report,
+    run_coevolution,
+)
 from opennego.training import run_training_loop
 from opennego.training_season import (
     TrainingSeasonError,
@@ -580,6 +585,65 @@ def train_season_main(argv: list[str] | None = None) -> int:
         return common.print_error(exc)
 
     payload = to_jsonable(season)
+    if report_path is not None:
+        payload["report"] = str(report_path)
+    common.print_json(payload)
+    return 0
+
+
+def coevolve_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run competitive co-evolution: two strategy populations play a "
+            "tournament each generation, and the winners mutate to seed the next."
+        )
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="runs/coevolution",
+        help="Directory for the coevolution artifact.",
+    )
+    parser.add_argument(
+        "--products",
+        default="examples/data/real_market_products.json",
+        help="Product fixture used to generate tournament scenarios.",
+    )
+    parser.add_argument("--generations", type=int, default=5)
+    parser.add_argument("--population", type=int, default=6)
+    parser.add_argument("--scenario-count", type=int, default=2)
+    parser.add_argument("--seed", type=int, default=13)
+    parser.add_argument(
+        "--evolve",
+        default="both",
+        choices=("both", "buyer", "seller"),
+        help="Which population(s) evolve; fixing one side isolates the other.",
+    )
+    parser.add_argument(
+        "--report",
+        help="Optional path to write a static HTML co-evolution report.",
+    )
+    args = parser.parse_args(argv)
+
+    evolve = ("buyer", "seller") if args.evolve == "both" else (args.evolve,)
+    try:
+        result = run_coevolution(
+            output_dir=args.output_dir,
+            products_path=args.products,
+            generations=args.generations,
+            population=args.population,
+            scenario_count=args.scenario_count,
+            seed=args.seed,
+            evolve=evolve,
+        )
+        report_path = None
+        if args.report:
+            report_path = Path(args.report)
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(render_coevolution_report(result), encoding="utf-8")
+    except (OSError, ValueError, CoevolutionError) as exc:
+        return common.print_error(exc)
+
+    payload = to_jsonable(result)
     if report_path is not None:
         payload["report"] = str(report_path)
     common.print_json(payload)
