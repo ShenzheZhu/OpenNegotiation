@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- BYOK prompt evolution (M11, in progress): `opennego.prompt_evolution` adds the substrate to evolve natural-language strategy prompts. A `PromptMutatorPort` with a deterministic `FakePromptMutator` (CI/demos) and an `LLMPromptMutator` (BYOK, meta-prompts the user's model via `LLMPort`), plus prompt→agent factories — a BYOK LLM agent (`make_llm_agent_factory`, embedding the evolved prompt) and a deterministic prompt-sensitive fake agent (`fake_agent_factory`, mapping a prompt's aggressiveness onto a real policy via the M9 `policy_override`) so a prompt's fitness is observable no-key.
+
 - Web client (M10, in progress): the training season is now in the browser. `POST /api/train-season` runs `run_training_season` for a stored agent and returns the ranked weakness profile + held-out-validated candidate slate; a new `Training season` tab renders them and applies a chosen candidate through the existing strategy-config path (nothing auto-applied). API is no-key dispatch-tested; the EUI view builds in CI.
 
 - Web client (M10, in progress): co-evolution is now in the browser. `POST /api/coevolve` runs `run_coevolution` and returns per-generation leaderboards, champion genomes + lineage, and the fitness trajectory; a new `Co-evolution` tab renders the generational table and champion lineage. No-key dispatch-tested; the EUI view builds in CI.
