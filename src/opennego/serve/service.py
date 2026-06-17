@@ -310,6 +310,30 @@ class ServeService:
             raise ServeError(str(exc)) from exc
         return to_jsonable(season)
 
+    # -- co-evolution -------------------------------------------------------
+
+    def run_coevolution_session(self, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        from opennego.coevolution import run_coevolution
+
+        generations = int(payload.get("generations", 5))
+        population = int(payload.get("population", 6))
+        scenario_count = int(payload.get("scenario_count", 2))
+        seed = int(payload.get("seed", 13))
+        evolve_raw = str(payload.get("evolve", "both"))
+        evolve = ("buyer", "seller") if evolve_raw == "both" else (evolve_raw,)
+        try:
+            result = run_coevolution(
+                output_dir=self.data_dir / "coevolution",
+                generations=generations,
+                population=population,
+                scenario_count=scenario_count,
+                seed=seed,
+                evolve=evolve,
+            )
+        except Exception as exc:
+            raise ServeError(str(exc)) from exc
+        return to_jsonable(result)
+
     # -- ratings ------------------------------------------------------------
 
     def ratings(self) -> Mapping[str, Any]:

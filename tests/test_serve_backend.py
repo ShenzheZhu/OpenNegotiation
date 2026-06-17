@@ -262,3 +262,18 @@ def test_train_season_rejects_unknown_agent(tmp_path):
     )
     assert status == 400
     assert "error" in payload
+
+
+def test_coevolve_endpoint_returns_generational_run(tmp_path):
+    service = _service(tmp_path)
+    status, result = dispatch(
+        service,
+        "POST",
+        "/api/coevolve",
+        {"generations": 3, "population": 4, "scenario_count": 1},
+    )
+    assert status == 200
+    assert result["schema_version"] == "opennego.coevolution.v1"
+    assert len(result["generation_records"]) == 3
+    assert result["buyer_champion"]["genome_id"]
+    assert result["seller_champion"]["genome_id"]
