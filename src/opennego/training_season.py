@@ -361,6 +361,78 @@ def run_training_season(
     return season
 
 
+def render_season_report(season: "TrainingSeason") -> str:
+    """Render a self-contained static HTML report for a training season."""
+
+    import html
+
+    def esc(value: Any) -> str:
+        return html.escape(str(value))
+
+    weakness_rows = "".join(
+        "<tr>"
+        f"<td>{esc(w.phase)}</td><td>{esc(w.category)}</td>"
+        f"<td>{w.frequency}</td><td>{w.severity_weight:.0f}</td>"
+        f"<td>{w.mean_policy_score:.3f}</td><td>{w.priority:.3f}</td>"
+        f"<td>{esc(', '.join(w.opponents))}</td>"
+        "</tr>"
+        for w in season.weakness_profile.weaknesses
+    ) or '<tr><td colspan="7">No weaknesses found.</td></tr>'
+
+    def verdict_label(entry: CandidateSlateEntry) -> str:
+        mark = "✓ recommended" if entry.candidate_id == season.recommended_candidate_id else ""
+        return f"{esc(entry.verdict)} {mark}".strip()
+
+    slate_rows = "".join(
+        "<tr>"
+        f"<td>{e.rank}</td><td>{esc(e.phase)}/{esc(e.category)}</td>"
+        f"<td>{esc(e.candidate_id)}</td>"
+        f"<td>{e.train_score_delta:+.4f}</td><td>{e.heldout_score_delta:+.4f}</td>"
+        f"<td>{verdict_label(e)}</td>"
+        "</tr>"
+        for e in season.slate
+    ) or '<tr><td colspan="6">No candidates generated.</td></tr>'
+
+    traj = season.trajectory
+    recommendation = (
+        f"Recommended candidate <strong>{esc(season.recommended_candidate_id)}</strong> "
+        f"(held-out +{season.recommended_heldout_delta:.4f})."
+        if season.recommended_candidate_id
+        else "No candidate improved out of sample; keep the current strategy."
+    )
+
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Training season - {esc(season.user_role)}</title>
+<style>
+body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }}
+table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
+th, td {{ border: 1px solid #ccc; padding: 6px 10px; text-align: left; font-size: 14px; }}
+th {{ background: #f3f4f6; }}
+.summary {{ background: #f9fafb; border: 1px solid #e5e7eb; padding: 1rem; border-radius: 6px; }}
+</style></head><body>
+<h1>Training season</h1>
+<div class="summary">
+<p>Role: <strong>{esc(season.user_role)}</strong> &middot;
+matches analyzed: <strong>{season.weakness_profile.matches_analyzed}</strong> &middot;
+baseline mean score: <strong>{season.baseline_mean_score:.3f}</strong></p>
+<p>Trajectory: {traj['baseline_mean_score']:.3f} &rarr; {traj['best_mean_score']:.3f}
+(&Delta; {traj['delta']:+.4f}). {recommendation}</p>
+</div>
+<h2>Ranked weaknesses</h2>
+<table><thead><tr>
+<th>Phase</th><th>Category</th><th>Frequency</th><th>Severity</th>
+<th>Mean score</th><th>Priority</th><th>Opponents</th>
+</tr></thead><tbody>{weakness_rows}</tbody></table>
+<h2>Validated candidate slate</h2>
+<table><thead><tr>
+<th>Rank</th><th>Targets</th><th>Candidate</th>
+<th>Train &Delta;</th><th>Held-out &Delta;</th><th>Verdict</th>
+</tr></thead><tbody>{slate_rows}</tbody></table>
+</body></html>
+"""
+
+
 def _suite_mean_score(summary: SparringSuiteSummary) -> float:
     scores = [
         result.policy_score

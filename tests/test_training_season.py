@@ -171,3 +171,29 @@ def test_run_training_season_rejects_bad_k(tmp_path):
 
     with pytest.raises(TrainingSeasonError):
         run_training_season(output_dir=tmp_path / "s", k=0)
+
+
+def test_train_season_cli_runs_and_writes_report(tmp_path, capsys):
+    from opennego.cli import COMMANDS
+    from opennego.cli.learning import train_season_main
+    from opennego.training_season import TRAINING_SEASON_SCHEMA_VERSION
+
+    assert "train-season" in COMMANDS
+
+    report = tmp_path / "season.html"
+    rc = train_season_main(
+        [
+            "--output-dir",
+            str(tmp_path / "season"),
+            "--k",
+            "1",
+            "--report",
+            str(report),
+        ]
+    )
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["schema_version"] == TRAINING_SEASON_SCHEMA_VERSION
+    assert payload["report"] == str(report)
+    html = report.read_text()
+    assert "Training season" in html and "Validated candidate slate" in html

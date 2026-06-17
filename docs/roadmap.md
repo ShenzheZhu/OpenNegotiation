@@ -172,6 +172,14 @@ quality score uses, `reputation_premium_seller` / `reputation_discount_buyer`
 NPC archetypes, and a reputation skill drill. Fixtures by default with the live
 eBay band behind the existing source gates. Does not touch protocol v2.
 
+### M8 — Training season
+
+Deepens the single-shot training loop into the "training factory" experience:
+spar the whole roster, aggregate the coach's findings into a ranked weakness
+profile, then generate and **held-out-validate** a candidate per top weakness
+and return a ranked slate with an advisory recommendation (overfit demoted).
+Nothing is auto-applied. `opennego train-season` + a static season report.
+
 ## Design Docs
 
 Milestone work that needs review-before-build records the decision under
@@ -181,7 +189,8 @@ Milestone work that needs review-before-build records the decision under
 - [Rating: normalized surplus to continuous rating](design/rating.md) (M3)
 - [Local web client: `opennego serve`](design/serve.md) (M4)
 - [Market skills and sandbox](design/market.md) (M5)
-- [Information asymmetry: condition and reputation](design/information_asymmetry.md) (M6)
+- [Information asymmetry: condition and reputation](design/information_asymmetry.md) (M6, M7)
+- [Training season: aggregated weaknesses and a ranked candidate slate](design/training_season.md) (M8)
 
 ## Engineering Process
 

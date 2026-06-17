@@ -127,12 +127,19 @@ sellers, hidden-fee sellers), diagnose failures, and iterate:
 opennego strategies                          # list NPC profiles
 opennego spar --output-dir runs/spar --report runs/spar/report.html
 opennego train --output-dir runs/train      # full spar -> patch -> rerun loop
+opennego train-season --report runs/season.html   # whole-roster weakness slate
 ```
 
 `train` produces a versioned strategy candidate plus a before/after
 comparison, and `--holdout-validation` reruns the candidate against opponents
 it never trained on so an overfit (`train_only`) patch is flagged before you
-adopt it. Apply it (recording a lineage), then export it for your own stack:
+adopt it.
+
+`train-season` goes wider: it spars the whole roster, aggregates the coach's
+findings into a *ranked weakness profile*, then generates and held-out-validates
+a candidate per top weakness and returns a ranked slate with an advisory
+recommendation (overfit candidates demoted). Nothing is auto-applied — you pick.
+Apply your choice (recording a lineage), then export it for your own stack:
 
 ```bash
 opennego apply-strategy --candidate runs/train/strategy_candidate.json \
@@ -225,7 +232,7 @@ exit codes `0` (success), `1` (completed with failures), `2` (usage error).
 | Demo | `demo`, `validate-demo`, `run-models` |
 | Client | `serve` |
 | Market skills | `drill`, `market-run`, `market-calibrate` |
-| Sparring & learning | `strategies`, `spar`, `learn`, `evolve`, `compare`, `train`, `apply-strategy`, `lineage`, `export-training-adapter`, `validate-training-adapter` |
+| Sparring & learning | `strategies`, `spar`, `learn`, `evolve`, `compare`, `train`, `train-season`, `apply-strategy`, `lineage`, `export-training-adapter`, `validate-training-adapter` |
 | Market data | `market-source-policy`, `validate-market-source`, `ingest-market`, `ingest-ebay`, `ingest-ebay-active`, `validate-market`, `scenarios` |
 | Strategy marketplace | `marketplace-export`, `validate-marketplace` |
 
