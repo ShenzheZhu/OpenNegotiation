@@ -287,6 +287,29 @@ class ServeService:
             "lineage": str(lineage_path),
         }
 
+    # -- training season ----------------------------------------------------
+
+    def run_season(self, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        agent = self.get_agent(self._require_id(payload.get("agent_id"), "agent_id"))
+        k = int(payload.get("k", 3))
+        if k < 1:
+            raise ServeError("k: expected at least one candidate")
+        holdout_seed = int(payload.get("holdout_seed", 0))
+        from opennego.training_season import run_training_season
+
+        try:
+            season = run_training_season(
+                output_dir=self.data_dir / "seasons" / agent["id"],
+                config_path=self.config_path,
+                registry_path=self.registry_path,
+                user_role=agent["role"],
+                k=k,
+                holdout_seed=holdout_seed,
+            )
+        except Exception as exc:
+            raise ServeError(str(exc)) from exc
+        return to_jsonable(season)
+
     # -- ratings ------------------------------------------------------------
 
     def ratings(self) -> Mapping[str, Any]:
