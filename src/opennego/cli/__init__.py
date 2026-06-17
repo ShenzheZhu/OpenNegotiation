@@ -79,6 +79,11 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, CommandMain, str], ...]], ...]
                 learning.train_season_main,
                 "Aggregate roster weaknesses into a ranked, validated candidate slate.",
             ),
+            (
+                "coevolve",
+                learning.coevolve_main,
+                "Co-evolve buyer and seller populations in a generational tournament.",
+            ),
             ("apply-strategy", learning.apply_strategy_main, "Apply a candidate into a strategy config."),
             ("lineage", learning.lineage_main, "Print and validate a strategy evolution lineage."),
             (

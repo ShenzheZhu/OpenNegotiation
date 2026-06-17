@@ -180,6 +180,15 @@ profile, then generate and **held-out-validate** a candidate per top weakness
 and return a ranked slate with an advisory recommendation (overfit demoted).
 Nothing is auto-applied. `opennego train-season` + a static season report.
 
+### M9 — Co-evolution
+
+The "a2a adversarial play + prompt evolution" headline. Two populations (buyers,
+sellers) play a tournament each generation, are ranked by fitness, and the
+winners mutate/cross to seed the next — strategies are validated against a
+*moving* adversary, and the meta evolves. Deterministic numeric-genome core
+(no-key, CI-verifiable) with an optional BYOK prompt-genome layer on the same
+engine via an agent-factory seam. `opennego coevolve` + a generational report.
+
 ## Design Docs
 
 Milestone work that needs review-before-build records the decision under
@@ -191,6 +200,7 @@ Milestone work that needs review-before-build records the decision under
 - [Market skills and sandbox](design/market.md) (M5)
 - [Information asymmetry: condition and reputation](design/information_asymmetry.md) (M6, M7)
 - [Training season: aggregated weaknesses and a ranked candidate slate](design/training_season.md) (M8)
+- [Co-evolution: competing populations and an evolving meta](design/coevolution.md) (M9)
 
 ## Engineering Process
 

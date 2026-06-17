@@ -15,7 +15,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from opennego.agents.profiles import (
     BuyerPolicy,
@@ -33,6 +33,11 @@ from opennego.schema import Role, Scenario
 COEVOLUTION_SCHEMA_VERSION = "opennego.coevolution.v1"
 COEVOLUTION_EXECUTION_MODE = "competitive_population_tournament_v1"
 DEFAULT_PRODUCTS_PATH = "examples/data/real_market_products.json"
+
+# Maps a genome to the agent that plays it. The default deterministic factory is
+# build_agent; the BYOK prompt layer supplies its own factory (e.g. one that
+# builds an LLM agent from a prompt genome) to run on the same engine.
+AgentFactory = Callable[["Genome"], Any]
 
 # Gene bounds per role: (low, high), inclusive. The genome carries exactly these
 # keys; anything else is rejected so a genome can never smuggle in a non-evolved
@@ -230,6 +235,7 @@ def run_coevolution(
     evolve: Sequence[str] = ("buyer", "seller"),
     elite_fraction: float = 0.34,
     scenarios: Sequence[Scenario] | None = None,
+    agent_factory: AgentFactory | None = None,
 ) -> Coevolution:
     """Run a competitive co-evolution: two populations, G generations.
 
@@ -258,6 +264,7 @@ def run_coevolution(
     if not scenarios:
         raise CoevolutionError("no scenarios available for the tournament")
 
+    factory = agent_factory or build_agent
     rng = random.Random(f"coevolution:{seed}")
     registry: dict[str, Genome] = {}
 
@@ -274,7 +281,7 @@ def run_coevolution(
 
     generation_records: list[GenerationRecord] = []
     for generation in range(generations):
-        buyer_fit, seller_fit = _tournament(buyers, sellers, scenarios)
+        buyer_fit, seller_fit = _tournament(buyers, sellers, scenarios, factory)
         buyer_board = _leaderboard(buyers, buyer_fit)
         seller_board = _leaderboard(sellers, seller_fit)
         generation_records.append(
@@ -334,15 +341,78 @@ def run_coevolution(
     return result
 
 
+def render_coevolution_report(result: Coevolution) -> str:
+    """Render a self-contained static HTML report for a co-evolution run."""
+
+    import html
+
+    def esc(value: Any) -> str:
+        return html.escape(str(value))
+
+    def genes_str(genes: Mapping[str, float]) -> str:
+        return ", ".join(f"{k}={v:.3f}" for k, v in genes.items())
+
+    gen_rows = "".join(
+        "<tr>"
+        f"<td>{r.generation}</td>"
+        f"<td>{r.buyer_best_fitness:.4f}</td><td>{r.buyer_mean_fitness:.4f}</td>"
+        f"<td>{r.seller_best_fitness:.4f}</td><td>{r.seller_mean_fitness:.4f}</td>"
+        f"<td>{esc(r.buyer_leaderboard[0].genome_id)}</td>"
+        f"<td>{esc(r.seller_leaderboard[0].genome_id)}</td>"
+        "</tr>"
+        for r in result.generation_records
+    )
+
+    def lineage_list(lineage: Sequence[Mapping[str, Any]]) -> str:
+        return "".join(
+            f"<li>{esc(item['genome_id'])} "
+            f"(parents: {esc(', '.join(item['parent_ids']) or 'seed')})</li>"
+            for item in lineage
+        )
+
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Co-evolution run (seed {esc(result.seed)})</title>
+<style>
+body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }}
+table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
+th, td {{ border: 1px solid #ccc; padding: 6px 10px; text-align: left; font-size: 14px; }}
+th {{ background: #f3f4f6; }}
+.summary {{ background: #f9fafb; border: 1px solid #e5e7eb; padding: 1rem; border-radius: 6px; }}
+code {{ font-size: 13px; }}
+</style></head><body>
+<h1>Co-evolution run</h1>
+<div class="summary">
+<p>Seed <strong>{esc(result.seed)}</strong> &middot;
+{result.generations} generations &middot; population {result.population_size}/role &middot;
+{result.scenario_count} scenarios &middot; evolving: {esc(', '.join(result.evolve_roles))}</p>
+<p>Buyer champion <code>{esc(result.buyer_champion.genome_id)}</code>
+(fitness {result.buyer_champion.fitness:.4f}): {esc(genes_str(result.buyer_champion.genes))}</p>
+<p>Seller champion <code>{esc(result.seller_champion.genome_id)}</code>
+(fitness {result.seller_champion.fitness:.4f}): {esc(genes_str(result.seller_champion.genes))}</p>
+</div>
+<h2>Per-generation fitness</h2>
+<table><thead><tr>
+<th>Gen</th><th>Buyer best</th><th>Buyer mean</th>
+<th>Seller best</th><th>Seller mean</th><th>Buyer leader</th><th>Seller leader</th>
+</tr></thead><tbody>{gen_rows}</tbody></table>
+<h2>Champion lineage</h2>
+<h3>Buyer</h3><ul>{lineage_list(result.buyer_champion_lineage)}</ul>
+<h3>Seller</h3><ul>{lineage_list(result.seller_champion_lineage)}</ul>
+</body></html>
+"""
+
+
 def _tournament(
     buyers: Sequence[Genome],
     sellers: Sequence[Genome],
     scenarios: Sequence[Scenario],
+    factory: AgentFactory,
 ) -> tuple[dict[str, float], dict[str, float]]:
     buyer_scores: dict[str, list[float]] = {b.genome_id: [] for b in buyers}
     seller_scores: dict[str, list[float]] = {s.genome_id: [] for s in sellers}
-    buyer_agents = {b.genome_id: build_agent(b) for b in buyers}
-    seller_agents = {s.genome_id: build_agent(s) for s in sellers}
+    buyer_agents = {b.genome_id: factory(b) for b in buyers}
+    seller_agents = {s.genome_id: factory(s) for s in sellers}
     for buyer in buyers:
         for seller in sellers:
             for scenario in scenarios:
