@@ -235,3 +235,30 @@ def test_match_rating_ingestion_is_idempotent(tmp_path):
     _, board = dispatch(service, "GET", "/api/ratings")
     # Same deterministic run id → ingested once.
     assert board["match_count"] == 1
+
+
+def test_train_season_endpoint_returns_ranked_slate(tmp_path):
+    service = _service(tmp_path)
+    dispatch(
+        service, "POST", "/api/agents",
+        {"id": "buyer1", "role": "buyer", "strategy_prompt": "p"},
+    )
+    status, season = dispatch(
+        service, "POST", "/api/train-season", {"agent_id": "buyer1", "k": 2}
+    )
+    assert status == 200
+    assert season["schema_version"] == "opennego.training_season.v1"
+    assert season["user_role"] == "buyer"
+    assert 1 <= len(season["slate"]) <= 2
+    assert "weaknesses" in season["weakness_profile"]
+    # Slate entries carry a candidate_path the strategy endpoint can apply.
+    assert all("candidate_path" in entry for entry in season["slate"])
+
+
+def test_train_season_rejects_unknown_agent(tmp_path):
+    service = _service(tmp_path)
+    status, payload = dispatch(
+        service, "POST", "/api/train-season", {"agent_id": "ghost"}
+    )
+    assert status == 400
+    assert "error" in payload

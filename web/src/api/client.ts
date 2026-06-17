@@ -164,3 +164,46 @@ export interface RatingLeaderboard {
 export const ratingsApi = {
   get: () => request<RatingLeaderboard>("/api/ratings"),
 };
+
+export interface AggregatedWeakness {
+  phase: string;
+  category: string;
+  frequency: number;
+  severity_weight: number;
+  mean_policy_score: number;
+  priority: number;
+  opponents: string[];
+}
+
+export interface CandidateSlateEntry {
+  rank: number;
+  phase: string;
+  category: string;
+  candidate_id: string;
+  candidate_path: string;
+  strategy_config_path: string;
+  verdict: string;
+  train_score_delta: number;
+  heldout_score_delta: number;
+  rerun_mean_score: number;
+  generalizes: boolean;
+}
+
+export interface TrainingSeason {
+  schema_version: string;
+  user_role: string;
+  baseline_mean_score: number;
+  weakness_profile: { matches_analyzed: number; weaknesses: AggregatedWeakness[] };
+  slate: CandidateSlateEntry[];
+  recommended_candidate_id: string | null;
+  recommended_heldout_delta: number;
+  trajectory: { baseline_mean_score: number; best_mean_score: number; delta: number };
+}
+
+export const seasonApi = {
+  run: (agentId: string, k = 3) =>
+    request<TrainingSeason>("/api/train-season", {
+      method: "POST",
+      body: JSON.stringify({ agent_id: agentId, k }),
+    }),
+};
