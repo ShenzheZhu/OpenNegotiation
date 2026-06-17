@@ -67,6 +67,10 @@ def test_run_match_trace_and_report(tmp_path):
     )
     assert status == 200
     run_id = match["run_id"]
+    # Public M6/M7 signals are surfaced on the match result.
+    assert "scenario_signals" in match
+    assert "condition_claim" in match["scenario_signals"]
+    assert "reputation_band" in match["scenario_signals"]
 
     status, trace = dispatch(service, "GET", f"/api/runs/{run_id}/trace")
     assert status == 200 and trace["events"]
