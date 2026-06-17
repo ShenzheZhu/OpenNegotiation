@@ -7,19 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-17
+
+Training and self-play: the M8 training season (whole-roster weakness
+aggregation + a ranked, held-out-validated candidate slate) and the M9
+co-evolution engine (two strategy populations evolving against each other in a
+generational tournament, deterministic core + a BYOK prompt seam).
+
 ### Added
 
-- Co-evolution (M9, in progress): `opennego.coevolution` adds an evolvable strategy genome — a bounded numeric point in the deterministic policy space (buyer: `opening_discount`/`counter_fraction`/`willingness_multiplier`/`quality_skepticism`; seller: `opening_markup`/`concession_fraction`/`floor_reference_multiplier`). A genome maps to a real `BuyerPolicy`/`SellerPolicy` and drives a deterministic agent (via a new `policy_override` on the profile agents), with seeded, bounded `mutate` and per-gene `crossover`. The substrate for the no-key arms race.
+- Co-evolution (M9): `opennego.coevolution` adds an evolvable strategy genome — a bounded numeric point in the deterministic policy space (buyer: `opening_discount`/`counter_fraction`/`willingness_multiplier`/`quality_skepticism`; seller: `opening_markup`/`concession_fraction`/`floor_reference_multiplier`). A genome maps to a real `BuyerPolicy`/`SellerPolicy` and drives a deterministic agent (via a new `policy_override` on the profile agents), with seeded, bounded `mutate` and per-gene `crossover`. The substrate for the no-key arms race.
 
-- Co-evolution (M9, in progress): `opennego.coevolution.run_coevolution` runs the competitive engine — two populations (buyers, sellers) play a full tournament each generation (scored by the quality/reputation-aware match score), elites survive, and the rest are refilled by mutation/crossover for `G` generations. Emits `opennego.coevolution.v1` with per-generation leaderboards, the champion genome per role, the champion lineage, and the fitness trajectory. Deterministic in the seed; an `evolve` option can hold one role fixed (making the other's improvement monotone).
+- Co-evolution (M9): `opennego.coevolution.run_coevolution` runs the competitive engine — two populations (buyers, sellers) play a full tournament each generation (scored by the quality/reputation-aware match score), elites survive, and the rest are refilled by mutation/crossover for `G` generations. Emits `opennego.coevolution.v1` with per-generation leaderboards, the champion genome per role, the champion lineage, and the fitness trajectory. Deterministic in the seed; an `evolve` option can hold one role fixed (making the other's improvement monotone).
 
-- Co-evolution (M9, in progress): `opennego coevolve` runs the engine end to end (`--generations`/`--population`/`--scenario-count`/`--seed`/`--evolve`, optional `--report` for a static HTML generational report). `run_coevolution` accepts an `agent_factory` seam so a BYOK prompt-genome population can plug into the identical engine without touching the deterministic core.
+- Co-evolution (M9): `opennego coevolve` runs the engine end to end (`--generations`/`--population`/`--scenario-count`/`--seed`/`--evolve`, optional `--report` for a static HTML generational report). `run_coevolution` accepts an `agent_factory` seam so a BYOK prompt-genome population can plug into the identical engine without touching the deterministic core.
 
-- Training season (M8, in progress): `opennego.training_season.aggregate_weaknesses` reads every battle report from a sparring suite and aggregates the coach's findings by `(phase, category)` into a ranked `opennego.weakness_profile.v1` — frequency across opponents, severity weight, mean policy score, and example opponent archetypes, ranked by `frequency * severity_weight * (1 - mean_score)`. The diagnostic that drives the validated candidate slate.
+- Training season (M8): `opennego.training_season.aggregate_weaknesses` reads every battle report from a sparring suite and aggregates the coach's findings by `(phase, category)` into a ranked `opennego.weakness_profile.v1` — frequency across opponents, severity weight, mean policy score, and example opponent archetypes, ranked by `frequency * severity_weight * (1 - mean_score)`. The diagnostic that drives the validated candidate slate.
 
-- Training season (M8, in progress): `opennego.training_season.run_training_season` turns the ranked weaknesses into a held-out-validated menu. It spars the whole opposite-role roster, and for the top-`k` weaknesses synthesizes a focused battle report, generates a targeted strategy candidate, reruns the suite with it, and records the held-out generalization verdict. Candidates are ranked with overfit (`train_only`/`regressed`) demoted below any that generalize, with an advisory recommendation and a baseline→best trajectory, emitted as `opennego.training_season.v1`. Nothing is auto-applied.
+- Training season (M8): `opennego.training_season.run_training_season` turns the ranked weaknesses into a held-out-validated menu. It spars the whole opposite-role roster, and for the top-`k` weaknesses synthesizes a focused battle report, generates a targeted strategy candidate, reruns the suite with it, and records the held-out generalization verdict. Candidates are ranked with overfit (`train_only`/`regressed`) demoted below any that generalize, with an advisory recommendation and a baseline→best trajectory, emitted as `opennego.training_season.v1`. Nothing is auto-applied.
 
-- Training season (M8, in progress): `opennego train-season` runs a season end to end (`--role`, `--k`, `--holdout-seed`, optional `--report` for a static HTML season report rendering the ranked weakness profile and validated candidate slate).
+- Training season (M8): `opennego train-season` runs a season end to end (`--role`, `--k`, `--holdout-seed`, optional `--report` for a static HTML season report rendering the ranked weakness profile and validated candidate slate).
 
 ## [0.2.0] - 2026-06-16
 
