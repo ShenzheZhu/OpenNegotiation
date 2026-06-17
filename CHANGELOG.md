@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Training season (M8, in progress): `opennego.training_season.aggregate_weaknesses` reads every battle report from a sparring suite and aggregates the coach's findings by `(phase, category)` into a ranked `opennego.weakness_profile.v1` — frequency across opponents, severity weight, mean policy score, and example opponent archetypes, ranked by `frequency * severity_weight * (1 - mean_score)`. The diagnostic that drives the validated candidate slate.
+
 ## [0.2.0] - 2026-06-16
 
 The realistic-gym release: milestones M1–M7 on top of the 0.1.0 core — gym-core
