@@ -255,6 +255,7 @@ BUYER_POLICIES: dict[str, BuyerPolicy] = {
 class ProfileBackedSeller:
     profile: StrategyProfile
     role: Role = Role.SELLER
+    policy_override: SellerPolicy | None = None
 
     def __post_init__(self) -> None:
         if self.profile.role != Role.SELLER:
@@ -266,6 +267,8 @@ class ProfileBackedSeller:
 
     @property
     def policy(self) -> SellerPolicy:
+        if self.policy_override is not None:
+            return self.policy_override
         return SELLER_POLICIES.get(self.profile.archetype, SellerPolicy())
 
     def act(self, context: AgentContext) -> AgentAction:
@@ -396,6 +399,7 @@ class ProfileBackedSeller:
 class ProfileBackedBuyer:
     profile: StrategyProfile
     role: Role = Role.BUYER
+    policy_override: BuyerPolicy | None = None
 
     def __post_init__(self) -> None:
         if self.profile.role != Role.BUYER:
@@ -407,6 +411,8 @@ class ProfileBackedBuyer:
 
     @property
     def policy(self) -> BuyerPolicy:
+        if self.policy_override is not None:
+            return self.policy_override
         return BUYER_POLICIES.get(self.profile.archetype, BuyerPolicy())
 
     def act(self, context: AgentContext) -> AgentAction:

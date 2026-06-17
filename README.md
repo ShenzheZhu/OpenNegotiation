@@ -232,7 +232,7 @@ exit codes `0` (success), `1` (completed with failures), `2` (usage error).
 | Demo | `demo`, `validate-demo`, `run-models` |
 | Client | `serve` |
 | Market skills | `drill`, `market-run`, `market-calibrate` |
-| Sparring & learning | `strategies`, `spar`, `learn`, `evolve`, `compare`, `train`, `train-season`, `apply-strategy`, `lineage`, `export-training-adapter`, `validate-training-adapter` |
+| Sparring & learning | `strategies`, `spar`, `learn`, `evolve`, `compare`, `train`, `train-season`, `coevolve`, `apply-strategy`, `lineage`, `export-training-adapter`, `validate-training-adapter` |
 | Market data | `market-source-policy`, `validate-market-source`, `ingest-market`, `ingest-ebay`, `ingest-ebay-active`, `validate-market`, `scenarios` |
 | Strategy marketplace | `marketplace-export`, `validate-marketplace` |
 
