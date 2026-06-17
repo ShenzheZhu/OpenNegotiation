@@ -207,3 +207,43 @@ export const seasonApi = {
       body: JSON.stringify({ agent_id: agentId, k }),
     }),
 };
+
+export interface GenomeScore {
+  genome_id: string;
+  fitness: number;
+  genes: Record<string, number>;
+  parent_ids: string[];
+}
+
+export interface GenerationRecord {
+  generation: number;
+  buyer_best_fitness: number;
+  buyer_mean_fitness: number;
+  seller_best_fitness: number;
+  seller_mean_fitness: number;
+  buyer_leaderboard: GenomeScore[];
+  seller_leaderboard: GenomeScore[];
+}
+
+export interface Coevolution {
+  schema_version: string;
+  seed: number;
+  generations: number;
+  population_size: number;
+  scenario_count: number;
+  evolve_roles: string[];
+  generation_records: GenerationRecord[];
+  buyer_champion: GenomeScore;
+  seller_champion: GenomeScore;
+  buyer_champion_lineage: { genome_id: string; parent_ids: string[] }[];
+  seller_champion_lineage: { genome_id: string; parent_ids: string[] }[];
+  trajectory: { buyer_best_by_generation: number[]; seller_best_by_generation: number[] };
+}
+
+export const coevolveApi = {
+  run: (payload: Record<string, unknown> = {}) =>
+    request<Coevolution>("/api/coevolve", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+};

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Web client (M10, in progress): the training season is now in the browser. `POST /api/train-season` runs `run_training_season` for a stored agent and returns the ranked weakness profile + held-out-validated candidate slate; a new `Training season` tab renders them and applies a chosen candidate through the existing strategy-config path (nothing auto-applied). API is no-key dispatch-tested; the EUI view builds in CI.
 
+- Web client (M10, in progress): co-evolution is now in the browser. `POST /api/coevolve` runs `run_coevolution` and returns per-generation leaderboards, champion genomes + lineage, and the fitness trajectory; a new `Co-evolution` tab renders the generational table and champion lineage. No-key dispatch-tested; the EUI view builds in CI.
+
 ## [0.3.0] - 2026-06-17
 
 Training and self-play: the M8 training season (whole-roster weakness
