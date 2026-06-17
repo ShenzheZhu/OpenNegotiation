@@ -33,6 +33,11 @@ from opennego.strategy_config import (
     write_strategy_config,
 )
 from opennego.training import run_training_loop
+from opennego.training_season import (
+    TrainingSeasonError,
+    render_season_report,
+    run_training_season,
+)
 from opennego.training_adapter import (
     TrainingAdapterError,
     validate_training_adapter_package,
@@ -495,6 +500,90 @@ def train_main(argv: list[str] | None = None) -> int:
 
     common.print_json(to_jsonable(summary))
     return 0 if summary.status == "completed" else 1
+
+
+def train_season_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run a training season: aggregate weaknesses across the roster and "
+            "produce a ranked, held-out-validated candidate slate."
+        )
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="runs/training_season",
+        help="Directory for baseline, candidate, and season artifacts.",
+    )
+    parser.add_argument(
+        "--config",
+        default="configs/real_market_demo.yaml",
+        help="Experiment config used for sparring slices.",
+    )
+    parser.add_argument(
+        "--registry",
+        default=str(DEFAULT_NPC_REGISTRY_PATH),
+        help="Path to an NPC strategy registry JSON file.",
+    )
+    parser.add_argument(
+        "--user-role",
+        default="buyer",
+        choices=("buyer", "seller"),
+        help="Role of the user-owned agent to optimize.",
+    )
+    parser.add_argument(
+        "--k",
+        type=int,
+        default=3,
+        help="Number of top weaknesses to generate and validate candidates for.",
+    )
+    parser.add_argument(
+        "--learning-tool-regime",
+        default="no_tools",
+        help="Completed run tool regime to diagnose for policy learning.",
+    )
+    parser.add_argument(
+        "--parent-strategy-id",
+        default="user_strategy_v0",
+        help="Stable id of the strategy being patched.",
+    )
+    parser.add_argument(
+        "--holdout-seed",
+        type=int,
+        default=0,
+        help="Deterministic seed for the train/held-out split.",
+    )
+    parser.add_argument(
+        "--report",
+        help="Optional path to write a static HTML season report.",
+    )
+    parser.add_argument("--no-fail-fast", action="store_true")
+    args = parser.parse_args(argv)
+
+    try:
+        season = run_training_season(
+            output_dir=args.output_dir,
+            config_path=args.config,
+            registry_path=args.registry,
+            user_role=args.user_role,
+            k=args.k,
+            learning_tool_regime=args.learning_tool_regime,
+            parent_strategy_id=args.parent_strategy_id,
+            holdout_seed=args.holdout_seed,
+            fail_fast=not args.no_fail_fast,
+        )
+        report_path = None
+        if args.report:
+            report_path = Path(args.report)
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(render_season_report(season), encoding="utf-8")
+    except (OSError, ValueError, KeyError, TrainingSeasonError, ConfigValidationError) as exc:
+        return common.print_error(exc)
+
+    payload = to_jsonable(season)
+    if report_path is not None:
+        payload["report"] = str(report_path)
+    common.print_json(payload)
+    return 0
 
 
 def spar_main(argv: list[str] | None = None) -> int:

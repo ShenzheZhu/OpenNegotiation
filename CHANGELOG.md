@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Training season (M8, in progress): `opennego.training_season.aggregate_weaknesses` reads every battle report from a sparring suite and aggregates the coach's findings by `(phase, category)` into a ranked `opennego.weakness_profile.v1` — frequency across opponents, severity weight, mean policy score, and example opponent archetypes, ranked by `frequency * severity_weight * (1 - mean_score)`. The diagnostic that drives the validated candidate slate.
+
+- Training season (M8, in progress): `opennego.training_season.run_training_season` turns the ranked weaknesses into a held-out-validated menu. It spars the whole opposite-role roster, and for the top-`k` weaknesses synthesizes a focused battle report, generates a targeted strategy candidate, reruns the suite with it, and records the held-out generalization verdict. Candidates are ranked with overfit (`train_only`/`regressed`) demoted below any that generalize, with an advisory recommendation and a baseline→best trajectory, emitted as `opennego.training_season.v1`. Nothing is auto-applied.
+
+- Training season (M8, in progress): `opennego train-season` runs a season end to end (`--role`, `--k`, `--holdout-seed`, optional `--report` for a static HTML season report rendering the ranked weakness profile and validated candidate slate).
+
 ## [0.2.0] - 2026-06-16
 
 The realistic-gym release: milestones M1–M7 on top of the 0.1.0 core — gym-core
