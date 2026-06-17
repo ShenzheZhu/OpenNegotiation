@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Web client (M10, in progress): co-evolution is now in the browser. `POST /api/coevolve` runs `run_coevolution` and returns per-generation leaderboards, champion genomes + lineage, and the fitness trajectory; a new `Co-evolution` tab renders the generational table and champion lineage. No-key dispatch-tested; the EUI view builds in CI.
 
+- Web client (M10, in progress): the hidden-information signals are now legible in the browser. The match result carries the public `scenario_signals` (condition claim + seller reputation band/feedback), shown as badges, and the match trace renders the buyer's `inspect` estimates (estimated vs claimed quality). The hidden true condition/quality is never surfaced.
+
 ## [0.3.0] - 2026-06-17
 
 Training and self-play: the M8 training season (whole-roster weakness

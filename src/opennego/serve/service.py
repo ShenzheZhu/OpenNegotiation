@@ -135,6 +135,26 @@ class ServeService:
             "policy_score": result.policy_score,
             "battle_report": result.battle_report,
             "run_dir": str(run_dir),
+            "scenario_signals": self._scenario_signals(run_dir),
+        }
+
+    def _scenario_signals(self, run_dir: Path) -> Mapping[str, Any]:
+        """Public M6/M7 signals for the match: condition claim + reputation band.
+
+        Both are public (the buyer sees them in the negotiation); the hidden
+        true condition/quality is never surfaced here.
+        """
+
+        from opennego.artifacts import load_scenario_artifact
+
+        scenario = load_scenario_artifact(run_dir / "scenario.json")
+        reputation = scenario.seller_reputation
+        return {
+            "condition_claim": scenario.product.condition,
+            "reputation_band": reputation.band if reputation is not None else None,
+            "reputation_feedback_pct": (
+                reputation.feedback_pct if reputation is not None else None
+            ),
         }
 
     def _ingest_rating(

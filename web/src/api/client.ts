@@ -24,7 +24,15 @@ export interface TraceEvent {
   action_type: string;
   content: string;
   offer?: { price: number; note: string } | null;
+  tool_call?: { name: string; arguments: Record<string, unknown> } | null;
+  tool_result?: Record<string, unknown> | null;
   private: boolean;
+}
+
+export interface ScenarioSignals {
+  condition_claim: string;
+  reputation_band: string | null;
+  reputation_feedback_pct: number | null;
 }
 
 export interface MatchResult {
@@ -34,6 +42,7 @@ export interface MatchResult {
   outcome: string;
   deal_price: number | null;
   policy_score: number | null;
+  scenario_signals?: ScenarioSignals;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

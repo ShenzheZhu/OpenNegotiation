@@ -189,6 +189,13 @@ winners mutate/cross to seed the next — strategies are validated against a
 (no-key, CI-verifiable) with an optional BYOK prompt-genome layer on the same
 engine via an agent-factory seam. `opennego coevolve` + a generational report.
 
+### M10 — Web client round-out
+
+Close the gap between the M1–M9 engine and the M4-era browser client: surface
+the training season (M8), co-evolution (M9), and the hidden condition/reputation
+signals (M6/M7) in the `serve` API + EUI client. API endpoints are no-key
+dispatch-tested; EUI views build in CI; visual verification is the maintainer's.
+
 ## Design Docs
 
 Milestone work that needs review-before-build records the decision under
@@ -201,6 +208,7 @@ Milestone work that needs review-before-build records the decision under
 - [Information asymmetry: condition and reputation](design/information_asymmetry.md) (M6, M7)
 - [Training season: aggregated weaknesses and a ranked candidate slate](design/training_season.md) (M8)
 - [Co-evolution: competing populations and an evolving meta](design/coevolution.md) (M9)
+- [Web client round-out: surfacing M5–M9 in the browser](design/web_client_roundout.md) (M10)
 
 ## Engineering Process
 
